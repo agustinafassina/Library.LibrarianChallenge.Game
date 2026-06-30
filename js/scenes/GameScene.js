@@ -70,7 +70,7 @@ export default class GameScene extends Phaser.Scene {
 
     this.buildShelf(level.books.length);
     this.buildBooks(level.books);
-    this.buildRuleBadge();
+    this.buildLevelInstruction();
     this.buildLibrarian();
     this.buildControls();
     this.buildPager();
@@ -386,7 +386,7 @@ export default class GameScene extends Phaser.Scene {
     });
   }
 
-  buildRuleBadge() {
+  buildLevelInstruction() {
     const { width } = this.scale;
     this.levelText.setText(
       I18n.t("levelProgress", { level: this.levelNumber, total: this.totalLevels })
@@ -396,37 +396,33 @@ export default class GameScene extends Phaser.Scene {
     const ruleName = translated.startsWith("rule_")
       ? getRuleLabel(this.levelDef.rule)
       : translated;
-    const label = I18n.t("ruleColon", { label: ruleName });
-    const badge = this.add.graphics();
-    const padX = 18;
-    const tmp = this.add
-      .text(0, 0, label, { fontFamily: FONTS.body, fontSize: "20px", fontStyle: "bold" })
-      .setVisible(false);
-    const bw = tmp.width + padX * 2;
-    tmp.destroy();
-
+    const ruleLine = I18n.t("ruleColon", { label: ruleName });
+    const detail =
+      I18n.pick(this.levelDef, "hint") || I18n.pick(this.levelDef, "description");
     const bx = width / 2;
-    const by = 86;
-    badge.fillStyle(COLORS.accent, 1);
-    badge.fillRoundedRect(bx - bw / 2, by - 20, bw, 40, 20);
+    const by = 78;
+
     this.add
-      .text(bx, by, label, {
+      .text(bx, by, ruleLine, {
         fontFamily: FONTS.body,
-        fontSize: "20px",
-        color: "#2c1d14",
+        fontSize: "18px",
+        color: "#d9a441",
         fontStyle: "bold",
+        align: "center",
       })
       .setOrigin(0.5);
 
-    this.add
-      .text(bx, by + 32, I18n.pick(this.levelDef, "description"), {
-        fontFamily: FONTS.body,
-        fontSize: "15px",
-        color: "#f3e3c3",
-        align: "center",
-        wordWrap: { width: width - 120 },
-      })
-      .setOrigin(0.5);
+    if (detail) {
+      this.add
+        .text(bx, by + 26, detail, {
+          fontFamily: FONTS.body,
+          fontSize: "15px",
+          color: "#f3e3c3",
+          align: "center",
+          wordWrap: { width: width - 120 },
+        })
+        .setOrigin(0.5, 0);
+    }
   }
 
   buildLibrarian() {
@@ -444,36 +440,6 @@ export default class GameScene extends Phaser.Scene {
       repeat: -1,
       ease: "Sine.inOut",
     });
-
-    this.buildSpeechBubble(
-      I18n.pick(this.levelDef, "hint") || I18n.pick(this.levelDef, "description")
-    );
-  }
-
-  buildSpeechBubble(text) {
-    const x = 8;
-    const w = 162;
-
-    const txt = this.add
-      .text(x + w / 2, 0, text, {
-        fontFamily: FONTS.body,
-        fontSize: "13px",
-        color: "#2c1d14",
-        align: "center",
-        wordWrap: { width: w - 24 },
-      })
-      .setOrigin(0.5, 0)
-      .setDepth(7);
-
-    const h = txt.height + 22;
-    const libTop = this.librarian.y - this.librarian.displayHeight / 2;
-    const yTop = Math.max(68, libTop - 12 - h);
-    txt.y = yTop + 11;
-
-    const bubble = this.add.graphics().setDepth(6);
-    bubble.fillStyle(COLORS.parchment, 1);
-    bubble.fillRoundedRect(x, yTop, w, h, 12);
-    bubble.fillTriangle(x + 34, yTop + h, x + 20, yTop + h + 16, x + 56, yTop + h);
   }
 
   buildControls() {
