@@ -262,38 +262,57 @@ export default class GameScene extends Phaser.Scene {
   createBookCard(book, slot) {
     const w = this.bookW;
     const h = this.bookH;
-    const titleSize = Math.round(Phaser.Math.Clamp(h * 0.1, 11, 15));
-    const metaSize = Math.round(Phaser.Math.Clamp(h * 0.075, 9, 12));
+
+    const showAuthor = w >= 78;
+    const showGenre  = h >= 88;
+
+    const titleSize = Math.round(Phaser.Math.Clamp(Math.min(h * 0.11, w * 0.2), 12, 15));
+    const metaSize  = Math.round(Phaser.Math.Clamp(Math.min(h * 0.09, w * 0.17), 11, 13));
 
     const spine = this.add.graphics();
     const fill = Phaser.Display.Color.HexStringToColor(book.color).color;
+
     spine.fillStyle(fill, 1);
-    spine.fillRoundedRect(-w / 2, -h / 2, w, h, 8);
-    spine.lineStyle(3, 0x000000, 0.25);
-    spine.strokeRoundedRect(-w / 2, -h / 2, w, h, 8);
-    spine.fillStyle(0xffffff, 0.18);
-    spine.fillRect(-w / 2 + 6, -h / 2 + 8, w - 12, 4);
-    spine.fillRect(-w / 2 + 6, h / 2 - 12, w - 12, 4);
+    spine.fillRoundedRect(-w / 2, -h / 2, w, h, 7);
+    spine.lineStyle(1.5, 0x000000, 0.3);
+    spine.strokeRoundedRect(-w / 2, -h / 2, w, h, 7);
+    spine.lineStyle(1, 0xffffff, 0.3);
+    spine.lineBetween(-w / 2 + 8, -h / 2 + 2, w / 2 - 8, -h / 2 + 2);
+
+    const shadow = { offsetX: 0, offsetY: 1, color: "#000000", blur: 3, fill: true };
 
     const titleTxt = this.add
-      .text(0, -h / 2 + 14, book.title, {
+      .text(0, -h / 2 + 10, book.title, {
         fontFamily: FONTS.body,
         fontSize: `${titleSize}px`,
         color: "#ffffff",
         align: "center",
         fontStyle: "bold",
-        wordWrap: { width: w - 14 },
+        wordWrap: { width: w - 10 },
+        shadow,
       })
       .setOrigin(0.5, 0);
 
-    const meta = `${book.author}\n${book.genre} \u00b7 ${book.year}`;
+    const yearOnly = !showAuthor && !showGenre;
+    let metaStr;
+    if (showAuthor && showGenre) {
+      metaStr = `${book.author}\n${book.genre} \u00b7 ${book.year}`;
+    } else if (showGenre) {
+      metaStr = `${book.genre} \u00b7 ${book.year}`;
+    } else {
+      metaStr = `${book.year}`;
+    }
+
     const metaTxt = this.add
-      .text(0, h / 2 - 12, meta, {
+      .text(0, h / 2 - 8, metaStr, {
         fontFamily: FONTS.body,
-        fontSize: `${metaSize}px`,
-        color: "#f7f0e0",
+        fontSize: `${yearOnly ? metaSize + 1 : metaSize}px`,
+        fontStyle: yearOnly ? "bold" : "normal",
+        color: "#ffffff",
         align: "center",
-        lineSpacing: 1,
+        lineSpacing: 3,
+        wordWrap: { width: w - 10 },
+        shadow,
       })
       .setOrigin(0.5, 1);
 
@@ -301,16 +320,66 @@ export default class GameScene extends Phaser.Scene {
     container.setSize(w, h);
     container.setData("book", book);
     container.setData("spine", spine);
+    container.setData("compact", !showAuthor || !showGenre);
     return container;
   }
 
+  showBookTooltip(container) {
+    this.hideBookTooltip();
+    if (this.dragging || this.solved) return;
+
+    const { width } = this.scale;
+    const book = container.getData("book");
+    const h = this.bookH;
+    const lines = `${book.title}\n${book.author}\n${book.genre} \u00b7 ${book.year}`;
+
+    const txt = this.add
+      .text(0, 0, lines, {
+        fontFamily: FONTS.body,
+        fontSize: "13px",
+        color: "#2c1d14",
+        align: "center",
+        lineSpacing: 3,
+      })
+      .setDepth(60)
+      .setOrigin(0.5, 1);
+
+    const tw = txt.width + 18;
+    const th = txt.height + 12;
+    const tx = Phaser.Math.Clamp(container.x, tw / 2 + 8, width - tw / 2 - 8);
+    const ty = Math.max(AREA_TOP + th + 4, container.y - h / 2 - 6);
+
+    txt.setPosition(tx, ty);
+
+    const bg = this.add.graphics().setDepth(59);
+    bg.fillStyle(COLORS.parchment, 0.97);
+    bg.fillRoundedRect(tx - tw / 2, ty - th, tw, th, 8);
+    bg.lineStyle(1, 0x2c1d14, 0.3);
+    bg.strokeRoundedRect(tx - tw / 2, ty - th, tw, th, 8);
+
+    this.activeTooltip = { txt, bg };
+  }
+
+  hideBookTooltip() {
+    if (this.activeTooltip) {
+      this.activeTooltip.txt.destroy();
+      this.activeTooltip.bg.destroy();
+      this.activeTooltip = null;
+    }
+  }
+
   enableDragging() {
+    this.activeTooltip = null;
+
     this.order.forEach((c) => {
       c.setInteractive({ useHandCursor: true, draggable: true });
+      c.on("pointerover", () => this.showBookTooltip(c));
+      c.on("pointerout",  () => this.hideBookTooltip());
     });
 
     this.input.on("dragstart", (_p, obj) => {
       if (this.solved || this.autoArranging) return;
+      this.hideBookTooltip();
       this.dragging = obj;
       obj.setDepth(20);
       this.tweens.add({ targets: obj, scale: 1.06, duration: 100 });

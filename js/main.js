@@ -8,6 +8,8 @@ const config = {
   type: Phaser.AUTO,
   parent: "game-container",
   backgroundColor: "#1e1410",
+  antialias: true,
+  resolution: window.devicePixelRatio || 1,
   scale: {
     mode: Phaser.Scale.FIT,
     autoCenter: Phaser.Scale.CENTER_BOTH,
