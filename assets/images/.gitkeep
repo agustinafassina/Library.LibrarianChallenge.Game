@@ -1,0 +1,3 @@
+Placeholder. Art is currently generated at runtime in js/scenes/BootScene.js.
+Drop real PNGs here (librarian.png, shelf.png, book.png, background.png) and
+load them with this.load.image(...) in BootScene.preload() to replace them.

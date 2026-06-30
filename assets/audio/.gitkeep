@@ -1,0 +1,2 @@
+Optional sound effects go here (e.g. win.mp3, place.mp3). Load them in
+BootScene.preload() with this.load.audio(...) and play via this.sound.play(...).

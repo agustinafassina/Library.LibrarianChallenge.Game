@@ -1,0 +1,240 @@
+import { Storage } from "../utils/storage.js";
+import { I18n } from "../utils/i18n.js";
+import { makeButton, COLORS, FONTS } from "../utils/ui.js";
+
+export default class MenuScene extends Phaser.Scene {
+  constructor() {
+    super("MenuScene");
+  }
+
+  create() {
+    const { width, height } = this.scale;
+
+    this.drawBackground();
+
+    this.add
+      .image(width * 0.8, height * 0.62, "librarian")
+      .setScale(1.6)
+      .setOrigin(0.5);
+
+    this.add
+      .text(width / 2, height * 0.2, "Librarian's Challenge", {
+        fontFamily: FONTS.title,
+        fontSize: "52px",
+        color: "#f3e3c3",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5)
+      .setShadow(0, 4, "#00000088", 6);
+
+    this.add
+      .text(width / 2, height * 0.28, I18n.t("subtitle"), {
+        fontFamily: FONTS.body,
+        fontSize: "20px",
+        color: "#d9a441",
+      })
+      .setOrigin(0.5);
+
+    const cx = width * 0.34;
+    let y = height * 0.42;
+    const gap = 64;
+
+    makeButton(this, cx, y, I18n.t("start"), () => {
+      this.scene.start("GameScene", { level: 1 });
+    });
+
+    const hasProgress = Storage.hasProgress();
+    y += gap;
+    makeButton(
+      this,
+      cx,
+      y,
+      hasProgress ? I18n.t("continueLvl", { level: Storage.getMaxLevelUnlocked() }) : I18n.t("continue"),
+      () => this.scene.start("GameScene", { level: Storage.getMaxLevelUnlocked() }),
+      { enabled: hasProgress }
+    );
+
+    y += gap;
+    makeButton(this, cx, y, I18n.t("levelSelect"), () => {
+      this.scene.start("LevelSelectScene");
+    });
+
+    y += gap;
+    makeButton(this, cx, y, I18n.t("settings"), () => this.openSettings(), {
+      fill: COLORS.woodLight,
+      textColor: "#f3e3c3",
+    });
+
+    y += gap;
+    makeButton(this, cx, y, I18n.t("resetProgress"), () => this.confirmReset(), {
+      fill: COLORS.bad,
+      fillHover: 0xa53f3e,
+      textColor: "#ffffff",
+      enabled: hasProgress,
+    });
+
+    this.add
+      .text(width / 2, height - 24, I18n.t("tip"), {
+        fontFamily: FONTS.body,
+        fontSize: "15px",
+        color: "#c9b08a",
+        align: "center",
+        wordWrap: { width: width - 60 },
+      })
+      .setOrigin(0.5);
+  }
+
+  openModal(pw, ph) {
+    const { width, height } = this.scale;
+    const items = [];
+
+    const dim = this.add
+      .rectangle(width / 2, height / 2, width, height, 0x000000, 0.65)
+      .setDepth(100)
+      .setInteractive();
+    items.push(dim);
+
+    const panel = this.add.graphics().setDepth(101);
+    panel.fillStyle(COLORS.ink, 0.98);
+    panel.fillRoundedRect(width / 2 - pw / 2, height / 2 - ph / 2, pw, ph, 16);
+    panel.lineStyle(3, COLORS.accent, 1);
+    panel.strokeRoundedRect(width / 2 - pw / 2, height / 2 - ph / 2, pw, ph, 16);
+    items.push(panel);
+
+    const close = () => items.forEach((it) => it.destroy());
+    return { items, close };
+  }
+
+  openSettings() {
+    const { width, height } = this.scale;
+    const { items, close } = this.openModal(440, 260);
+
+    items.push(
+      this.add
+        .text(width / 2, height / 2 - 92, I18n.t("settingsTitle"), {
+          fontFamily: FONTS.title,
+          fontSize: "30px",
+          color: "#f3e3c3",
+          fontStyle: "bold",
+        })
+        .setOrigin(0.5)
+        .setDepth(102)
+    );
+
+    items.push(
+      this.add
+        .text(width / 2, height / 2 - 44, I18n.t("language"), {
+          fontFamily: FONTS.body,
+          fontSize: "18px",
+          color: "#d9a441",
+        })
+        .setOrigin(0.5)
+        .setDepth(102)
+    );
+
+    const langs = I18n.available;
+    const totalW = langs.length * 160 + (langs.length - 1) * 20;
+    const startX = width / 2 - totalW / 2 + 80;
+    langs.forEach((lang, i) => {
+      const isCurrent = lang.code === I18n.lang;
+      const btn = makeButton(
+        this,
+        startX + i * 180,
+        height / 2 + 6,
+        lang.label,
+        () => {
+          if (lang.code !== I18n.lang) {
+            I18n.set(lang.code);
+            close();
+            this.scene.restart();
+          }
+        },
+        {
+          width: 160,
+          height: 50,
+          fontSize: 18,
+          fill: isCurrent ? COLORS.accent : COLORS.woodLight,
+          textColor: isCurrent ? "#2c1d14" : "#f3e3c3",
+        }
+      ).setDepth(102);
+      items.push(btn);
+    });
+
+    items.push(
+      makeButton(this, width / 2, height / 2 + 78, I18n.t("done"), () => close(), {
+        width: 160,
+        height: 46,
+        fontSize: 18,
+        fill: COLORS.woodLight,
+        textColor: "#f3e3c3",
+      }).setDepth(102)
+    );
+  }
+
+  confirmReset() {
+    const { width, height } = this.scale;
+    const { items, close } = this.openModal(440, 220);
+
+    items.push(
+      this.add
+        .text(width / 2, height / 2 - 60, I18n.t("confirmTitle"), {
+          fontFamily: FONTS.title,
+          fontSize: "28px",
+          color: "#f3e3c3",
+          fontStyle: "bold",
+        })
+        .setOrigin(0.5)
+        .setDepth(102)
+    );
+    items.push(
+      this.add
+        .text(width / 2, height / 2 - 16, I18n.t("confirmBody"), {
+          fontFamily: FONTS.body,
+          fontSize: "16px",
+          color: "#d9a441",
+          align: "center",
+          wordWrap: { width: 380 },
+        })
+        .setOrigin(0.5)
+        .setDepth(102)
+    );
+
+    items.push(
+      makeButton(
+        this,
+        width / 2 - 100,
+        height / 2 + 52,
+        I18n.t("yesReset"),
+        () => {
+          Storage.clearAll();
+          close();
+          this.scene.restart();
+        },
+        { width: 170, height: 50, fontSize: 18, fill: COLORS.bad, fillHover: 0xa53f3e, textColor: "#ffffff" }
+      ).setDepth(102)
+    );
+    items.push(
+      makeButton(this, width / 2 + 100, height / 2 + 52, I18n.t("cancel"), () => close(), {
+        width: 170,
+        height: 50,
+        fontSize: 18,
+        fill: COLORS.woodLight,
+        textColor: "#f3e3c3",
+      }).setDepth(102)
+    );
+  }
+
+  drawBackground() {
+    const { width, height } = this.scale;
+    const g = this.add.graphics();
+    g.fillStyle(COLORS.woodDark, 1);
+    g.fillRect(0, 0, width, height);
+    g.lineStyle(2, 0x000000, 0.15);
+    for (let yy = 80; yy < height; yy += 90) {
+      g.beginPath();
+      g.moveTo(0, yy);
+      g.lineTo(width, yy);
+      g.strokePath();
+    }
+  }
+}

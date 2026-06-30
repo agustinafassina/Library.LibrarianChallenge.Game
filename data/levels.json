@@ -1,0 +1,68 @@
+[
+  {
+    "level": 1,
+    "rule": "title_az",
+    "title": "Finding Your Footing",
+    "title_es": "Primeros pasos",
+    "description": "Sort the books by title A\u2013Z.",
+    "description_es": "Orden\u00e1 los libros por t\u00edtulo A\u2013Z.",
+    "hint": "Drag the books so their titles read A to Z, left to right.",
+    "hint_es": "Arrastr\u00e1 los libros para que los t\u00edtulos vayan de la A a la Z, de izquierda a derecha.",
+    "books": [4, 1, 3, 2]
+  },
+  {
+    "level": 2,
+    "rule": "author_az",
+    "title": "Mind the Authors",
+    "title_es": "Atenci\u00f3n a los autores",
+    "description": "Sort the books by author name A\u2013Z (fills two shelves).",
+    "description_es": "Orden\u00e1 los libros por nombre de autor A\u2013Z (usa dos estantes).",
+    "hint": "By author A\u2013Z. Top shelf first, then the next. Same author? Order by title.",
+    "hint_es": "Por autor A\u2013Z. Primero el estante de arriba, despu\u00e9s el siguiente. \u00bfMismo autor? Orden\u00e1 por t\u00edtulo.",
+    "books": [1, 5, 2, 6, 21, 22, 25, 26]
+  },
+  {
+    "level": 3,
+    "rule": "genre_az",
+    "title": "Genre Zones",
+    "title_es": "Zonas por g\u00e9nero",
+    "description": "Group the books by genre A\u2013Z: Fantasy, then History, then Mystery.",
+    "description_es": "Agrup\u00e1 los libros por g\u00e9nero A\u2013Z: Fantasy, despu\u00e9s History, despu\u00e9s Mystery.",
+    "hint": "Fill the top shelf first. Genres go A\u2013Z; within a genre, order by title.",
+    "hint_es": "Llen\u00e1 primero el estante de arriba. Los g\u00e9neros van A\u2013Z; dentro de cada g\u00e9nero, orden\u00e1 por t\u00edtulo.",
+    "books": [3, 5, 25, 4, 6, 33, 1, 7, 29]
+  },
+  {
+    "level": 4,
+    "rule": "year_asc",
+    "title": "Through the Years",
+    "title_es": "A trav\u00e9s de los a\u00f1os",
+    "description": "Sort the books by publication year, oldest first (across two shelves).",
+    "description_es": "Orden\u00e1 los libros por a\u00f1o de publicaci\u00f3n, del m\u00e1s viejo al m\u00e1s nuevo (en dos estantes).",
+    "hint": "Oldest on the top-left, newest on the bottom-right. Check each spine's year.",
+    "hint_es": "El m\u00e1s viejo arriba a la izquierda, el m\u00e1s nuevo abajo a la derecha. Mir\u00e1 el a\u00f1o en cada lomo.",
+    "books": [4, 32, 11, 26, 2, 29, 13, 22, 39, 17]
+  },
+  {
+    "level": 5,
+    "rule": "genre_then_title",
+    "title": "The Head Librarian's Exam",
+    "title_es": "El examen del jefe de biblioteca",
+    "description": "Group by genre A\u2013Z, then by title A\u2013Z within each genre.",
+    "description_es": "Agrup\u00e1 por g\u00e9nero A\u2013Z y, dentro de cada g\u00e9nero, por t\u00edtulo A\u2013Z.",
+    "hint": "Genres A\u2013Z (Fantasy, History, Mystery, Romance). Inside each, go A\u2013Z by title. Top shelf first.",
+    "hint_es": "G\u00e9neros A\u2013Z (Fantasy, History, Mystery, Romance). Dentro de cada uno, A\u2013Z por t\u00edtulo. Primero el estante de arriba.",
+    "books": [3, 18, 30, 4, 16, 33, 7, 10, 36, 9, 14, 31]
+  },
+  {
+    "level": 6,
+    "rule": "genre_then_title",
+    "title": "Night Shift Chaos",
+    "title_es": "Caos del turno noche",
+    "description": "A full cart, five genres including Sci-Fi. Genre A\u2013Z, then title A\u2013Z.",
+    "description_es": "Un carrito lleno, cinco g\u00e9neros incluyendo Sci-Fi. G\u00e9nero A\u2013Z y luego t\u00edtulo A\u2013Z.",
+    "hint": "Five genres A\u2013Z (Fantasy \u2026 Sci-Fi last). Within each, A\u2013Z by title. Read top shelf first.",
+    "hint_es": "Cinco g\u00e9neros A\u2013Z (Fantasy \u2026 Sci-Fi al final). Dentro de cada uno, A\u2013Z por t\u00edtulo. Le\u00e9 primero el estante de arriba.",
+    "books": [25, 35, 24, 40, 23, 36, 21, 34, 27, 28, 37, 39]
+  }
+]
