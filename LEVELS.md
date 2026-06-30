@@ -1,0 +1,64 @@
+# Levels (books, shelves & pages)
+[← Back to README](README.md)
+
+50 levels with a steadily increasing book count (4 → 67). Books are laid out
+across shelves of up to 6 books each (`shelves = ceil(books / 6)`); shelves are
+grouped into pages of up to 4 shelves (`pages = ceil(shelves / 4)`), so levels
+with more than 24 books span multiple pages (and more than 48 books reach a
+third page).
+
+| Level | Name | Rule | Books | Shelves | Pages |
+|------:|------|------|------:|--------:|------:|
+| 1 | Finding Your Footing | Title A-Z | 4 | 1 | 1 |
+| 2 | Mind the Authors | Author A-Z | 7 | 2 | 1 |
+| 3 | Genre Zones | Genre A-Z | 9 | 2 | 1 |
+| 4 | Through the Years | Year (oldest first) | 10 | 2 | 1 |
+| 5 | The Head Librarian's Exam | Genre, then Title | 11 | 2 | 1 |
+| 6 | Night Shift Chaos | Genre, then Title | 12 | 2 | 1 |
+| 7 | Alphabet Avalanche | Title A-Z | 13 | 3 | 1 |
+| 8 | Author Roll Call | Author A-Z | 14 | 3 | 1 |
+| 9 | Centuries in Miniature | Year (oldest first) | 14 | 3 | 1 |
+| 10 | The Genre Labyrinth | Genre, then Title | 15 | 3 | 1 |
+| 11 | Grand Reopening | Genre, then Title | 16 | 3 | 1 |
+| 12 | Spine to Spine | Title A-Z | 16 | 3 | 1 |
+| 13 | Two by Two | Author A-Z | 17 | 3 | 1 |
+| 14 | Timeline Trouble | Year (oldest first) | 17 | 3 | 1 |
+| 15 | Sorted by Shelfmark | Genre A-Z | 18 | 3 | 1 |
+| 16 | Mixed Returns | Genre, then Title | 18 | 3 | 1 |
+| 17 | The Long Wall | Title A-Z | 18 | 3 | 1 |
+| 18 | Chronology Crunch | Year (oldest first) | 20 | 4 | 1 |
+| 19 | Roll Call II | Author A-Z | 22 | 4 | 1 |
+| 20 | The Final Reshelving | Genre, then Title | 24 | 4 | 1 |
+| 21 | Overflowing Returns Cart | Title A-Z | 26 | 5 | 2 |
+| 22 | A Century on the Carts | Year (oldest first) | 28 | 5 | 2 |
+| 23 | The Whole Roster | Author A-Z | 30 | 5 | 2 |
+| 24 | Stockroom Sweep | Genre, then Title | 30 | 5 | 2 |
+| 25 | Closing Time Colossus | Genre, then Title | 32 | 6 | 2 |
+| 26 | Reading Room Tetris | Title A-Z | 34 | 6 | 2 |
+| 27 | Index Card Army | Author A-Z | 36 | 6 | 2 |
+| 28 | Decades Deep | Year (oldest first) | 38 | 7 | 2 |
+| 29 | Returns Tsunami | Genre, then Title | 40 | 7 | 2 |
+| 30 | Section by Section | Genre A-Z | 42 | 7 | 2 |
+| 31 | The Endless Aisle | Title A-Z | 44 | 8 | 2 |
+| 32 | Full Staff Meeting | Author A-Z | 46 | 8 | 2 |
+| 33 | The Long Timeline | Year (oldest first) | 48 | 8 | 2 |
+| 34 | Three-Page Pile-Up | Genre, then Title | 50 | 9 | 3 |
+| 35 | The Whole Library | Genre, then Title | 52 | 9 | 3 |
+| 36 | Stacked to the Ceiling | Title A-Z | 53 | 9 | 3 |
+| 37 | Card Catalog Climb | Author A-Z | 54 | 9 | 3 |
+| 38 | Timeline Tower | Year (oldest first) | 55 | 10 | 3 |
+| 39 | Genre Gridlock | Genre A-Z | 56 | 10 | 3 |
+| 40 | Second Shift Storm | Genre, then Title | 57 | 10 | 3 |
+| 41 | Alphabet Overload | Title A-Z | 58 | 10 | 3 |
+| 42 | Author Avalanche II | Author A-Z | 59 | 10 | 3 |
+| 43 | Full Catalog Chronology | Year (oldest first) | 60 | 10 | 3 |
+| 44 | Beyond the Stacks | Genre, then Title | 61 | 11 | 3 |
+| 45 | Every Section Filled | Genre A-Z | 62 | 11 | 3 |
+| 46 | Title Marathon | Title A-Z | 63 | 11 | 3 |
+| 47 | Roll Call Finale | Author A-Z | 64 | 11 | 3 |
+| 48 | Centuries Complete | Year (oldest first) | 65 | 11 | 3 |
+| 49 | Penultimate Pile | Genre, then Title | 66 | 11 | 3 |
+| 50 | The Master's Degree | Genre, then Title | 67 | 12 | 3 |
+
+Level definitions live in [`data/levels.json`](data/levels.json) and the book
+catalogue in [`data/books.json`](data/books.json).

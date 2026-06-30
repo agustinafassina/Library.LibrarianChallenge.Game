@@ -19,7 +19,7 @@
     "description_es": "Orden\u00e1 los libros por nombre de autor A\u2013Z (usa dos estantes).",
     "hint": "By author A\u2013Z. Top shelf first, then the next. Same author? Order by title.",
     "hint_es": "Por autor A\u2013Z. Primero el estante de arriba, despu\u00e9s el siguiente. \u00bfMismo autor? Orden\u00e1 por t\u00edtulo.",
-    "books": [1, 5, 2, 6, 21, 22, 25, 26]
+    "books": [1, 5, 2, 6, 21, 22, 25]
   },
   {
     "level": 3,
@@ -52,7 +52,7 @@
     "description_es": "Agrup\u00e1 por g\u00e9nero A\u2013Z y, dentro de cada g\u00e9nero, por t\u00edtulo A\u2013Z.",
     "hint": "Genres A\u2013Z (Fantasy, History, Mystery, Romance). Inside each, go A\u2013Z by title. Top shelf first.",
     "hint_es": "G\u00e9neros A\u2013Z (Fantasy, History, Mystery, Romance). Dentro de cada uno, A\u2013Z por t\u00edtulo. Primero el estante de arriba.",
-    "books": [3, 18, 30, 4, 16, 33, 7, 10, 36, 9, 14, 31]
+    "books": [3, 18, 30, 4, 16, 33, 7, 10, 36, 9, 14]
   },
   {
     "level": 6,
@@ -74,7 +74,7 @@
     "description_es": "Orden\u00e1 un grupo m\u00e1s grande por t\u00edtulo A\u2013Z en tres estantes.",
     "hint": "Read the shelves like lines on a page: top shelf first, then middle, then bottom.",
     "hint_es": "Le\u00e9 los estantes como renglones: primero arriba, despu\u00e9s el medio y por \u00faltimo abajo.",
-    "books": [53, 54, 55, 56, 57, 58, 41, 42, 43, 44, 45, 46, 47, 48, 49]
+    "books": [53, 54, 55, 56, 57, 58, 41, 42, 43, 44, 45, 46, 47]
   },
   {
     "level": 8,
@@ -96,7 +96,7 @@
     "description_es": "Orden\u00e1 los libros por a\u00f1o de publicaci\u00f3n, del m\u00e1s viejo al m\u00e1s nuevo, en tres estantes.",
     "hint": "The years jump around a lot. Start with the 1990s and work toward the future.",
     "hint_es": "Los a\u00f1os saltan bastante. Empez\u00e1 por los 90 y avanz\u00e1 hacia el futuro.",
-    "books": [46, 51, 58, 42, 54, 45, 48, 59, 50, 44, 53, 55, 41, 60, 43, 49, 57, 56]
+    "books": [46, 51, 58, 42, 54, 45, 48, 59, 50, 44, 53, 55, 41, 60]
   },
   {
     "level": 10,
@@ -107,17 +107,446 @@
     "description_es": "Se mezclan seis g\u00e9neros. Agrup\u00e1 por g\u00e9nero A\u2013Z y luego por t\u00edtulo A\u2013Z.",
     "hint": "Adventure comes first alphabetically. Sci-Fi comes last. Inside each genre, use title order.",
     "hint_es": "Adventure va primero alfab\u00e9ticamente. Sci-Fi va al final. Dentro de cada g\u00e9nero, us\u00e1 el t\u00edtulo.",
-    "books": [53, 54, 57, 45, 49, 55, 56, 46, 51, 59, 44, 47, 60, 42, 48, 41, 43, 50]
+    "books": [53, 54, 57, 45, 49, 55, 46, 51, 59, 44, 47, 42, 48, 41, 43]
   },
   {
     "level": 11,
     "rule": "genre_then_title",
     "title": "Grand Reopening",
     "title_es": "Gran reapertura",
-    "description": "Final challenge for now: many books, many genres. Genre A\u2013Z, then title A\u2013Z.",
-    "description_es": "Desaf\u00edo final por ahora: muchos libros y muchos g\u00e9neros. G\u00e9nero A\u2013Z y luego t\u00edtulo A\u2013Z.",
+    "description": "A busy reopening: many books, many genres. Genre A\u2013Z, then title A\u2013Z.",
+    "description_es": "Una reapertura agitada: muchos libros y muchos g\u00e9neros. G\u00e9nero A\u2013Z y luego t\u00edtulo A\u2013Z.",
     "hint": "Stay calm: sort by genre groups first, then clean up each group by title.",
     "hint_es": "Con calma: primero arm\u00e1 grupos por g\u00e9nero, despu\u00e9s orden\u00e1 cada grupo por t\u00edtulo.",
-    "books": [53, 57, 58, 30, 38, 45, 49, 55, 56, 32, 46, 51, 59, 40, 23, 44, 47, 60]
+    "books": [53, 57, 58, 30, 38, 45, 49, 55, 56, 32, 46, 51, 59, 40, 23, 44]
+  },
+  {
+    "level": 12,
+    "rule": "title_az",
+    "title": "Spine to Spine",
+    "title_es": "Lomo a lomo",
+    "description": "Sixteen books, titles A\u2013Z.",
+    "description_es": "Diecis\u00e9is libros, t\u00edtulos A\u2013Z.",
+    "hint": "Pure alphabetical order by title. Fill the top shelf first.",
+    "hint_es": "Orden alfab\u00e9tico por t\u00edtulo. Llen\u00e1 primero el estante de arriba.",
+    "books": [12, 16, 20, 8, 11, 15, 19, 5, 9, 13, 17, 7, 1, 2, 3, 4]
+  },
+  {
+    "level": 13,
+    "rule": "author_az",
+    "title": "Two by Two",
+    "title_es": "De a dos",
+    "description": "Sort by author A\u2013Z. Several authors have two books each.",
+    "description_es": "Orden\u00e1 por autor A\u2013Z. Varios autores tienen dos libros.",
+    "hint": "Group each author's books together, then order them by title.",
+    "hint_es": "Junt\u00e1 los libros de cada autor y despu\u00e9s orden\u00e1los por t\u00edtulo.",
+    "books": [10, 36, 3, 7, 18, 30, 9, 14, 31, 42, 48, 21, 12, 16, 1, 2, 5]
+  },
+  {
+    "level": 14,
+    "rule": "year_asc",
+    "title": "Timeline Trouble",
+    "title_es": "L\u00ednea de tiempo",
+    "description": "Seventeen books by year, oldest first.",
+    "description_es": "Diecisiete libros por a\u00f1o, del m\u00e1s viejo primero.",
+    "hint": "Watch the years on the spines; they're shuffled.",
+    "hint_es": "Mir\u00e1 los a\u00f1os en los lomos; est\u00e1n mezclados.",
+    "books": [15, 4, 32, 11, 26, 2, 29, 13, 22, 39, 17, 33, 5, 1, 35, 7, 9]
+  },
+  {
+    "level": 15,
+    "rule": "genre_az",
+    "title": "Sorted by Shelfmark",
+    "title_es": "Por g\u00e9nero otra vez",
+    "description": "Group by genre A\u2013Z, then by title.",
+    "description_es": "Agrup\u00e1 por g\u00e9nero A\u2013Z y luego por t\u00edtulo.",
+    "hint": "All same-genre books sit together; inside, A\u2013Z by title.",
+    "hint_es": "Los del mismo g\u00e9nero van juntos; adentro, A\u2013Z por t\u00edtulo.",
+    "books": [3, 5, 8, 4, 6, 11, 1, 2, 10, 9, 14, 19, 7, 12, 13, 15, 16, 17]
+  },
+  {
+    "level": 16,
+    "rule": "genre_then_title",
+    "title": "Mixed Returns",
+    "title_es": "Devoluciones mezcladas",
+    "description": "Eighteen returns to sort: genre A\u2013Z, then title A\u2013Z.",
+    "description_es": "Dieciocho devoluciones: g\u00e9nero A\u2013Z y luego t\u00edtulo A\u2013Z.",
+    "hint": "First clump by genre, then tidy each genre by title.",
+    "hint_es": "Primero agrup\u00e1 por g\u00e9nero, despu\u00e9s orden\u00e1 cada g\u00e9nero por t\u00edtulo.",
+    "books": [3, 18, 30, 35, 4, 16, 33, 40, 7, 10, 36, 44, 9, 14, 31, 42, 1, 2]
+  },
+  {
+    "level": 17,
+    "rule": "title_az",
+    "title": "The Long Wall",
+    "title_es": "El muro largo",
+    "description": "Eighteen books across three shelves, titles A\u2013Z.",
+    "description_es": "Dieciocho libros en tres estantes, t\u00edtulos A\u2013Z.",
+    "hint": "A big alphabetical run. Top shelf, then middle, then bottom.",
+    "hint_es": "Una tira alfab\u00e9tica grande. Arriba, medio y abajo.",
+    "books": [41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58]
+  },
+  {
+    "level": 18,
+    "rule": "year_asc",
+    "title": "Chronology Crunch",
+    "title_es": "Cronolog\u00eda apretada",
+    "description": "Twenty books by publication year, oldest first.",
+    "description_es": "Veinte libros por a\u00f1o de publicaci\u00f3n, del m\u00e1s viejo primero.",
+    "hint": "Start in the 1990s and end in the 2020s.",
+    "hint_es": "Empez\u00e1 en los 90 y termin\u00e1 en los 2020.",
+    "books": [46, 51, 58, 42, 54, 45, 48, 59, 50, 44, 53, 55, 41, 60, 43, 49, 47, 52, 56, 57]
+  },
+  {
+    "level": 19,
+    "rule": "author_az",
+    "title": "Roll Call II",
+    "title_es": "Lista II",
+    "description": "Twenty-two books by author A\u2013Z, title as tiebreaker.",
+    "description_es": "Veintid\u00f3s libros por autor A\u2013Z, t\u00edtulo como desempate.",
+    "hint": "Same author? Keep those in title order.",
+    "hint_es": "\u00bfMismo autor? Manten\u00e9los en orden por t\u00edtulo.",
+    "books": [1, 5, 17, 2, 6, 19, 3, 7, 18, 4, 8, 20, 21, 22, 25, 26, 9, 10, 11, 12, 13, 14]
+  },
+  {
+    "level": 20,
+    "rule": "genre_then_title",
+    "title": "The Final Reshelving",
+    "title_es": "La reorganizaci\u00f3n final",
+    "description": "The grand finale: every genre, twenty-four books. Genre A\u2013Z, then title A\u2013Z.",
+    "description_es": "El gran final: todos los g\u00e9neros, veinticuatro libros. G\u00e9nero A\u2013Z y luego t\u00edtulo A\u2013Z.",
+    "hint": "Adventure first, Sci-Fi last. Inside each genre, A\u2013Z by title.",
+    "hint_es": "Adventure primero, Sci-Fi al final. Dentro de cada g\u00e9nero, A\u2013Z por t\u00edtulo.",
+    "books": [53, 57, 54, 45, 49, 55, 58, 46, 51, 59, 32, 44, 47, 60, 42, 48, 41, 43, 50, 52, 56, 30, 38, 23]
+  },
+  {
+    "level": 21,
+    "rule": "title_az",
+    "title": "Overflowing Returns Cart",
+    "title_es": "Carrito desbordado",
+    "description": "Twenty-six books by title A\u2013Z. Use the page arrow to reach the lower shelves.",
+    "description_es": "Veintis\u00e9is libros por t\u00edtulo A\u2013Z. Us\u00e1 la flecha de p\u00e1gina para llegar a los estantes de abajo.",
+    "hint": "More than one page now. Sort A\u2013Z, flipping pages as needed.",
+    "hint_es": "Ahora hay m\u00e1s de una p\u00e1gina. Orden\u00e1 A\u2013Z, cambiando de p\u00e1gina cuando haga falta.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26]
+  },
+  {
+    "level": 22,
+    "rule": "year_asc",
+    "title": "A Century on the Carts",
+    "title_es": "Un siglo en los carritos",
+    "description": "Twenty-eight books by year, oldest first, across two pages.",
+    "description_es": "Veintiocho libros por a\u00f1o, del m\u00e1s viejo primero, en dos p\u00e1ginas.",
+    "hint": "Drag a book to the right edge to carry it to the next page.",
+    "hint_es": "Arrastr\u00e1 un libro al borde derecho para llevarlo a la p\u00e1gina siguiente.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28]
+  },
+  {
+    "level": 23,
+    "rule": "author_az",
+    "title": "The Whole Roster",
+    "title_es": "Plantel completo",
+    "description": "Thirty books by author A\u2013Z. Same author? Order by title.",
+    "description_es": "Treinta libros por autor A\u2013Z. \u00bfMismo autor? Orden\u00e1 por t\u00edtulo.",
+    "hint": "Two pages of authors. Keep each author's books together.",
+    "hint_es": "Dos p\u00e1ginas de autores. Manten\u00e9 juntos los libros de cada autor.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30]
+  },
+  {
+    "level": 24,
+    "rule": "genre_then_title",
+    "title": "Stockroom Sweep",
+    "title_es": "Barrido del dep\u00f3sito",
+    "description": "Thirty books, all six genres. Genre A\u2013Z, then title A\u2013Z.",
+    "description_es": "Treinta libros, los seis g\u00e9neros. G\u00e9nero A\u2013Z y luego t\u00edtulo A\u2013Z.",
+    "hint": "Adventure first, Sci-Fi last. Use the pages to fit them all.",
+    "hint_es": "Adventure primero, Sci-Fi al final. Us\u00e1 las p\u00e1ginas para que entren todos.",
+    "books": [31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60]
+  },
+  {
+    "level": 25,
+    "rule": "genre_then_title",
+    "title": "Closing Time Colossus",
+    "title_es": "El coloso del cierre",
+    "description": "The biggest job yet: thirty-two books, every genre. Genre A\u2013Z, then title A\u2013Z.",
+    "description_es": "El trabajo m\u00e1s grande: treinta y dos libros, todos los g\u00e9neros. G\u00e9nero A\u2013Z y luego t\u00edtulo A\u2013Z.",
+    "hint": "Take it page by page. Adventure first, Sci-Fi last; titles A\u2013Z inside each genre.",
+    "hint_es": "Tomalo p\u00e1gina por p\u00e1gina. Adventure primero, Sci-Fi al final; t\u00edtulos A\u2013Z dentro de cada g\u00e9nero.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 53, 54, 57]
+  },
+  {
+    "level": 26,
+    "rule": "title_az",
+    "title": "Reading Room Tetris",
+    "title_es": "Tetris de la sala",
+    "description": "Thirty-four books by title A\u2013Z.",
+    "description_es": "Treinta y cuatro libros por t\u00edtulo A\u2013Z.",
+    "hint": "Two pages of spines. Sort A\u2013Z and flip when full.",
+    "hint_es": "Dos p\u00e1ginas de lomos. Orden\u00e1 A\u2013Z y cambi\u00e1 de p\u00e1gina cuando se llene.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34]
+  },
+  {
+    "level": 27,
+    "rule": "author_az",
+    "title": "Index Card Army",
+    "title_es": "Ej\u00e9rcito de fichas",
+    "description": "Thirty-six books by author A\u2013Z; title breaks ties.",
+    "description_es": "Treinta y seis libros por autor A\u2013Z; el t\u00edtulo desempata.",
+    "hint": "Keep each author's books grouped, in title order.",
+    "hint_es": "Manten\u00e9 agrupados los libros de cada autor, en orden por t\u00edtulo.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36]
+  },
+  {
+    "level": 28,
+    "rule": "year_asc",
+    "title": "Decades Deep",
+    "title_es": "A\u00f1os y a\u00f1os",
+    "description": "Thirty-eight books by year, oldest first.",
+    "description_es": "Treinta y ocho libros por a\u00f1o, del m\u00e1s viejo primero.",
+    "hint": "From the 1990s to the 2020s, across both pages.",
+    "hint_es": "De los 90 a los 2020, repartidos en las dos p\u00e1ginas.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38]
+  },
+  {
+    "level": 29,
+    "rule": "genre_then_title",
+    "title": "Returns Tsunami",
+    "title_es": "Tsunami de devoluciones",
+    "description": "Forty books, all six genres. Genre A\u2013Z, then title A\u2013Z.",
+    "description_es": "Cuarenta libros, los seis g\u00e9neros. G\u00e9nero A\u2013Z y luego t\u00edtulo A\u2013Z.",
+    "hint": "Adventure first, Sci-Fi last. Page through the genres.",
+    "hint_es": "Adventure primero, Sci-Fi al final. Pas\u00e1 las p\u00e1ginas por g\u00e9nero.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 53, 54, 57]
+  },
+  {
+    "level": 30,
+    "rule": "genre_az",
+    "title": "Section by Section",
+    "title_es": "Secci\u00f3n por secci\u00f3n",
+    "description": "Forty-two books grouped by genre A\u2013Z, then title.",
+    "description_es": "Cuarenta y dos libros agrupados por g\u00e9nero A\u2013Z, luego t\u00edtulo.",
+    "hint": "All of one genre together before the next begins.",
+    "hint_es": "Todo un g\u00e9nero junto antes de que empiece el siguiente.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 53, 54, 57]
+  },
+  {
+    "level": 31,
+    "rule": "title_az",
+    "title": "The Endless Aisle",
+    "title_es": "El pasillo infinito",
+    "description": "Forty-four books by title A\u2013Z.",
+    "description_es": "Cuarenta y cuatro libros por t\u00edtulo A\u2013Z.",
+    "hint": "A long alphabetical march. Use both pages.",
+    "hint_es": "Una larga marcha alfab\u00e9tica. Us\u00e1 las dos p\u00e1ginas.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44]
+  },
+  {
+    "level": 32,
+    "rule": "author_az",
+    "title": "Full Staff Meeting",
+    "title_es": "Reuni\u00f3n de todo el personal",
+    "description": "Forty-six books by author A\u2013Z.",
+    "description_es": "Cuarenta y seis libros por autor A\u2013Z.",
+    "hint": "Same author? Title order. Two pages to manage.",
+    "hint_es": "\u00bfMismo autor? Orden por t\u00edtulo. Dos p\u00e1ginas para manejar.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46]
+  },
+  {
+    "level": 33,
+    "rule": "year_asc",
+    "title": "The Long Timeline",
+    "title_es": "La l\u00ednea larga",
+    "description": "Forty-eight books by year, oldest first.",
+    "description_es": "Cuarenta y ocho libros por a\u00f1o, del m\u00e1s viejo primero.",
+    "hint": "Two full pages. Oldest top-left of page one.",
+    "hint_es": "Dos p\u00e1ginas llenas. El m\u00e1s viejo arriba a la izquierda de la primera.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48]
+  },
+  {
+    "level": 34,
+    "rule": "genre_then_title",
+    "title": "Three-Page Pile-Up",
+    "title_es": "Pila de tres p\u00e1ginas",
+    "description": "Fifty books across three pages. Genre A\u2013Z, then title A\u2013Z.",
+    "description_es": "Cincuenta libros en tres p\u00e1ginas. G\u00e9nero A\u2013Z y luego t\u00edtulo A\u2013Z.",
+    "hint": "Now there's a third page\u2014flip right twice to see it all.",
+    "hint_es": "Ahora hay una tercera p\u00e1gina: pas\u00e1 dos veces a la derecha para verlo todo.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 53, 54, 57]
+  },
+  {
+    "level": 35,
+    "rule": "genre_then_title",
+    "title": "The Whole Library",
+    "title_es": "Toda la biblioteca",
+    "description": "Fifty-two books, every genre, three pages. Genre A\u2013Z, then title A\u2013Z.",
+    "description_es": "Cincuenta y dos libros, todos los g\u00e9neros, tres p\u00e1ginas. G\u00e9nero A\u2013Z y luego t\u00edtulo A\u2013Z.",
+    "hint": "The grand sweep. Adventure first, Sci-Fi last; titles A\u2013Z inside each.",
+    "hint_es": "El gran barrido. Adventure primero, Sci-Fi al final; t\u00edtulos A\u2013Z dentro de cada uno.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 53, 54, 57]
+  },
+  {
+    "level": 36,
+    "rule": "title_az",
+    "title": "Stacked to the Ceiling",
+    "title_es": "Apilados hasta el techo",
+    "description": "Fifty-three books by title A\u2013Z.",
+    "description_es": "Cincuenta y tres libros por t\u00edtulo A\u2013Z.",
+    "hint": "Still two pages\u2014keep sorting A\u2013Z as you flip.",
+    "hint_es": "Siguen siendo dos p\u00e1ginas: orden\u00e1 A\u2013Z mientras cambi\u00e1s.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53]
+  },
+  {
+    "level": 37,
+    "rule": "author_az",
+    "title": "Card Catalog Climb",
+    "title_es": "Subida por el cat\u00e1logo",
+    "description": "Fifty-four books by author A\u2013Z.",
+    "description_es": "Cincuenta y cuatro libros por autor A\u2013Z.",
+    "hint": "Same author? Title breaks the tie.",
+    "hint_es": "\u00bfMismo autor? El t\u00edtulo desempata.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54]
+  },
+  {
+    "level": 38,
+    "rule": "year_asc",
+    "title": "Timeline Tower",
+    "title_es": "Torre cronol\u00f3gica",
+    "description": "Fifty-five books by year, oldest first.",
+    "description_es": "Cincuenta y cinco libros por a\u00f1o, del m\u00e1s viejo primero.",
+    "hint": "Watch the spine years across both pages.",
+    "hint_es": "Mir\u00e1 los a\u00f1os en los lomos en las dos p\u00e1ginas.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55]
+  },
+  {
+    "level": 39,
+    "rule": "genre_az",
+    "title": "Genre Gridlock",
+    "title_es": "Atasco de g\u00e9neros",
+    "description": "Fifty-six books grouped by genre A\u2013Z, then title.",
+    "description_es": "Cincuenta y seis libros por g\u00e9nero A\u2013Z, luego t\u00edtulo.",
+    "hint": "Genre blocks first, titles inside each block.",
+    "hint_es": "Primero bloques por g\u00e9nero, t\u00edtulos adentro de cada uno.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56]
+  },
+  {
+    "level": 40,
+    "rule": "genre_then_title",
+    "title": "Second Shift Storm",
+    "title_es": "Tormenta del segundo turno",
+    "description": "Fifty-seven books, all six genres. Genre A\u2013Z, then title A\u2013Z.",
+    "description_es": "Cincuenta y siete libros, los seis g\u00e9neros. G\u00e9nero A\u2013Z y luego t\u00edtulo A\u2013Z.",
+    "hint": "Adventure first, Sci-Fi last.",
+    "hint_es": "Adventure primero, Sci-Fi al final.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57]
+  },
+  {
+    "level": 41,
+    "rule": "title_az",
+    "title": "Alphabet Overload",
+    "title_es": "Sobrecarga alfab\u00e9tica",
+    "description": "Fifty-eight books by title A\u2013Z.",
+    "description_es": "Cincuenta y ocho libros por t\u00edtulo A\u2013Z.",
+    "hint": "A long run\u2014page through the alphabet.",
+    "hint_es": "Una tira larga: pas\u00e1 las p\u00e1ginas del alfabeto.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58]
+  },
+  {
+    "level": 42,
+    "rule": "author_az",
+    "title": "Author Avalanche II",
+    "title_es": "Avalancha de autores II",
+    "description": "Fifty-nine books by author A\u2013Z.",
+    "description_es": "Cincuenta y nueve libros por autor A\u2013Z.",
+    "hint": "Group each author's pair before moving on.",
+    "hint_es": "Agrup\u00e1 cada par de un autor antes de seguir.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59]
+  },
+  {
+    "level": 43,
+    "rule": "year_asc",
+    "title": "Full Catalog Chronology",
+    "title_es": "Cronolog\u00eda del cat\u00e1logo completo",
+    "description": "Sixty books\u2014the entire original catalogue\u2014by year, oldest first.",
+    "description_es": "Sesenta libros, todo el cat\u00e1logo original, por a\u00f1o del m\u00e1s viejo primero.",
+    "hint": "Every spine from the 1990s to the 2020s.",
+    "hint_es": "Todos los lomos, de los 90 a los 2020.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60]
+  },
+  {
+    "level": 44,
+    "rule": "genre_then_title",
+    "title": "Beyond the Stacks",
+    "title_es": "M\u00e1s all\u00e1 de los estantes",
+    "description": "Sixty-one books, every genre. Genre A\u2013Z, then title A\u2013Z.",
+    "description_es": "Sesenta y un libros, todos los g\u00e9neros. G\u00e9nero A\u2013Z y luego t\u00edtulo A\u2013Z.",
+    "hint": "New arrivals mixed in\u2014sort by genre first.",
+    "hint_es": "Llegadas nuevas mezcladas: primero por g\u00e9nero.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61]
+  },
+  {
+    "level": 45,
+    "rule": "genre_az",
+    "title": "Every Section Filled",
+    "title_es": "Cada secci\u00f3n llena",
+    "description": "Sixty-two books by genre A\u2013Z, then title.",
+    "description_es": "Sesenta y dos libros por g\u00e9nero A\u2013Z, luego t\u00edtulo.",
+    "hint": "Each genre section grows bigger now.",
+    "hint_es": "Cada secci\u00f3n de g\u00e9nero crece m\u00e1s.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62]
+  },
+  {
+    "level": 46,
+    "rule": "title_az",
+    "title": "Title Marathon",
+    "title_es": "Marat\u00f3n de t\u00edtulos",
+    "description": "Sixty-three books by title A\u2013Z across three pages.",
+    "description_es": "Sesenta y tres libros por t\u00edtulo A\u2013Z en tres p\u00e1ginas.",
+    "hint": "Three pages of titles. Stay alphabetical.",
+    "hint_es": "Tres p\u00e1ginas de t\u00edtulos. Manten\u00e9 el orden alfab\u00e9tico.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63]
+  },
+  {
+    "level": 47,
+    "rule": "author_az",
+    "title": "Roll Call Finale",
+    "title_es": "Lista final",
+    "description": "Sixty-four books by author A\u2013Z.",
+    "description_es": "Sesenta y cuatro libros por autor A\u2013Z.",
+    "hint": "Almost every author in the building.",
+    "hint_es": "Casi todos los autores del edificio.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64]
+  },
+  {
+    "level": 48,
+    "rule": "year_asc",
+    "title": "Centuries Complete",
+    "title_es": "Siglos completos",
+    "description": "Sixty-five books by year, oldest first.",
+    "description_es": "Sesenta y cinco libros por a\u00f1o, del m\u00e1s viejo primero.",
+    "hint": "From dusty 90s tomes to brand-new arrivals.",
+    "hint_es": "De tomos polvorientos de los 90 a llegadas nuevas.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65]
+  },
+  {
+    "level": 49,
+    "rule": "genre_then_title",
+    "title": "Penultimate Pile",
+    "title_es": "Pila pen\u00faltima",
+    "description": "Sixty-six books, six genres, three pages. Genre A\u2013Z, then title A\u2013Z.",
+    "description_es": "Sesenta y seis libros, seis g\u00e9neros, tres p\u00e1ginas. G\u00e9nero A\u2013Z y luego t\u00edtulo A\u2013Z.",
+    "hint": "One level left after this. Genre groups first.",
+    "hint_es": "Queda un nivel despu\u00e9s de este. Primero grupos por g\u00e9nero.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66]
+  },
+  {
+    "level": 50,
+    "rule": "genre_then_title",
+    "title": "The Master's Degree",
+    "title_es": "El t\u00edtulo de maestr\u00eda",
+    "description": "Level fifty: sixty-seven books, every genre, three pages. Genre A\u2013Z, then title A\u2013Z.",
+    "description_es": "Nivel cincuenta: sesenta y siete libros, todos los g\u00e9neros, tres p\u00e1ginas. G\u00e9nero A\u2013Z y luego t\u00edtulo A\u2013Z.",
+    "hint": "The ultimate reshelving. Adventure first, Sci-Fi last; titles A\u2013Z inside each.",
+    "hint_es": "La reorganizaci\u00f3n definitiva. Adventure primero, Sci-Fi al final; t\u00edtulos A\u2013Z dentro de cada uno.",
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67]
   }
 ]

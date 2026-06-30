@@ -4,14 +4,18 @@ import { Storage } from "../utils/storage.js";
 import { I18n } from "../utils/i18n.js";
 import { makeButton, COLORS, FONTS, formatTime } from "../utils/ui.js";
 
-const BOOK_W_MAX = 96;
-const BOOK_H_MAX = 150;
+const BOOK_W_MAX = 102;
+const BOOK_H_MAX = 152;
 const GAP_X = 14;
 const GAP_Y = 18;
 const BOARD_H = 14;
 const MAX_PER_ROW = 6;
-const AREA_TOP = 156;
-const AREA_BOTTOM = 462;
+const MAX_ROWS_PER_PAGE = 4;
+const AREA_TOP = 150;
+const AREA_BOTTOM = 545;
+const LEFT_RESERVED = 176;
+const RIGHT_MARGIN = 24;
+const RIGHT_GUTTER = 60;
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -27,7 +31,12 @@ export default class GameScene extends Phaser.Scene {
     this.moves = 0;
     this.startTime = 0;
     this.solved = false;
+    this.autoArranging = false;
     this.levelDef = null;
+    this.currentPage = 0;
+    this.pageCount = 1;
+    this.dragging = null;
+    this.flipCooldown = 0;
   }
 
   async create() {
@@ -64,6 +73,8 @@ export default class GameScene extends Phaser.Scene {
     this.buildRuleBadge();
     this.buildLibrarian();
     this.buildControls();
+    this.buildPager();
+    this.showPage(0);
 
     this.input.keyboard.on("keydown-R", () => this.resetLevel());
 
@@ -145,10 +156,15 @@ export default class GameScene extends Phaser.Scene {
 
   computeLayout(count) {
     const { width } = this.scale;
-    const availW = width - 80;
-    const availH = AREA_BOTTOM - AREA_TOP;
-
     const rows = Math.max(1, Math.ceil(count / MAX_PER_ROW));
+    this.pageCount = Math.max(1, Math.ceil(rows / MAX_ROWS_PER_PAGE));
+    const rowsOnScreen = Math.min(rows, MAX_ROWS_PER_PAGE);
+
+    const regionLeft = LEFT_RESERVED;
+    const regionRight = width - (this.pageCount > 1 ? RIGHT_GUTTER : RIGHT_MARGIN);
+    const regionCenter = (regionLeft + regionRight) / 2;
+    const availW = regionRight - regionLeft;
+    const availH = AREA_BOTTOM - AREA_TOP;
 
     const rowCounts = [];
     let remaining = count;
@@ -165,29 +181,33 @@ export default class GameScene extends Phaser.Scene {
       BOOK_W_MAX
     );
     this.bookH = Phaser.Math.Clamp(
-      (availH - rows * BOARD_H - (rows - 1) * GAP_Y) / rows,
+      (availH - rowsOnScreen * BOARD_H - (rowsOnScreen - 1) * GAP_Y) / rowsOnScreen,
       78,
       BOOK_H_MAX
     );
 
     const rowStride = this.bookH + BOARD_H + GAP_Y;
-    const totalH = rows * this.bookH + rows * BOARD_H + (rows - 1) * GAP_Y;
+    const totalH =
+      rowsOnScreen * this.bookH + rowsOnScreen * BOARD_H + (rowsOnScreen - 1) * GAP_Y;
     const startY = AREA_TOP + (availH - totalH) / 2;
 
     this.slots = [];
     this.rowRects = [];
     for (let r = 0; r < rows; r++) {
+      const page = Math.floor(r / MAX_ROWS_PER_PAGE);
+      const screenRow = r % MAX_ROWS_PER_PAGE;
       const cnt = rowCounts[r];
       const rowW = cnt * this.bookW + (cnt - 1) * GAP_X;
-      const startX = (width - rowW) / 2 + this.bookW / 2;
-      const centerY = startY + this.bookH / 2 + r * rowStride;
+      const startX = regionCenter - rowW / 2 + this.bookW / 2;
+      const centerY = startY + this.bookH / 2 + screenRow * rowStride;
       for (let c = 0; c < cnt; c++) {
-        this.slots.push({ x: startX + c * (this.bookW + GAP_X), y: centerY });
+        this.slots.push({ x: startX + c * (this.bookW + GAP_X), y: centerY, page });
       }
       this.rowRects.push({
         x: startX - this.bookW / 2 - 16,
-        y: startY + this.bookH + r * rowStride,
+        y: startY + this.bookH + screenRow * rowStride,
         w: rowW + 32,
+        page,
       });
     }
 
@@ -197,12 +217,14 @@ export default class GameScene extends Phaser.Scene {
   buildShelf(count) {
     this.computeLayout(count);
 
-    const g = this.add.graphics();
+    this.shelfGraphics = [];
     this.rowRects.forEach((rect) => {
+      const g = this.add.graphics();
       g.fillStyle(COLORS.woodLight, 1);
       g.fillRect(rect.x, rect.y, rect.w, BOARD_H);
       g.fillStyle(COLORS.woodDark, 1);
       g.fillRect(rect.x, rect.y + BOARD_H, rect.w, 9);
+      this.shelfGraphics.push({ gfx: g, page: rect.page });
     });
 
     this.slotGuides = [];
@@ -240,8 +262,8 @@ export default class GameScene extends Phaser.Scene {
   createBookCard(book, slot) {
     const w = this.bookW;
     const h = this.bookH;
-    const titleSize = Math.round(Phaser.Math.Clamp(h * 0.085, 10, 13));
-    const metaSize = Math.round(Phaser.Math.Clamp(h * 0.07, 9, 11));
+    const titleSize = Math.round(Phaser.Math.Clamp(h * 0.1, 11, 15));
+    const metaSize = Math.round(Phaser.Math.Clamp(h * 0.075, 9, 12));
 
     const spine = this.add.graphics();
     const fill = Phaser.Display.Color.HexStringToColor(book.color).color;
@@ -264,7 +286,7 @@ export default class GameScene extends Phaser.Scene {
       })
       .setOrigin(0.5, 0);
 
-    const meta = `${book.author}\n${book.genre}\n${book.year}`;
+    const meta = `${book.author}\n${book.genre} \u00b7 ${book.year}`;
     const metaTxt = this.add
       .text(0, h / 2 - 12, meta, {
         fontFamily: FONTS.body,
@@ -288,23 +310,40 @@ export default class GameScene extends Phaser.Scene {
     });
 
     this.input.on("dragstart", (_p, obj) => {
-      if (this.solved) return;
+      if (this.solved || this.autoArranging) return;
+      this.dragging = obj;
       obj.setDepth(20);
       this.tweens.add({ targets: obj, scale: 1.06, duration: 100 });
     });
 
     this.input.on("drag", (_p, obj, dragX, dragY) => {
-      if (this.solved) return;
+      if (this.solved || this.autoArranging) return;
       obj.x = dragX;
       obj.y = dragY;
+      this.maybeFlipPage(dragX);
     });
 
     this.input.on("dragend", (_p, obj) => {
-      if (this.solved) return;
+      if (this.solved || this.autoArranging) return;
       obj.setDepth(1);
       this.tweens.add({ targets: obj, scale: 1, duration: 100 });
       this.handleDrop(obj);
+      this.dragging = null;
+      this.showPage(this.currentPage);
     });
+  }
+
+  maybeFlipPage(dragX) {
+    if (this.pageCount <= 1) return;
+    const { width } = this.scale;
+    if (this.time.now < this.flipCooldown) return;
+    if (dragX > width - RIGHT_GUTTER && this.currentPage < this.pageCount - 1) {
+      this.flipCooldown = this.time.now + 450;
+      this.goToPage(this.currentPage + 1);
+    } else if (dragX < LEFT_RESERVED && this.currentPage > 0) {
+      this.flipCooldown = this.time.now + 450;
+      this.goToPage(this.currentPage - 1);
+    }
   }
 
   handleDrop(obj) {
@@ -322,9 +361,10 @@ export default class GameScene extends Phaser.Scene {
   }
 
   nearestSlot(x, y) {
-    let best = 0;
+    let best = -1;
     let bestDist = Infinity;
     this.slots.forEach((slot, i) => {
+      if (slot.page !== this.currentPage) return;
       const d = Phaser.Math.Distance.Between(slot.x, slot.y, x, y);
       if (d < bestDist) {
         bestDist = d;
@@ -392,8 +432,8 @@ export default class GameScene extends Phaser.Scene {
   buildLibrarian() {
     const { height } = this.scale;
     this.librarian = this.add
-      .image(96, height - 110, "librarian")
-      .setScale(1.2)
+      .image(90, height - 86, "librarian")
+      .setScale(0.95)
       .setDepth(5);
 
     this.tweens.add({
@@ -411,38 +451,128 @@ export default class GameScene extends Phaser.Scene {
   }
 
   buildSpeechBubble(text) {
-    const x = 180;
-    const y = this.scale.height - 150;
-    const w = 320;
-    const h = 86;
+    const x = 8;
+    const w = 162;
 
-    const bubble = this.add.graphics().setDepth(6);
-    bubble.fillStyle(COLORS.parchment, 1);
-    bubble.fillRoundedRect(x, y - h / 2, w, h, 12);
-    bubble.fillTriangle(x, y + 6, x - 18, y + 24, x, y + 26);
-
-    this.add
-      .text(x + w / 2, y, text, {
+    const txt = this.add
+      .text(x + w / 2, 0, text, {
         fontFamily: FONTS.body,
-        fontSize: "15px",
+        fontSize: "13px",
         color: "#2c1d14",
         align: "center",
         wordWrap: { width: w - 24 },
       })
-      .setOrigin(0.5)
+      .setOrigin(0.5, 0)
       .setDepth(7);
+
+    const h = txt.height + 22;
+    const libTop = this.librarian.y - this.librarian.displayHeight / 2;
+    const yTop = Math.max(68, libTop - 12 - h);
+    txt.y = yTop + 11;
+
+    const bubble = this.add.graphics().setDepth(6);
+    bubble.fillStyle(COLORS.parchment, 1);
+    bubble.fillRoundedRect(x, yTop, w, h, 12);
+    bubble.fillTriangle(x + 34, yTop + h, x + 20, yTop + h + 16, x + 56, yTop + h);
   }
 
   buildControls() {
     const { width, height } = this.scale;
     this.checkBtn = makeButton(
       this,
-      width / 2,
+      width / 2 - 122,
       height - 60,
       I18n.t("checkOrder"),
       () => this.checkSolved(true),
-      { width: 220, height: 52, fontSize: 20, fill: COLORS.good, textColor: "#ffffff" }
+      { width: 224, height: 52, fontSize: 19, fill: COLORS.good, textColor: "#ffffff" }
     );
+
+    this.autoBtn = makeButton(
+      this,
+      width / 2 + 122,
+      height - 60,
+      I18n.t("autoArrange"),
+      () => this.autoArrange(),
+      { width: 224, height: 52, fontSize: 19, fill: COLORS.accent, textColor: "#2c1d14" }
+    );
+  }
+
+  buildPager() {
+    const { width, height } = this.scale;
+    const midY = (AREA_TOP + AREA_BOTTOM) / 2;
+
+    this.sideNext = makeButton(
+      this,
+      width - 32,
+      midY,
+      "\u203a",
+      () => this.goToPage(this.currentPage + 1),
+      { width: 44, height: 96, fontSize: 40, fill: COLORS.woodLight, textColor: "#f3e3c3" }
+    ).setDepth(40);
+
+    this.prevBtn = makeButton(
+      this,
+      width - 214,
+      height - 60,
+      "\u2039",
+      () => this.goToPage(this.currentPage - 1),
+      { width: 38, height: 40, fontSize: 24, fill: COLORS.woodLight, textColor: "#f3e3c3" }
+    ).setDepth(40);
+
+    this.pagerLabel = this.add
+      .text(width - 128, height - 60, "", {
+        fontFamily: FONTS.body,
+        fontSize: "16px",
+        color: "#f3e3c3",
+        fontStyle: "bold",
+        align: "center",
+      })
+      .setOrigin(0.5)
+      .setDepth(40);
+
+    this.nextBtn = makeButton(
+      this,
+      width - 42,
+      height - 60,
+      "\u203a",
+      () => this.goToPage(this.currentPage + 1),
+      { width: 38, height: 40, fontSize: 24, fill: COLORS.woodLight, textColor: "#f3e3c3" }
+    ).setDepth(40);
+  }
+
+  showPage(p) {
+    this.currentPage = Phaser.Math.Clamp(p, 0, this.pageCount - 1);
+
+    this.order.forEach((c, i) => {
+      const onPage = this.slots[i].page === this.currentPage;
+      c.setVisible(onPage || c === this.dragging);
+    });
+    this.slotGuides.forEach((guide, i) =>
+      guide.setVisible(this.slots[i].page === this.currentPage)
+    );
+    this.shelfGraphics.forEach((s) => s.gfx.setVisible(s.page === this.currentPage));
+
+    this.updatePager();
+  }
+
+  goToPage(p) {
+    const target = Phaser.Math.Clamp(p, 0, this.pageCount - 1);
+    if (target === this.currentPage) return;
+    this.showPage(target);
+  }
+
+  updatePager() {
+    const multi = this.pageCount > 1;
+    this.sideNext?.setVisible(multi && this.currentPage < this.pageCount - 1);
+    this.prevBtn?.setVisible(multi);
+    this.nextBtn?.setVisible(multi);
+    this.pagerLabel?.setVisible(multi);
+    if (!multi) return;
+    this.pagerLabel.setText(
+      I18n.t("pageIndicator", { page: this.currentPage + 1, total: this.pageCount })
+    );
+    this.prevBtn.setEnabled(this.currentPage > 0);
+    this.nextBtn.setEnabled(this.currentPage < this.pageCount - 1);
   }
 
   checkSolved(manual = false) {
@@ -583,8 +713,56 @@ export default class GameScene extends Phaser.Scene {
       (a, b) => expected.indexOf(a.getData("book")) - expected.indexOf(b.getData("book"))
     );
     this.layoutBooks(false);
+    this.showPage(0);
     this.checkSolved();
     return this.solved;
+  }
+
+  autoArrange() {
+    if (!this.levelDef || this.solved || this.autoArranging) return;
+    this.autoArranging = true;
+    this.autoBtn?.setEnabled(false);
+
+    const books = this.order.map((c) => c.getData("book"));
+    const { expected } = evaluateOrder(books, this.levelDef.rule);
+    this.order.sort(
+      (a, b) => expected.indexOf(a.getData("book")) - expected.indexOf(b.getData("book"))
+    );
+
+    this.currentPage = 0;
+    this.showPage(0);
+
+    const stepDelay = 100;
+    let animSteps = 0;
+    this.order.forEach((c, i) => {
+      const slot = this.slots[i];
+      if (slot.page !== 0) {
+        c.x = slot.x;
+        c.y = slot.y;
+        return;
+      }
+      const step = animSteps++;
+      c.setDepth(10 + step);
+      this.tweens.add({
+        targets: c,
+        x: slot.x,
+        y: slot.y,
+        delay: step * stepDelay,
+        duration: 280,
+        ease: "Back.out",
+        onStart: () => {
+          this.tweens.add({ targets: c, scale: 1.1, duration: 140, yoyo: true });
+        },
+      });
+    });
+
+    const total = animSteps * stepDelay + 360;
+    this.time.delayedCall(total, () => {
+      this.order.forEach((c) => c.setDepth(1));
+      this.autoArranging = false;
+      this.showPage(0);
+      this.checkSolved();
+    });
   }
 
   update() {

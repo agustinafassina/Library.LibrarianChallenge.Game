@@ -43,7 +43,15 @@ Then open <http://localhost:8000>.
 - **Check Order** button verifies the current arrangement (it also auto-checks
   after every move).
 - **R** or the **Reset** button restarts the current level.
+- On big levels the shelves span several **pages**: use the right-edge arrow or
+  the `‹ Page X / Y ›` pager next to the buttons. While dragging a book, push it
+  against the left/right edge to carry it to the previous/next page.
 - Works with mouse and touch.
+
+## Levels
+50 levels with a steadily increasing book count (4 → 67), spread across shelves
+and up to three pages. See the full breakdown (books, shelves and pages per
+level) in **[LEVELS.md](LEVELS.md)**.
 
 ## Automated test (run every level)
 An end-to-end smoke test opens a real browser tab, plays through **every level**
@@ -92,7 +100,7 @@ js/
     i18n.js           UI translations (English / Spanish), language persisted
     ui.js             shared buttons / colors / helpers
 data/
-  books.json          the book catalogue (60 books across 6 genres)
+  books.json          the book catalogue (70 books across 6 genres)
   levels.json         level definitions (each references book ids)
 assets/               drop real images/audio here to replace placeholders
 ```

@@ -58,5 +58,15 @@
   { "id": 57, "title": "Emerald Expedition",     "author": "Amina Reed",      "genre": "Adventure",   "year": 2022, "size": "small",  "color": "#4fbf6a" },
   { "id": 58, "title": "Frostbound Folklore",    "author": "Amina Reed",      "genre": "Fantasy",     "year": 2001, "size": "large",  "color": "#73bfe6" },
   { "id": 59, "title": "Golden Gazette",         "author": "Bruno Hale",      "genre": "History",     "year": 2011, "size": "medium", "color": "#c6a24f" },
-  { "id": 60, "title": "Harbor of Hushed Clues", "author": "Bruno Hale",      "genre": "Mystery",     "year": 2019, "size": "small",  "color": "#4f5fa8" }
+  { "id": 60, "title": "Harbor of Hushed Clues", "author": "Bruno Hale",      "genre": "Mystery",     "year": 2019, "size": "small",  "color": "#4f5fa8" },
+  { "id": 61, "title": "Ivory Inkwell",          "author": "Carla Diaz",      "genre": "Fantasy",     "year": 2013, "size": "medium", "color": "#9a5bc6" },
+  { "id": 62, "title": "Jungle of Journals",     "author": "Daniel Evans",    "genre": "Adventure",   "year": 2003, "size": "large",  "color": "#c68a4f" },
+  { "id": 63, "title": "Kiln of Knowledge",      "author": "Elena Fischer",   "genre": "History",     "year": 2016, "size": "small",  "color": "#b58a3c" },
+  { "id": 64, "title": "Loom of Lost Letters",   "author": "Frank Gomez",     "genre": "Mystery",     "year": 2008, "size": "medium", "color": "#4f6fc6" },
+  { "id": 65, "title": "Moonlit Manuscripts",    "author": "Grace Hill",      "genre": "Romance",     "year": 2021, "size": "large",  "color": "#d96f9e" },
+  { "id": 66, "title": "Nebula Notebook",        "author": "Henry Ito",       "genre": "Sci-Fi",      "year": 2019, "size": "small",  "color": "#6f9fff" },
+  { "id": 67, "title": "Obsidian Odyssey",       "author": "Ivy Nakamura",    "genre": "Adventure",   "year": 2017, "size": "medium", "color": "#4fbf6a" },
+  { "id": 68, "title": "Parchment Pilgrimage",   "author": "Jonas Petrov",    "genre": "Fantasy",     "year": 2006, "size": "large",  "color": "#5bbf6a" },
+  { "id": 69, "title": "Quartz Quarters",        "author": "Kara Lindqvist",  "genre": "History",     "year": 2023, "size": "small",  "color": "#c6a24f" },
+  { "id": 70, "title": "Raven's Registry",       "author": "Liam O'Connor",   "genre": "Mystery",     "year": 2012, "size": "medium", "color": "#5b6ec6" }
 ]
