@@ -64,5 +64,60 @@
     "hint": "Five genres A\u2013Z (Fantasy \u2026 Sci-Fi last). Within each, A\u2013Z by title. Read top shelf first.",
     "hint_es": "Cinco g\u00e9neros A\u2013Z (Fantasy \u2026 Sci-Fi al final). Dentro de cada uno, A\u2013Z por t\u00edtulo. Le\u00e9 primero el estante de arriba.",
     "books": [25, 35, 24, 40, 23, 36, 21, 34, 27, 28, 37, 39]
+  },
+  {
+    "level": 7,
+    "rule": "title_az",
+    "title": "Alphabet Avalanche",
+    "title_es": "Avalancha alfab\u00e9tica",
+    "description": "Sort a bigger set of books by title A\u2013Z across three shelves.",
+    "description_es": "Orden\u00e1 un grupo m\u00e1s grande por t\u00edtulo A\u2013Z en tres estantes.",
+    "hint": "Read the shelves like lines on a page: top shelf first, then middle, then bottom.",
+    "hint_es": "Le\u00e9 los estantes como renglones: primero arriba, despu\u00e9s el medio y por \u00faltimo abajo.",
+    "books": [53, 54, 55, 56, 57, 58, 41, 42, 43, 44, 45, 46, 47, 48, 49]
+  },
+  {
+    "level": 8,
+    "rule": "author_az",
+    "title": "Author Roll Call",
+    "title_es": "Lista de autores",
+    "description": "Sort by author name A\u2013Z. Same author? Then sort those books by title.",
+    "description_es": "Orden\u00e1 por nombre de autor A\u2013Z. \u00bfMismo autor? Entonces orden\u00e1 esos libros por t\u00edtulo.",
+    "hint": "Author pairs are mixed together. Keep each author's books in title order.",
+    "hint_es": "Hay pares de autores mezclados. Manten\u00e9 los libros de cada autor ordenados por t\u00edtulo.",
+    "books": [41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54]
+  },
+  {
+    "level": 9,
+    "rule": "year_asc",
+    "title": "Centuries in Miniature",
+    "title_es": "Siglos en miniatura",
+    "description": "Sort the books by publication year, oldest first, across three shelves.",
+    "description_es": "Orden\u00e1 los libros por a\u00f1o de publicaci\u00f3n, del m\u00e1s viejo al m\u00e1s nuevo, en tres estantes.",
+    "hint": "The years jump around a lot. Start with the 1990s and work toward the future.",
+    "hint_es": "Los a\u00f1os saltan bastante. Empez\u00e1 por los 90 y avanz\u00e1 hacia el futuro.",
+    "books": [46, 51, 58, 42, 54, 45, 48, 59, 50, 44, 53, 55, 41, 60, 43, 49, 57, 56]
+  },
+  {
+    "level": 10,
+    "rule": "genre_then_title",
+    "title": "The Genre Labyrinth",
+    "title_es": "El laberinto de g\u00e9neros",
+    "description": "Six genres are mixed together. Group by genre A\u2013Z, then title A\u2013Z.",
+    "description_es": "Se mezclan seis g\u00e9neros. Agrup\u00e1 por g\u00e9nero A\u2013Z y luego por t\u00edtulo A\u2013Z.",
+    "hint": "Adventure comes first alphabetically. Sci-Fi comes last. Inside each genre, use title order.",
+    "hint_es": "Adventure va primero alfab\u00e9ticamente. Sci-Fi va al final. Dentro de cada g\u00e9nero, us\u00e1 el t\u00edtulo.",
+    "books": [53, 54, 57, 45, 49, 55, 56, 46, 51, 59, 44, 47, 60, 42, 48, 41, 43, 50]
+  },
+  {
+    "level": 11,
+    "rule": "genre_then_title",
+    "title": "Grand Reopening",
+    "title_es": "Gran reapertura",
+    "description": "Final challenge for now: many books, many genres. Genre A\u2013Z, then title A\u2013Z.",
+    "description_es": "Desaf\u00edo final por ahora: muchos libros y muchos g\u00e9neros. G\u00e9nero A\u2013Z y luego t\u00edtulo A\u2013Z.",
+    "hint": "Stay calm: sort by genre groups first, then clean up each group by title.",
+    "hint_es": "Con calma: primero arm\u00e1 grupos por g\u00e9nero, despu\u00e9s orden\u00e1 cada grupo por t\u00edtulo.",
+    "books": [53, 57, 58, 30, 38, 45, 49, 55, 56, 32, 46, 51, 59, 40, 23, 44, 47, 60]
   }
 ]

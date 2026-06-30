@@ -1,0 +1,15 @@
+{
+  "name": "librarians-challenge",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A small 2D browser game where you sort books shelf by shelf.",
+  "scripts": {
+    "test": "node tests/runAllLevels.mjs",
+    "test:e2e": "node tests/runAllLevels.mjs",
+    "pretest": "playwright install chromium"
+  },
+  "devDependencies": {
+    "playwright": "^1.49.0"
+  }
+}

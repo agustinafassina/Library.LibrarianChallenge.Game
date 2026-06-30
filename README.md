@@ -45,6 +45,25 @@ Then open <http://localhost:8000>.
 - **R** or the **Reset** button restarts the current level.
 - Works with mouse and touch.
 
+## Automated test (run every level)
+An end-to-end smoke test opens a real browser tab, plays through **every level**
+automatically, verifies each one is solvable and that progress is saved, then
+closes the tab. It uses [Playwright](https://playwright.dev/) and a tiny built-in
+static server (no manual server needed).
+
+```bash
+npm install                 # once: installs Playwright
+npx playwright install chromium   # once: downloads the browser
+npm test                    # runs tests/runAllLevels.mjs
+```
+
+How it works: the page is opened with `?test=1`, which exposes the Phaser game on
+`window.__GAME__`. The test starts each level and calls a test-only
+`GameScene.autosolve()` helper (it arranges the books into the rule's expected
+order and triggers the win check), then waits for the Level Complete screen.
+This exercises real level loading, rule evaluation, win detection and progress
+saving. The `autosolve` hook and `window.__GAME__` are only active with `?test=1`.
+
 ## Language (English / Spanish)
 Open **Settings** from the main menu to switch the interface language. The choice
 is saved to `localStorage` and applied across all menus and the in-game HUD.
@@ -73,7 +92,7 @@ js/
     i18n.js           UI translations (English / Spanish), language persisted
     ui.js             shared buttons / colors / helpers
 data/
-  books.json          the book catalogue (40 books across 5 genres)
+  books.json          the book catalogue (60 books across 6 genres)
   levels.json         level definitions (each references book ids)
 assets/               drop real images/audio here to replace placeholders
 ```

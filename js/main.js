@@ -18,4 +18,8 @@ const config = {
   scene: [BootScene, MenuScene, LevelSelectScene, GameScene, LevelCompleteScene],
 };
 
-new Phaser.Game(config);
+const game = new Phaser.Game(config);
+
+if (new URLSearchParams(window.location.search).has("test")) {
+  window.__GAME__ = game;
+}

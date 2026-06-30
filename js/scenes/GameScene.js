@@ -575,6 +575,18 @@ export default class GameScene extends Phaser.Scene {
     this.scene.restart({ level: this.levelNumber });
   }
 
+  autosolve() {
+    if (!this.levelDef || this.solved) return false;
+    const books = this.order.map((c) => c.getData("book"));
+    const { expected } = evaluateOrder(books, this.levelDef.rule);
+    this.order.sort(
+      (a, b) => expected.indexOf(a.getData("book")) - expected.indexOf(b.getData("book"))
+    );
+    this.layoutBooks(false);
+    this.checkSolved();
+    return this.solved;
+  }
+
   update() {
     if (this.timerStarted && !this.solved) {
       const elapsed = this.time.now - this.startTime;
