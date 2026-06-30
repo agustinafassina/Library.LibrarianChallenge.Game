@@ -1,7 +1,7 @@
 import { getLevelWithBooks, getLevelCount } from "../utils/dataLoader.js";
 import { evaluateOrder, getRuleLabel } from "../utils/rules.js";
 import { Storage } from "../utils/storage.js";
-import { I18n } from "../utils/i18n.js";
+import { I18n } from "../utils/i18n.js?v=2";
 import { makeButton, COLORS, FONTS, formatTime } from "../utils/ui.js";
 
 const BOOK_W_MAX = 102;
@@ -13,7 +13,7 @@ const MAX_PER_ROW = 6;
 const MAX_ROWS_PER_PAGE = 4;
 const AREA_TOP = 150;
 const AREA_BOTTOM = 545;
-const LEFT_RESERVED = 176;
+const LEFT_RESERVED = 24;
 const RIGHT_MARGIN = 24;
 const RIGHT_GUTTER = 60;
 
@@ -101,7 +101,7 @@ export default class GameScene extends Phaser.Scene {
     bar.setDepth(50);
 
     this.add
-      .text(16, 28, "Librarian's Challenge", {
+      .text(16, 28, I18n.t("appTitle"), {
         fontFamily: FONTS.title,
         fontSize: "22px",
         color: "#f3e3c3",
@@ -428,13 +428,14 @@ export default class GameScene extends Phaser.Scene {
   buildLibrarian() {
     const { height } = this.scale;
     this.librarian = this.add
-      .image(90, height - 86, "librarian")
-      .setScale(0.95)
+      .image(36, height - 36, "librarian")
+      .setScale(0.58)
+      .setOrigin(0.5, 1)
       .setDepth(5);
 
     this.tweens.add({
       targets: this.librarian,
-      y: this.librarian.y - 8,
+      y: this.librarian.y - 4,
       duration: 1400,
       yoyo: true,
       repeat: -1,

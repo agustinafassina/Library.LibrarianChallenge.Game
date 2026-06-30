@@ -2,6 +2,7 @@ const KEY_LANG = "librarians-challenge:lang";
 
 const STRINGS = {
   en: {
+    appTitle: "Librarian's Challenge",
     subtitle: "Restore order to the library, shelf by shelf.",
     start: "Start Game",
     continue: "Continue",
@@ -53,6 +54,7 @@ const STRINGS = {
   },
 
   es: {
+    appTitle: "El Desaf\u00edo del Bibliotecario",
     subtitle: "Devolv\u00e9 el orden a la biblioteca, estante por estante.",
     start: "Empezar",
     continue: "Continuar",

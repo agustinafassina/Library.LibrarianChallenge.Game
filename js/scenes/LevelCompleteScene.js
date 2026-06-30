@@ -1,4 +1,4 @@
-import { I18n } from "../utils/i18n.js";
+import { I18n } from "../utils/i18n.js?v=2";
 import { makeButton, COLORS, FONTS, formatTime } from "../utils/ui.js";
 
 export default class LevelCompleteScene extends Phaser.Scene {

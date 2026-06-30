@@ -1,5 +1,5 @@
 import { Storage } from "../utils/storage.js";
-import { I18n } from "../utils/i18n.js";
+import { I18n } from "../utils/i18n.js?v=2";
 import { makeButton, COLORS, FONTS } from "../utils/ui.js";
 
 export default class MenuScene extends Phaser.Scene {
@@ -18,7 +18,7 @@ export default class MenuScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.add
-      .text(width / 2, height * 0.2, "Librarian's Challenge", {
+      .text(width / 2, height * 0.2, I18n.t("appTitle"), {
         fontFamily: FONTS.title,
         fontSize: "52px",
         color: "#f3e3c3",
