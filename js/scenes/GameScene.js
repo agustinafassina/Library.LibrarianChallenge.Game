@@ -12,7 +12,7 @@ const BOARD_H = 14;
 const MAX_PER_ROW = 6;
 const MAX_ROWS_PER_PAGE = 4;
 const AREA_TOP = 150;
-const AREA_BOTTOM = 545;
+const AREA_BOTTOM = 600;
 const LEFT_RESERVED = 24;
 const RIGHT_MARGIN = 24;
 const RIGHT_GUTTER = 60;
@@ -32,6 +32,7 @@ export default class GameScene extends Phaser.Scene {
     this.startTime = 0;
     this.solved = false;
     this.autoArranging = false;
+    this.autoUsed = false;
     this.levelDef = null;
     this.currentPage = 0;
     this.pageCount = 1;
@@ -94,7 +95,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   buildTopBar() {
-    const { width, height } = this.scale;
+    const { width } = this.scale;
     const bar = this.add.graphics();
     bar.fillStyle(COLORS.ink, 0.92);
     bar.fillRect(0, 0, width, 56);
@@ -110,8 +111,12 @@ export default class GameScene extends Phaser.Scene {
       .setOrigin(0, 0.5)
       .setDepth(51);
 
+    const headerLeft = 380;
+    const headerRight = width - 220;
+    const headerStep = (headerRight - headerLeft) / 2;
+
     this.levelText = this.add
-      .text(width * 0.42, 28, "", {
+      .text(headerLeft, 28, "", {
         fontFamily: FONTS.body,
         fontSize: "18px",
         color: "#d9a441",
@@ -121,7 +126,7 @@ export default class GameScene extends Phaser.Scene {
       .setDepth(51);
 
     this.movesText = this.add
-      .text(width * 0.62, 28, I18n.t("movesLabel", { moves: 0 }), {
+      .text(headerLeft + headerStep, 28, I18n.t("movesLabel", { moves: 0 }), {
         fontFamily: FONTS.body,
         fontSize: "18px",
         color: "#f3e3c3",
@@ -130,28 +135,24 @@ export default class GameScene extends Phaser.Scene {
       .setDepth(51);
 
     this.timeText = this.add
-      .text(width - 20, height - 28, I18n.t("timeLabel", { time: "0:00" }), {
+      .text(headerRight, 28, I18n.t("timeLabel", { time: "0:00" }), {
         fontFamily: FONTS.body,
-        fontSize: "20px",
+        fontSize: "18px",
         color: "#f3e3c3",
         fontStyle: "bold",
       })
-      .setOrigin(1, 0.5)
+      .setOrigin(0.5)
       .setDepth(51);
 
-    makeButton(this, width - 220, 28, I18n.t("resetR"), () => this.resetLevel(), {
-      width: 110,
-      height: 40,
-      fontSize: 16,
-    }).setDepth(51);
-
-    makeButton(this, width - 80, 28, I18n.t("menu"), () => this.scene.start("MenuScene"), {
-      width: 110,
-      height: 40,
-      fontSize: 16,
-      fill: COLORS.woodLight,
-      textColor: "#f3e3c3",
-    }).setDepth(51);
+    // Menu button — opens the action menu, pinned to the right
+    this.menuBtn = makeButton(
+      this,
+      width - 70,
+      28,
+      I18n.t("menu"),
+      () => this.toggleActionMenu(),
+      { width: 116, height: 40, fontSize: 16, fill: COLORS.woodLight, textColor: "#f3e3c3" }
+    ).setDepth(51);
   }
 
   computeLayout(count) {
@@ -272,12 +273,31 @@ export default class GameScene extends Phaser.Scene {
     const spine = this.add.graphics();
     const fill = Phaser.Display.Color.HexStringToColor(book.color).color;
 
+    // ── Book cover body ──────────────────────────────────────
     spine.fillStyle(fill, 1);
     spine.fillRoundedRect(-w / 2, -h / 2, w, h, 7);
-    spine.lineStyle(1.5, 0x000000, 0.3);
+
+    // Binding strip on the left (spine edge)
+    const bindW = Math.max(5, Math.round(w * 0.1));
+    spine.fillStyle(0x000000, 0.2);
+    spine.fillRoundedRect(-w / 2, -h / 2, bindW, h, { tl: 7, tr: 2, bl: 7, br: 2 });
+
+    // Page edges on the right (stacked pages visible from front)
+    const ex = w / 2 - 3;
+    spine.fillStyle(0xffffff, 0.35);
+    spine.fillRect(ex - 1, -h / 2 + 5, 2, h - 10);
+    spine.fillStyle(0xffffff, 0.2);
+    spine.fillRect(ex - 4, -h / 2 + 5, 2, h - 10);
+    spine.fillStyle(0xffffff, 0.1);
+    spine.fillRect(ex - 7, -h / 2 + 5, 2, h - 10);
+
+    // Inner frame (book cover border)
+    spine.lineStyle(1, 0xffffff, 0.22);
+    spine.strokeRoundedRect(-w / 2 + bindW + 2, -h / 2 + 3, w - bindW - 8, h - 6, 4);
+
+    // Outer border
+    spine.lineStyle(1.5, 0x000000, 0.35);
     spine.strokeRoundedRect(-w / 2, -h / 2, w, h, 7);
-    spine.lineStyle(1, 0xffffff, 0.3);
-    spine.lineBetween(-w / 2 + 8, -h / 2 + 2, w / 2 - 8, -h / 2 + 2);
 
     const shadow = { offsetX: 0, offsetY: 1, color: "#000000", blur: 3, fill: true };
 
@@ -409,7 +429,7 @@ export default class GameScene extends Phaser.Scene {
     if (dragX > width - RIGHT_GUTTER && this.currentPage < this.pageCount - 1) {
       this.flipCooldown = this.time.now + 450;
       this.goToPage(this.currentPage + 1);
-    } else if (dragX < LEFT_RESERVED && this.currentPage > 0) {
+    } else if (dragX < RIGHT_GUTTER && this.currentPage > 0) {
       this.flipCooldown = this.time.now + 450;
       this.goToPage(this.currentPage - 1);
     }
@@ -497,8 +517,8 @@ export default class GameScene extends Phaser.Scene {
   buildLibrarian() {
     const { height } = this.scale;
     this.librarian = this.add
-      .image(36, height - 36, "librarian")
-      .setScale(0.58)
+      .image(44, height - 28, "librarian")
+      .setScale(0.74)
       .setOrigin(0.5, 1)
       .setDepth(5);
 
@@ -513,67 +533,160 @@ export default class GameScene extends Phaser.Scene {
   }
 
   buildControls() {
-    const { width, height } = this.scale;
+    const { width } = this.scale;
+    // Primary action — compact icon button, pinned top-right below Menu
+    const bx = width - 70;
+    const by = 96;
     this.checkBtn = makeButton(
       this,
-      width / 2 - 122,
-      height - 60,
-      I18n.t("checkOrder"),
+      bx,
+      by,
+      "\u2713",
       () => this.checkSolved(true),
-      { width: 224, height: 52, fontSize: 19, fill: COLORS.good, textColor: "#ffffff" }
+      { width: 64, height: 44, fontSize: 26, fill: COLORS.good, textColor: "#ffffff" }
+    ).setDepth(51);
+    this.checkBtn.on("pointerover", () =>
+      this.showActionTooltip(bx, by + 40, I18n.t("checkOrder"))
     );
+    this.checkBtn.on("pointerout", () => this.hideActionTooltip());
 
-    this.autoBtn = makeButton(
-      this,
-      width / 2 + 122,
-      height - 60,
-      I18n.t("autoArrange"),
-      () => this.autoArrange(),
-      { width: 224, height: 52, fontSize: 19, fill: COLORS.accent, textColor: "#2c1d14" }
-    );
+    this.actionMenuItems = [];
+    this.actionMenuOpen = false;
+  }
+
+  showActionTooltip(x, y, label) {
+    this.hideActionTooltip();
+    const txt = this.add
+      .text(0, 0, label, {
+        fontFamily: FONTS.body,
+        fontSize: "14px",
+        color: "#f3e3c3",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5)
+      .setDepth(71);
+
+    const padX = 10;
+    const padY = 6;
+    const bw = txt.width + padX * 2;
+    const bh = txt.height + padY * 2;
+    const bg = this.add.graphics().setDepth(70);
+    bg.fillStyle(COLORS.ink, 0.95);
+    bg.fillRoundedRect(x - bw / 2, y - bh / 2, bw, bh, 6);
+    bg.lineStyle(1, COLORS.accent, 0.8);
+    bg.strokeRoundedRect(x - bw / 2, y - bh / 2, bw, bh, 6);
+    txt.setPosition(x, y);
+
+    this.actionTooltip = { bg, txt };
+  }
+
+  hideActionTooltip() {
+    if (!this.actionTooltip) return;
+    this.actionTooltip.bg.destroy();
+    this.actionTooltip.txt.destroy();
+    this.actionTooltip = null;
+  }
+
+  toggleActionMenu() {
+    if (this.actionMenuOpen) {
+      this.closeActionMenu();
+      return;
+    }
+    this.actionMenuOpen = true;
+
+    const { width, height } = this.scale;
+    const itemW = 190;
+    const itemH = 44;
+    const vgap = 8;
+    const menuX = width - 12 - itemW / 2;
+    const baseY = 56 + 8 + itemH / 2;
+
+    this.actionOverlay = this.add
+      .rectangle(0, 0, width, height, 0x000000, 0.001)
+      .setOrigin(0)
+      .setDepth(58)
+      .setInteractive();
+    this.actionOverlay.on("pointerdown", () => this.closeActionMenu());
+
+    const defs = [
+      {
+        label: I18n.t("autoArrange"),
+        fill: COLORS.woodLight,
+        textColor: "#f3e3c3",
+        onTap: () => this.autoArrange(),
+      },
+      {
+        label: I18n.t("resetR"),
+        fill: COLORS.accent,
+        textColor: "#2c1d14",
+        onTap: () => this.resetLevel(),
+      },
+      {
+        label: I18n.t("menu"),
+        fill: COLORS.woodLight,
+        textColor: "#f3e3c3",
+        onTap: () => this.scene.start("MenuScene"),
+      },
+    ];
+
+    defs.forEach((def, i) => {
+      const cy = baseY + i * (itemH + vgap);
+      const btn = makeButton(this, menuX, cy, def.label, () => {
+        this.closeActionMenu();
+        def.onTap();
+      }, {
+        width: itemW,
+        height: itemH,
+        fontSize: 16,
+        fill: def.fill,
+        textColor: def.textColor,
+      }).setDepth(60);
+      this.actionMenuItems.push(btn);
+    });
+  }
+
+  closeActionMenu() {
+    this.actionMenuOpen = false;
+    this.actionOverlay?.destroy();
+    this.actionOverlay = null;
+    this.actionMenuItems?.forEach((b) => b.destroy());
+    this.actionMenuItems = [];
   }
 
   buildPager() {
-    const { width, height } = this.scale;
+    const { width } = this.scale;
     const midY = (AREA_TOP + AREA_BOTTOM) / 2;
 
+    // Left side arrow
+    this.sidePrev = makeButton(
+      this,
+      28,
+      midY,
+      "\u2039",
+      () => this.goToPage(this.currentPage - 1),
+      { width: 44, height: 96, fontSize: 40, fill: COLORS.woodLight, textColor: "#f3e3c3" }
+    ).setDepth(40);
+
+    // Right side arrow
     this.sideNext = makeButton(
       this,
-      width - 32,
+      width - 28,
       midY,
       "\u203a",
       () => this.goToPage(this.currentPage + 1),
       { width: 44, height: 96, fontSize: 40, fill: COLORS.woodLight, textColor: "#f3e3c3" }
     ).setDepth(40);
 
-    this.prevBtn = makeButton(
-      this,
-      width - 214,
-      height - 60,
-      "\u2039",
-      () => this.goToPage(this.currentPage - 1),
-      { width: 38, height: 40, fontSize: 24, fill: COLORS.woodLight, textColor: "#f3e3c3" }
-    ).setDepth(40);
-
+    // Minimal page indicator — small pill at bottom center
     this.pagerLabel = this.add
-      .text(width - 128, height - 60, "", {
+      .text(width / 2, AREA_BOTTOM + 18, "", {
         fontFamily: FONTS.body,
-        fontSize: "16px",
-        color: "#f3e3c3",
-        fontStyle: "bold",
+        fontSize: "13px",
+        color: "#c9b08a",
         align: "center",
       })
-      .setOrigin(0.5)
+      .setOrigin(0.5, 0)
       .setDepth(40);
-
-    this.nextBtn = makeButton(
-      this,
-      width - 42,
-      height - 60,
-      "\u203a",
-      () => this.goToPage(this.currentPage + 1),
-      { width: 38, height: 40, fontSize: 24, fill: COLORS.woodLight, textColor: "#f3e3c3" }
-    ).setDepth(40);
   }
 
   showPage(p) {
@@ -599,16 +712,17 @@ export default class GameScene extends Phaser.Scene {
 
   updatePager() {
     const multi = this.pageCount > 1;
-    this.sideNext?.setVisible(multi && this.currentPage < this.pageCount - 1);
-    this.prevBtn?.setVisible(multi);
-    this.nextBtn?.setVisible(multi);
+    const notFirst = this.currentPage > 0;
+    const notLast  = this.currentPage < this.pageCount - 1;
+
+    this.sidePrev?.setVisible(multi && notFirst);
+    this.sideNext?.setVisible(multi && notLast);
     this.pagerLabel?.setVisible(multi);
     if (!multi) return;
+
     this.pagerLabel.setText(
       I18n.t("pageIndicator", { page: this.currentPage + 1, total: this.pageCount })
     );
-    this.prevBtn.setEnabled(this.currentPage > 0);
-    this.nextBtn.setEnabled(this.currentPage < this.pageCount - 1);
   }
 
   checkSolved(manual = false) {
@@ -624,31 +738,87 @@ export default class GameScene extends Phaser.Scene {
   }
 
   flashFeedback(perSlot) {
+    const wrongPages = new Set();
+
     this.order.forEach((c, i) => {
-      const ok = perSlot[i];
-      const guide = this.slotGuides[i];
+      const ok   = perSlot[i];
       const slot = this.slots[i];
-      guide.clear();
-      guide.lineStyle(3, ok ? COLORS.good : COLORS.bad, 0.9);
-      guide.strokeRoundedRect(
-        slot.x - this.bookW / 2,
-        slot.y - this.bookH / 2,
-        this.bookW,
-        this.bookH,
-        8
-      );
+      const guide = this.slotGuides[i];
+      const onScreen = slot.page === this.currentPage;
+
+      // Draw guide border on current page only (other guides are hidden)
+      if (onScreen) {
+        guide.clear();
+        guide.lineStyle(3, ok ? COLORS.good : COLORS.bad, 0.9);
+        guide.strokeRoundedRect(
+          slot.x - this.bookW / 2,
+          slot.y - this.bookH / 2,
+          this.bookW,
+          this.bookH,
+          8
+        );
+      }
+
       if (!ok) {
-        this.tweens.add({
-          targets: c,
-          x: c.x + 6,
-          duration: 50,
-          yoyo: true,
-          repeat: 3,
-        });
+        if (onScreen) {
+          // Shake only visible wrong books
+          this.tweens.add({ targets: c, x: c.x + 6, duration: 50, yoyo: true, repeat: 3 });
+        } else {
+          wrongPages.add(slot.page + 1); // 1-based page number
+        }
       }
     });
 
-    this.time.delayedCall(700, () => this.restoreGuides());
+    // Toast warning for errors on hidden pages
+    if (wrongPages.size > 0) {
+      const pages = [...wrongPages].sort().join(", ");
+      this.showFeedbackToast(I18n.t("errorsOnPage", { pages }));
+    }
+
+    this.time.delayedCall(1000, () => this.restoreGuides());
+  }
+
+  showFeedbackToast(message) {
+    // Destroy any previous toast
+    if (this.feedbackToast) {
+      this.feedbackToast.forEach((o) => o.destroy());
+      this.feedbackToast = null;
+    }
+
+    const { width } = this.scale;
+    const toastY = AREA_BOTTOM - 12;
+
+    const txt = this.add
+      .text(width / 2, toastY, message, {
+        fontFamily: FONTS.body,
+        fontSize: "14px",
+        color: "#ffffff",
+        align: "center",
+      })
+      .setOrigin(0.5, 1)
+      .setDepth(70)
+      .setAlpha(0);
+
+    const tw = txt.width + 24;
+    const th = txt.height + 12;
+    const bg = this.add.graphics().setDepth(69).setAlpha(0);
+    bg.fillStyle(COLORS.bad, 0.92);
+    bg.fillRoundedRect(width / 2 - tw / 2, toastY - th, tw, th, 8);
+
+    this.feedbackToast = [bg, txt];
+
+    this.tweens.add({
+      targets: [bg, txt],
+      alpha: 1,
+      duration: 200,
+      hold: 2200,
+      yoyo: true,
+      onComplete: () => {
+        bg.destroy();
+        txt.destroy();
+        this.feedbackToast = null;
+      },
+    });
   }
 
   restoreGuides() {
@@ -711,6 +881,7 @@ export default class GameScene extends Phaser.Scene {
         moves: this.moves,
         score,
         isBest,
+        autoUsed: this.autoUsed,
       });
     });
   }
@@ -733,7 +904,8 @@ export default class GameScene extends Phaser.Scene {
   computeScore(timeMs, moves) {
     const seconds = Math.floor(timeMs / 1000);
     const raw = 1000 - seconds * 4 - moves * 15;
-    return Math.max(50, raw);
+    const base = Math.max(50, raw);
+    return this.autoUsed ? Math.min(100, base) : base;
   }
 
   resetLevel() {
@@ -756,6 +928,93 @@ export default class GameScene extends Phaser.Scene {
 
   autoArrange() {
     if (!this.levelDef || this.solved || this.autoArranging) return;
+    this.showAutoConfirm();
+  }
+
+  showAutoConfirm() {
+    const { width, height } = this.scale;
+    const pw = 400, ph = 210;
+    const px = (width - pw) / 2, py = (height - ph) / 2;
+
+    const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.55)
+      .setOrigin(0)
+      .setDepth(50)
+      .setInteractive();
+
+    const panel = this.add.graphics().setDepth(51);
+    panel.fillStyle(0x3b2a1a, 1);
+    panel.fillRoundedRect(px, py, pw, ph, 14);
+    panel.lineStyle(2, 0xd9a441, 1);
+    panel.strokeRoundedRect(px, py, pw, ph, 14);
+
+    const title = this.add.text(width / 2, py + 28, I18n.t("autoConfirmTitle"), {
+      fontFamily: "Georgia, serif",
+      fontSize: "20px",
+      color: "#f3e3c3",
+      fontStyle: "bold",
+    }).setOrigin(0.5, 0.5).setDepth(52);
+
+    const body = this.add.text(width / 2, py + 80, I18n.t("autoConfirmBody"), {
+      fontFamily: "Georgia, serif",
+      fontSize: "14px",
+      color: "#c8b89a",
+      align: "center",
+    }).setOrigin(0.5, 0.5).setDepth(52);
+
+    const closeAll = () => {
+      overlay.destroy();
+      panel.destroy();
+      title.destroy();
+      body.destroy();
+      cancelBtn.destroy();
+      confirmBtn.destroy();
+    };
+
+    const cancelBtn = this.makeDialogButton(
+      px + 90, py + ph - 42, 140, 38,
+      I18n.t("cancel") ?? "Cancel",
+      0x5a3e28, "#f3e3c3", 52,
+      closeAll
+    );
+
+    const confirmBtn = this.makeDialogButton(
+      px + pw - 90, py + ph - 42, 160, 38,
+      I18n.t("autoConfirmYes"),
+      0x8b2020, "#ffffff", 52,
+      () => { closeAll(); this.runAutoArrange(); }
+    );
+  }
+
+  makeDialogButton(cx, cy, w, h, label, fillColor, textColor, depth, onTap) {
+    const bg = this.add.graphics().setDepth(depth);
+    const draw = (lit) => {
+      bg.clear();
+      bg.fillStyle(lit ? 0xffffff : fillColor, lit ? 0.15 : 1);
+      bg.fillRoundedRect(cx - w / 2, cy - h / 2, w, h, 8);
+      bg.lineStyle(1, 0xd9a441, 0.7);
+      bg.strokeRoundedRect(cx - w / 2, cy - h / 2, w, h, 8);
+    };
+    draw(false);
+
+    const txt = this.add.text(cx, cy, label, {
+      fontFamily: "Georgia, serif",
+      fontSize: "14px",
+      color: textColor,
+      fontStyle: "bold",
+    }).setOrigin(0.5, 0.5).setDepth(depth + 1);
+
+    const zone = this.add.zone(cx, cy, w, h).setDepth(depth + 2).setInteractive();
+    zone.on("pointerover", () => draw(true));
+    zone.on("pointerout", () => draw(false));
+    zone.on("pointerup", () => onTap());
+
+    const destroy = () => { bg.destroy(); txt.destroy(); zone.destroy(); };
+    return { destroy };
+  }
+
+  runAutoArrange() {
+    if (!this.levelDef || this.solved || this.autoArranging) return;
+    this.autoUsed = true;
     this.autoArranging = true;
     this.autoBtn?.setEnabled(false);
 

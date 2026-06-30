@@ -3,33 +3,68 @@ import { loadLevels } from "../utils/dataLoader.js";
 import { I18n } from "../utils/i18n.js?v=2";
 import { makeButton, COLORS, FONTS, formatTime } from "../utils/ui.js";
 
+const COLS        = 5;
+const ROWS_PAGE   = 4;
+const PER_PAGE    = COLS * ROWS_PAGE;
+const CELL_W      = 174;
+const CELL_H      = 122;
+const CARD_W      = 150;
+const CARD_H      = 104;
+const GRID_TOP    = 108;
+const GRID_BOTTOM = 580;
+
+const RULE_BADGE = {
+  title_az:         { en: "Title A–Z",       es: "Título A–Z" },
+  author_az:        { en: "Author A–Z",      es: "Autor A–Z" },
+  genre_az:         { en: "Genre A–Z",       es: "Género A–Z" },
+  year_asc:         { en: "Year ↑",          es: "Año ↑" },
+  genre_then_title: { en: "Genre › Title",   es: "Género › Título" },
+};
+
+function ruleBadgeLabel(rule) {
+  const entry = RULE_BADGE[rule];
+  if (!entry) return rule;
+  return entry[I18n.lang] ?? entry.en;
+}
+
 export default class LevelSelectScene extends Phaser.Scene {
   constructor() {
     super("LevelSelectScene");
   }
 
+  init() {
+    this.currentPage = 0;
+    this.pageCount   = 1;
+    this.cardGroups  = []; // [{page, objects:[]}]
+  }
+
   async create() {
     const { width, height } = this.scale;
 
-    const g = this.add.graphics();
-    g.fillStyle(COLORS.woodDark, 1);
-    g.fillRect(0, 0, width, height);
+    // Background
+    const bg = this.add.graphics();
+    bg.fillStyle(COLORS.woodDark, 1);
+    bg.fillRect(0, 0, width, height);
 
+    // Header
     this.add
-      .text(width / 2, 60, I18n.t("levelSelect"), {
+      .text(width / 2, 52, I18n.t("levelSelect"), {
         fontFamily: FONTS.title,
-        fontSize: "44px",
+        fontSize: "36px",
         color: "#f3e3c3",
         fontStyle: "bold",
       })
       .setOrigin(0.5);
 
-    makeButton(this, 120, 40, I18n.t("back"), () => this.scene.start("MenuScene"), {
-      width: 140,
-      height: 44,
-      fontSize: 18,
+    makeButton(this, 80, 40, I18n.t("back"), () => this.scene.start("MenuScene"), {
+      width: 120,
+      height: 40,
+      fontSize: 16,
+      fill: COLORS.woodLight,
+      textColor: "#f3e3c3",
     });
 
+    // Loading
     const loading = this.add
       .text(width / 2, height / 2, I18n.t("loadingLevels"), {
         fontFamily: FONTS.body,
@@ -48,72 +83,196 @@ export default class LevelSelectScene extends Phaser.Scene {
     }
     loading.destroy();
 
+    this.pageCount = Math.ceil(levels.length / PER_PAGE);
     const maxUnlocked = Storage.getMaxLevelUnlocked();
-    const cols = Math.min(levels.length, 5);
-    const cellW = 170;
-    const cellH = 150;
-    const startX = width / 2 - ((cols - 1) * cellW) / 2;
-    const startY = 170;
+
+    // Grid layout
+    const totalGridW = COLS * CELL_W;
+    const startX = width / 2 - totalGridW / 2 + CELL_W / 2;
+    const availH = GRID_BOTTOM - GRID_TOP;
+    const startY = GRID_TOP + (availH - ROWS_PAGE * CELL_H) / 2 + CELL_H / 2;
+
+    this.cardGroups = [];
 
     levels.forEach((lvl, i) => {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      const x = startX + col * cellW;
-      const y = startY + row * cellH;
+      const page = Math.floor(i / PER_PAGE);
+      const idx  = i % PER_PAGE;
+      const col  = idx % COLS;
+      const row  = Math.floor(idx / COLS);
+      const x    = startX + col * CELL_W;
+      const y    = startY + row * CELL_H;
       const unlocked = lvl.level <= maxUnlocked;
+      const best     = Storage.getBestForLevel(lvl.level);
+      const played   = !!best;
 
+      const objects = [];
+
+      // ── Card background ──────────────────────────────────
       const card = this.add.graphics();
-      card.fillStyle(unlocked ? COLORS.wood : 0x33241a, 1);
-      card.fillRoundedRect(x - 75, y - 55, 150, 110, 12);
-      card.lineStyle(3, unlocked ? COLORS.accent : 0x000000, unlocked ? 1 : 0.3);
-      card.strokeRoundedRect(x - 75, y - 55, 150, 110, 12);
+      if (!unlocked) {
+        card.fillStyle(0x2a1e14, 1);
+        card.fillRoundedRect(x - CARD_W / 2, y - CARD_H / 2, CARD_W, CARD_H, 10);
+        card.lineStyle(1.5, 0x3a2a1c, 1);
+        card.strokeRoundedRect(x - CARD_W / 2, y - CARD_H / 2, CARD_W, CARD_H, 10);
+      } else {
+        card.fillStyle(COLORS.wood, 1);
+        card.fillRoundedRect(x - CARD_W / 2, y - CARD_H / 2, CARD_W, CARD_H, 10);
+        // Accent border: gold for best, green for played, normal for unlocked
+        const borderColor = played ? (best.score >= 800 ? COLORS.good : COLORS.accent) : COLORS.accent;
+        card.lineStyle(played ? 2.5 : 1.5, borderColor, 1);
+        card.strokeRoundedRect(x - CARD_W / 2, y - CARD_H / 2, CARD_W, CARD_H, 10);
+        // Inner highlight line
+        card.lineStyle(1, 0xffffff, 0.12);
+        card.lineBetween(x - CARD_W / 2 + 8, y - CARD_H / 2 + 2, x + CARD_W / 2 - 8, y - CARD_H / 2 + 2);
+      }
+      objects.push(card);
 
-      this.add
-        .text(
-          x,
-          y - 30,
-          unlocked
-            ? I18n.t("levelN", { n: lvl.level })
-            : I18n.t("lockedN", { n: lvl.level }),
-          {
-            fontFamily: FONTS.body,
-            fontSize: "22px",
-            color: unlocked ? "#f3e3c3" : "#8a7355",
-            fontStyle: "bold",
-          }
-        )
-        .setOrigin(0.5);
-
-      this.add
-        .text(x, y + 2, I18n.pick(lvl, "title"), {
+      // ── Level number ──────────────────────────────────────
+      const numTxt = this.add
+        .text(x, y - CARD_H / 2 + 18, lvl.level.toString(), {
           fontFamily: FONTS.body,
-          fontSize: "13px",
-          color: unlocked ? "#d9a441" : "#6e5a42",
-          align: "center",
-          wordWrap: { width: 140 },
+          fontSize: "22px",
+          color: unlocked ? "#f3e3c3" : "#5a4030",
+          fontStyle: "bold",
         })
         .setOrigin(0.5);
+      objects.push(numTxt);
 
-      const best = Storage.getBestForLevel(lvl.level);
-      const bestText = best
-        ? I18n.t("best", { score: best.score, time: formatTime(best.timeMs) })
-        : I18n.t("notPlayed");
-      this.add
-        .text(x, y + 36, bestText, {
+      // ── Level title ───────────────────────────────────────
+      const titleTxt = this.add
+        .text(x, y, I18n.pick(lvl, "title"), {
           fontFamily: FONTS.body,
           fontSize: "12px",
-          color: unlocked ? "#c9b08a" : "#5a4836",
+          color: unlocked ? "#d9a441" : "#4a3528",
+          align: "center",
+          wordWrap: { width: CARD_W - 16 },
         })
         .setOrigin(0.5);
+      objects.push(titleTxt);
 
+      // ── Rule badge ────────────────────────────────────────
+      if (unlocked && lvl.rule) {
+        const badgeLabel = ruleBadgeLabel(lvl.rule);
+        const badgeTxt = this.add
+          .text(x, y + CARD_H / 2 - 14, badgeLabel, {
+            fontFamily: FONTS.body,
+            fontSize: "10px",
+            color: "#2c1d14",
+            align: "center",
+          })
+          .setOrigin(0.5);
+
+        const bw = badgeTxt.width + 10;
+        const badgeBg = this.add.graphics();
+        badgeBg.fillStyle(COLORS.accent, 1);
+        badgeBg.fillRoundedRect(x - bw / 2, y + CARD_H / 2 - 22, bw, 16, 6);
+        // insert badge bg before text
+        objects.push(badgeBg);
+        objects.push(badgeTxt);
+      }
+
+      // ── Best score / status ───────────────────────────────
+      if (unlocked) {
+        const statusTxt = played
+          ? I18n.t("best", { score: best.score, time: formatTime(best.timeMs) })
+          : I18n.t("notPlayed");
+        const statusColor = played ? "#c9b08a" : "#7a6548";
+
+        const st = this.add
+          .text(x, y - 14, statusTxt, {
+            fontFamily: FONTS.body,
+            fontSize: "10px",
+            color: statusColor,
+            align: "center",
+          })
+          .setOrigin(0.5);
+        objects.push(st);
+      }
+
+      // ── Lock icon ─────────────────────────────────────────
+      if (!unlocked) {
+        const lock = this.add
+          .text(x, y + 4, "🔒", {
+            fontSize: "22px",
+          })
+          .setOrigin(0.5);
+        objects.push(lock);
+      }
+
+      // ── Interaction ───────────────────────────────────────
       if (unlocked) {
         const hit = this.add
-          .rectangle(x, y, 150, 110, 0xffffff, 0.001)
+          .rectangle(x, y, CARD_W, CARD_H, 0xffffff, 0.001)
           .setInteractive({ useHandCursor: true });
-        hit.on("pointerover", () => card.setAlpha(0.85));
-        hit.on("pointerout", () => card.setAlpha(1));
-        hit.on("pointerdown", () => this.scene.start("GameScene", { level: lvl.level }));
+        hit.on("pointerover", () => {
+          card.setAlpha(0.8);
+          this.tweens.add({ targets: [numTxt, titleTxt], y: `-=2`, duration: 80 });
+        });
+        hit.on("pointerout", () => {
+          card.setAlpha(1);
+          this.tweens.add({ targets: [numTxt, titleTxt], y: `+=2`, duration: 80 });
+        });
+        hit.on("pointerdown", () =>
+          this.scene.start("GameScene", { level: lvl.level })
+        );
+        objects.push(hit);
       }
+
+      if (!this.cardGroups[page]) this.cardGroups[page] = [];
+      this.cardGroups[page].push(...objects);
     });
+
+    this.buildPager(width, height);
+    this.showPage(0);
+  }
+
+  buildPager(width, height) {
+    if (this.pageCount <= 1) return;
+
+    const btnY = height - 32;
+
+    this.prevPageBtn = makeButton(
+      this,
+      width / 2 - 80,
+      btnY,
+      "\u2039",
+      () => this.showPage(this.currentPage - 1),
+      { width: 44, height: 44, fontSize: 28, fill: COLORS.woodLight, textColor: "#f3e3c3" }
+    );
+
+    this.pageLbl = this.add
+      .text(width / 2, btnY, "", {
+        fontFamily: FONTS.body,
+        fontSize: "15px",
+        color: "#f3e3c3",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5);
+
+    this.nextPageBtn = makeButton(
+      this,
+      width / 2 + 80,
+      btnY,
+      "\u203a",
+      () => this.showPage(this.currentPage + 1),
+      { width: 44, height: 44, fontSize: 28, fill: COLORS.woodLight, textColor: "#f3e3c3" }
+    );
+  }
+
+  showPage(p) {
+    this.currentPage = Phaser.Math.Clamp(p, 0, this.pageCount - 1);
+
+    this.cardGroups.forEach((group, pageIdx) => {
+      const visible = pageIdx === this.currentPage;
+      group.forEach((obj) => obj.setVisible(visible));
+    });
+
+    if (this.pageLbl) {
+      this.pageLbl.setText(
+        I18n.t("pageIndicator", { page: this.currentPage + 1, total: this.pageCount })
+      );
+    }
+    this.prevPageBtn?.setEnabled(this.currentPage > 0);
+    this.nextPageBtn?.setEnabled(this.currentPage < this.pageCount - 1);
   }
 }
