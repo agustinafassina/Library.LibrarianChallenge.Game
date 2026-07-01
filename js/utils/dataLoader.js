@@ -42,16 +42,42 @@ export async function getBooksById() {
   return map;
 }
 
+function buildRuleSpec(src) {
+  if (Array.isArray(src.keys) && src.keys.length) {
+    return {
+      keys: src.keys,
+      label: src.ruleLabel ?? null,
+      label_es: src.ruleLabel_es ?? null,
+    };
+  }
+  return src.rule;
+}
+
 export async function getLevelWithBooks(levelNumber) {
   const [levels, byId] = await Promise.all([loadLevels(), getBooksById()]);
   const def = levels.find((l) => l.level === levelNumber);
   if (!def) return null;
 
-  const books = def.books
-    .map((id) => byId.get(id))
-    .filter(Boolean);
+  let zones;
+  if (def.zones) {    zones = def.zones.map((z) => ({
+      ...z,
+      rule: buildRuleSpec(z),
+      books: (z.books ?? []).map((id) => byId.get(id)).filter(Boolean),
+    }));
+  } else {
+    zones = [
+      {
+        rule: buildRuleSpec(def),
+        label: null,
+        label_es: null,
+        books: (def.books ?? []).map((id) => byId.get(id)).filter(Boolean),
+      },
+    ];
+  }
 
-  return { ...def, books };
+  const books = zones.flatMap((z) => z.books);
+
+  return { ...def, zones, books };
 }
 
 export async function getLevelCount() {

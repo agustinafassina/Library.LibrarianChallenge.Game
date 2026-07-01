@@ -19,6 +19,14 @@ const RULE_BADGE = {
   genre_az:         { en: "Genre A–Z",       es: "Género A–Z" },
   year_asc:         { en: "Year ↑",          es: "Año ↑" },
   genre_then_title: { en: "Genre › Title",   es: "Género › Título" },
+  year_desc:        { en: "Year ↓",          es: "Año ↓" },
+  title_za:         { en: "Title Z–A",       es: "Título Z–A" },
+  author_za:        { en: "Author Z–A",      es: "Autor Z–A" },
+  size_asc:         { en: "Size ↑",          es: "Tamaño ↑" },
+  size_desc:        { en: "Size ↓",          es: "Tamaño ↓" },
+  color_rainbow:    { en: "Color 🌈",        es: "Color 🌈" },
+  pages_asc:        { en: "Pages ↑",         es: "Páginas ↑" },
+  pages_desc:       { en: "Pages ↓",         es: "Páginas ↓" },
 };
 
 function ruleBadgeLabel(rule) {
@@ -153,8 +161,19 @@ export default class LevelSelectScene extends Phaser.Scene {
       objects.push(titleTxt);
 
       // ── Rule badge ────────────────────────────────────────
-      if (unlocked && lvl.rule) {
-        const badgeLabel = ruleBadgeLabel(lvl.rule);
+      const hasCustomKeys = Array.isArray(lvl.keys) && lvl.keys.length;
+      const badgeRule = lvl.rule ?? (lvl.zones ? "__multi__" : hasCustomKeys ? "__custom__" : null);
+      if (unlocked && badgeRule) {
+        let badgeLabel;
+        if (badgeRule === "__multi__") {
+          badgeLabel = I18n.lang === "es" ? "Multi-estante" : "Multi-shelf";
+        } else if (badgeRule === "__custom__") {
+          badgeLabel = (I18n.lang === "es" ? lvl.ruleLabel_es : lvl.ruleLabel)
+            || lvl.ruleLabel || lvl.ruleLabel_es
+            || (I18n.lang === "es" ? "Regla combinada" : "Combined rule");
+        } else {
+          badgeLabel = ruleBadgeLabel(badgeRule);
+        }
         const badgeTxt = this.add
           .text(x, y + CARD_H / 2 - 14, badgeLabel, {
             fontFamily: FONTS.body,

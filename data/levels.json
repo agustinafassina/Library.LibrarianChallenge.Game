@@ -548,5 +548,151 @@
     "hint": "The ultimate reshelving. Adventure first, Sci-Fi last; titles A\u2013Z inside each.",
     "hint_es": "La reorganizaci\u00f3n definitiva. Adventure primero, Sci-Fi al final; t\u00edtulos A\u2013Z dentro de cada uno.",
     "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67]
+  },
+  {
+    "level": 51,
+    "title": "Dual Shelf Challenge",
+    "title_es": "Desaf\u00edo de doble estante",
+    "hint": "Two shelves, two rules. Top shelf: titles A\u2013Z. Bottom shelf: oldest book first.",
+    "hint_es": "Dos estantes, dos reglas. Estante superior: t\u00edtulos A\u2013Z. Estante inferior: el libro m\u00e1s viejo primero.",
+    "zones": [
+      {
+        "rule": "title_az",
+        "label": "Top Shelf \u2014 Titles A\u2013Z",
+        "label_es": "Estante superior \u2014 T\u00edtulos A\u2013Z",
+        "books": [3, 7, 12, 18, 25, 31]
+      },
+      {
+        "rule": "year_asc",
+        "label": "Bottom Shelf \u2014 Oldest First",
+        "label_es": "Estante inferior \u2014 M\u00e1s viejo primero",
+        "books": [2, 8, 14, 20, 27, 33]
+      }
+    ]
+  },
+  {
+    "level": 52,
+    "keys": ["genre", "year:desc", "title"],
+    "ruleLabel": "Genre A\u2013Z, then newest year, then Title A\u2013Z",
+    "ruleLabel_es": "G\u00e9nero A\u2013Z, luego a\u00f1o m\u00e1s nuevo, luego T\u00edtulo A\u2013Z",
+    "title": "Custom Combined Rule",
+    "title_es": "Regla combinada a medida",
+    "hint": "Group by genre; inside each genre put the newest book first, ties broken by title.",
+    "hint_es": "Agrup\u00e1 por g\u00e9nero; dentro de cada g\u00e9nero pon\u00e9 el m\u00e1s nuevo primero, y desempat\u00e1 por t\u00edtulo.",
+    "books": [3, 18, 4, 6, 1, 7, 9, 19]
+  },
+  {
+    "level": 53,
+    "rule": "title_za",
+    "title": "Backwards Alphabet",
+    "title_es": "Alfabeto al rev\u00e9s",
+    "hint": "Sort the titles Z\u2013A, from Z on the left to A on the right.",
+    "hint_es": "Orden\u00e1 los t\u00edtulos de la Z a la A, de izquierda a derecha.",
+    "books": [1, 3, 5, 7]
+  },
+  {
+    "level": 54,
+    "rule": "year_desc",
+    "title": "Newest on the Left",
+    "title_es": "Lo m\u00e1s nuevo a la izquierda",
+    "hint": "Newest book first. The year is shown on each cover.",
+    "hint_es": "El libro m\u00e1s nuevo primero. El a\u00f1o est\u00e1 en cada portada.",
+    "books": [15, 13, 9, 25, 20]
+  },
+  {
+    "level": 55,
+    "rule": "size_asc",
+    "title": "Small to Tall",
+    "title_es": "De chico a grande",
+    "hint": "Order by size: small first, then medium, then large. Same size? By title.",
+    "hint_es": "Orden\u00e1 por tama\u00f1o: primero chico, luego mediano, luego grande. \u00bfMismo tama\u00f1o? Por t\u00edtulo.",
+    "books": [1, 2, 3, 4, 5, 6]
+  },
+  {
+    "level": 56,
+    "rule": "color_rainbow",
+    "title": "Chasing Rainbows",
+    "title_es": "Persiguiendo el arco\u00edris",
+    "hint": "Arrange the spines by colour, like a rainbow (red \u2192 violet).",
+    "hint_es": "Acomod\u00e1 los lomos por color, como un arco\u00edris (rojo \u2192 violeta).",
+    "books": [9, 4, 3, 20, 27, 18]
+  },
+  {
+    "level": 57,
+    "rule": "pages_asc",
+    "title": "Thin to Thick",
+    "title_es": "De fino a grueso",
+    "hint": "Fewest pages first. The page count is shown on each cover.",
+    "hint_es": "Menos p\u00e1ginas primero. La cantidad de p\u00e1ginas est\u00e1 en cada portada.",
+    "books": [34, 39, 44, 49, 54, 59]
+  },
+  {
+    "level": 58,
+    "rule": "author_za",
+    "title": "Authors in Reverse",
+    "title_es": "Autores al rev\u00e9s",
+    "hint": "Sort by author name Z\u2013A. Same author? Order by title.",
+    "hint_es": "Orden\u00e1 por autor de la Z a la A. \u00bfMismo autor? Orden\u00e1 por t\u00edtulo.",
+    "books": [1, 27, 53, 55, 59]
+  },
+  {
+    "level": 59,
+    "rule": "size_desc",
+    "title": "Giants First",
+    "title_es": "Los gigantes primero",
+    "hint": "Largest books first, down to the smallest. Same size? By title.",
+    "hint_es": "Los libros m\u00e1s grandes primero, hasta el m\u00e1s chico. \u00bfMismo tama\u00f1o? Por t\u00edtulo.",
+    "books": [7, 8, 10, 11, 12, 13]
+  },
+  {
+    "level": 60,
+    "rule": "pages_desc",
+    "title": "Heavyweights",
+    "title_es": "Los pesos pesados",
+    "hint": "Most pages first. Check the page count on each cover.",
+    "hint_es": "M\u00e1s p\u00e1ginas primero. Fijate la cantidad de p\u00e1ginas en cada portada.",
+    "books": [5, 10, 15, 20, 25, 30]
+  },
+  {
+    "level": 61,
+    "title": "Colour & Count",
+    "title_es": "Color y cantidad",
+    "hint": "Top shelf by colour (rainbow); bottom shelf by page count (fewest first).",
+    "hint_es": "Estante de arriba por color (arco\u00edris); estante de abajo por p\u00e1ginas (menos primero).",
+    "zones": [
+      {
+        "rule": "color_rainbow",
+        "label": "Top Shelf \u2014 Rainbow",
+        "label_es": "Estante superior \u2014 Arco\u00edris",
+        "books": [9, 4, 3, 20, 27]
+      },
+      {
+        "rule": "pages_asc",
+        "label": "Bottom Shelf \u2014 Fewest Pages",
+        "label_es": "Estante inferior \u2014 Menos p\u00e1ginas",
+        "books": [59, 54, 49, 44, 39]
+      }
+    ]
+  },
+  {
+    "level": 62,
+    "title": "The Full Toolkit",
+    "title_es": "Todas las herramientas",
+    "hint": "Top shelf by size (small first); bottom shelf by pages (most first).",
+    "hint_es": "Estante de arriba por tama\u00f1o (chico primero); estante de abajo por p\u00e1ginas (m\u00e1s primero).",
+    "zones": [
+      {
+        "rule": "size_asc",
+        "label": "Top Shelf \u2014 By Size",
+        "label_es": "Estante superior \u2014 Por tama\u00f1o",
+        "books": [10, 11, 12, 13, 14, 16]
+      },
+      {
+        "rule": "pages_desc",
+        "label": "Bottom Shelf \u2014 Most Pages",
+        "label_es": "Estante inferior \u2014 M\u00e1s p\u00e1ginas",
+        "books": [60, 64, 65, 66, 69]
+      }
+    ]
   }
 ]

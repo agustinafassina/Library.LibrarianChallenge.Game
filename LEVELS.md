@@ -1,7 +1,7 @@
 # Levels (books, shelves & pages)
 [← Back to README](README.md)
 
-50 levels with a steadily increasing book count (4 → 67). Books are laid out
+62 levels with a steadily increasing book count (4 → 67). Books are laid out
 across shelves of up to 6 books each (`shelves = ceil(books / 6)`); shelves are
 grouped into pages of up to 4 shelves (`pages = ceil(shelves / 4)`), so levels
 with more than 24 books span multiple pages (and more than 48 books reach a
@@ -59,6 +59,18 @@ third page).
 | 48 | Centuries Complete | Year (oldest first) | 65 | 11 | 3 |
 | 49 | Penultimate Pile | Genre, then Title | 66 | 11 | 3 |
 | 50 | The Master's Degree | Genre, then Title | 67 | 12 | 3 |
+| 51 | Dual Shelf Challenge | Top: Title A-Z • Bottom: Year (oldest first) | 12 | 2 | 1 |
+| 52 | Custom Combined Rule | Genre A-Z, then newest year, then Title A-Z | 8 | 2 | 1 |
+| 53 | Backwards Alphabet | Title Z-A | 4 | 1 | 1 |
+| 54 | Newest on the Left | Year (newest first) | 5 | 1 | 1 |
+| 55 | Small to Tall | Size (small to large) | 6 | 1 | 1 |
+| 56 | Chasing Rainbows | Color (rainbow) | 6 | 1 | 1 |
+| 57 | Thin to Thick | Pages (fewest first) | 6 | 1 | 1 |
+| 58 | Authors in Reverse | Author Z-A | 5 | 1 | 1 |
+| 59 | Giants First | Size (large to small) | 7 | 2 | 1 |
+| 60 | Heavyweights | Pages (most first) | 6 | 1 | 1 |
+| 61 | Colour & Count | Top: Color (rainbow) • Bottom: Pages (fewest first) | 10 | 2 | 1 |
+| 62 | The Full Toolkit | Top: Size (small to large) • Bottom: Pages (most first) | 11 | 2 | 1 |
 
 Level definitions live in [`data/levels.json`](data/levels.json) and the book
 catalogue in [`data/books.json`](data/books.json).

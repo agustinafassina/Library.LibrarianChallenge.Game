@@ -1,5 +1,5 @@
 import { getLevelWithBooks, getLevelCount } from "../utils/dataLoader.js";
-import { evaluateOrder, getRuleLabel } from "../utils/rules.js";
+import { evaluateOrder, getRuleLabel, resolveRule } from "../utils/rules.js";
 import { Storage } from "../utils/storage.js";
 import { I18n } from "../utils/i18n.js?v=2";
 import { makeButton, goToScene, COLORS, FONTS, formatTime } from "../utils/ui.js";
@@ -38,6 +38,10 @@ export default class GameScene extends Phaser.Scene {
     this.pageCount = 1;
     this.dragging = null;
     this.flipCooldown = 0;
+    this.paused = false;
+    this.pauseStart = 0;
+    this.pauseItems = null;
+    this.moveHistory = [];
   }
 
   async create() {
@@ -71,8 +75,8 @@ export default class GameScene extends Phaser.Scene {
     this.levelDef = level;
 
     this.buildLevelInstruction();
-    this.buildShelf(level.books.length);
-    this.buildBooks(level.books);
+    this.buildShelf();
+    this.buildBooks();
     this.buildLibrarian();
     this.buildControls();
     this.buildPager();
@@ -80,6 +84,11 @@ export default class GameScene extends Phaser.Scene {
     this.showPage(0);
 
     this.input.keyboard.on("keydown-R", () => this.resetLevel());
+    this.input.keyboard.on("keydown-P", () => this.togglePause());
+    this.input.keyboard.on("keydown-ESC", () => this.togglePause());
+    this.input.keyboard.on("keydown-Z", (e) => {
+      if (e.ctrlKey || e.metaKey) this.undoMove();
+    });
 
     this.startTime = this.time.now;
     this.timerStarted = true;
@@ -114,7 +123,7 @@ export default class GameScene extends Phaser.Scene {
       .setDepth(51);
 
     const headerLeft = 380;
-    const headerRight = width - 220;
+    const headerRight = width - 250;
     const headerStep = (headerRight - headerLeft) / 2;
 
     this.levelText = this.add
@@ -146,6 +155,21 @@ export default class GameScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(51);
 
+    // Pause button — compact icon just right of the timer
+    const pbx = width - 158;
+    this.pauseBtn = makeButton(
+      this,
+      pbx,
+      28,
+      "\u2016",
+      () => this.togglePause(),
+      { width: 44, height: 40, fontSize: 20, fill: COLORS.woodLight, textColor: "#f3e3c3" }
+    ).setDepth(51);
+    this.pauseBtn.on("pointerover", () =>
+      this.showActionTooltip(pbx, 62, I18n.t("pause"))
+    );
+    this.pauseBtn.on("pointerout", () => this.hideActionTooltip());
+
     // Menu button — opens the action menu, pinned to the right
     this.menuBtn = makeButton(
       this,
@@ -157,8 +181,17 @@ export default class GameScene extends Phaser.Scene {
     ).setDepth(51);
   }
 
-  computeLayout(count) {
+  computeLayout(zones) {
+    if (zones.length === 1) {
+      this._layoutSingleZone(zones[0]);
+    } else {
+      this._layoutMultiZone(zones);
+    }
+  }
+
+  _layoutSingleZone(zone) {
     const { width } = this.scale;
+    const count = zone.books.length;
     const rows = Math.max(1, Math.ceil(count / MAX_PER_ROW));
     this.pageCount = Math.max(1, Math.ceil(rows / MAX_ROWS_PER_PAGE));
     const rowsOnScreen = Math.min(rows, MAX_ROWS_PER_PAGE);
@@ -180,18 +213,15 @@ export default class GameScene extends Phaser.Scene {
 
     this.bookW = Phaser.Math.Clamp(
       (availW - (widestRow - 1) * GAP_X) / widestRow,
-      60,
-      BOOK_W_MAX
+      60, BOOK_W_MAX
     );
     this.bookH = Phaser.Math.Clamp(
       (availH - rowsOnScreen * BOARD_H - (rowsOnScreen - 1) * GAP_Y) / rowsOnScreen,
-      78,
-      BOOK_H_MAX
+      78, BOOK_H_MAX
     );
 
     const rowStride = this.bookH + BOARD_H + GAP_Y;
-    const totalH =
-      rowsOnScreen * this.bookH + rowsOnScreen * BOARD_H + (rowsOnScreen - 1) * GAP_Y;
+    const totalH = rowsOnScreen * this.bookH + rowsOnScreen * BOARD_H + (rowsOnScreen - 1) * GAP_Y;
     const startY = AREA_TOP + (availH - totalH) / 2;
 
     this.slots = [];
@@ -204,21 +234,120 @@ export default class GameScene extends Phaser.Scene {
       const startX = regionCenter - rowW / 2 + this.bookW / 2;
       const centerY = startY + this.bookH / 2 + screenRow * rowStride;
       for (let c = 0; c < cnt; c++) {
-        this.slots.push({ x: startX + c * (this.bookW + GAP_X), y: centerY, page });
+        this.slots.push({ x: startX + c * (this.bookW + GAP_X), y: centerY, page, zoneIdx: 0 });
       }
       this.rowRects.push({
         x: startX - this.bookW / 2 - 16,
         y: startY + this.bookH + screenRow * rowStride,
         w: rowW + 32,
-        page,
+        page, zoneIdx: 0,
       });
     }
+
+    this.zoneRanges = [{ zi: 0, rule: zone.rule, label: zone.label, label_es: zone.label_es,
+      start: 0, end: count - 1 }];
+    this.zoneTopYMap = null;
+    this.celebrateY = (AREA_TOP + AREA_BOTTOM) / 2;
+  }
+
+  _layoutMultiZone(zones) {
+    const { width } = this.scale;
+    const ZONE_LABEL_H = 26;
+    const ZONE_SEP = 18;
+
+    this.pageCount = 1; // multi-zone levels are single-page
+    this.slots = [];
+    this.rowRects = [];
+    this.zoneRanges = [];
+    this.zoneTopYMap = new Map();
+
+    // Pre-compute per-zone row metadata
+    const zoneMetas = zones.map((zone) => {
+      const count = zone.books.length;
+      const rows = Math.max(1, Math.ceil(count / MAX_PER_ROW));
+      const rowCounts = [];
+      let remaining = count;
+      for (let r = 0; r < rows; r++) {
+        const n = Math.ceil(remaining / (rows - r));
+        rowCounts.push(n);
+        remaining -= n;
+      }
+      return { count, rows, rowCounts, widestRow: Math.max(...rowCounts) };
+    });
+
+    const totalRows = zoneMetas.reduce((s, z) => s + z.rows, 0);
+    const maxWidestRow = Math.max(...zoneMetas.map((z) => z.widestRow));
+    const numZones = zones.length;
+
+    const regionLeft = LEFT_RESERVED;
+    const regionRight = width - RIGHT_MARGIN;
+    const regionCenter = (regionLeft + regionRight) / 2;
+    const availW = regionRight - regionLeft;
+
+    // Height reserved for zone labels and separators
+    const labelsH = numZones * ZONE_LABEL_H + (numZones - 1) * ZONE_SEP;
+    const availH = AREA_BOTTOM - AREA_TOP - labelsH;
+
+    this.bookW = Phaser.Math.Clamp(
+      (availW - (maxWidestRow - 1) * GAP_X) / maxWidestRow,
+      60, BOOK_W_MAX
+    );
+    this.bookH = Phaser.Math.Clamp(
+      (availH - totalRows * BOARD_H - (totalRows - 1) * GAP_Y) / totalRows,
+      78, BOOK_H_MAX
+    );
+
+    const rowStride = this.bookH + BOARD_H + GAP_Y;
+
+    let currentY = AREA_TOP;
+    let slotStart = 0;
+
+    zones.forEach((zone, zi) => {
+      const meta = zoneMetas[zi];
+
+      // Record the Y position of this zone's label area
+      this.zoneTopYMap.set(zi, currentY);
+      currentY += ZONE_LABEL_H;
+
+      // Lay out rows for this zone
+      for (let r = 0; r < meta.rows; r++) {
+        const cnt = meta.rowCounts[r];
+        const rowW = cnt * this.bookW + (cnt - 1) * GAP_X;
+        const startX = regionCenter - rowW / 2 + this.bookW / 2;
+        const centerY = currentY + this.bookH / 2;
+
+        for (let c = 0; c < cnt; c++) {
+          this.slots.push({
+            x: startX + c * (this.bookW + GAP_X),
+            y: centerY,
+            page: 0,
+            zoneIdx: zi,
+          });
+        }
+        this.rowRects.push({
+          x: startX - this.bookW / 2 - 16,
+          y: currentY + this.bookH,
+          w: rowW + 32,
+          page: 0, zoneIdx: zi,
+        });
+        currentY += rowStride;
+      }
+
+      this.zoneRanges.push({
+        zi, rule: zone.rule, label: zone.label, label_es: zone.label_es,
+        start: slotStart, end: slotStart + meta.count - 1,
+      });
+      slotStart += meta.count;
+
+      if (zi < numZones - 1) currentY += ZONE_SEP;
+    });
 
     this.celebrateY = (AREA_TOP + AREA_BOTTOM) / 2;
   }
 
-  buildShelf(count) {
-    this.computeLayout(count);
+  buildShelf() {
+    const zones = this.levelDef.zones;
+    this.computeLayout(zones);
 
     this.shelfGraphics = [];
     this.rowRects.forEach((rect) => {
@@ -229,6 +358,42 @@ export default class GameScene extends Phaser.Scene {
       g.fillRect(rect.x, rect.y + BOARD_H, rect.w, 9);
       this.shelfGraphics.push({ gfx: g, page: rect.page });
     });
+
+    // Zone labels and separators (multi-zone levels only)
+    this.zoneLabelObjects = [];
+    if (zones.length > 1 && this.zoneTopYMap) {
+      this.zoneRanges.forEach((range) => {
+        const labelY = this.zoneTopYMap.get(range.zi);
+        if (labelY == null) return;
+
+        const rawLabel = I18n.lang === "es"
+          ? (range.label_es || range.label || "")
+          : (range.label || range.label_es || "");
+        const ruleName = this.ruleDisplayName(range.rule);
+        const displayText = rawLabel
+          ? `${rawLabel} \u2014 ${ruleName}`
+          : ruleName;
+
+        // Separator line above zone (except first)
+        if (range.zi > 0) {
+          const sepG = this.add.graphics();
+          sepG.lineStyle(1, COLORS.accent, 0.25);
+          sepG.lineBetween(LEFT_RESERVED, labelY - 8, this.scale.width - RIGHT_MARGIN, labelY - 8);
+          this.zoneLabelObjects.push(sepG);
+        }
+
+        const lbl = this.add
+          .text(LEFT_RESERVED + 8, labelY + 13, displayText, {
+            fontFamily: FONTS.body,
+            fontSize: "13px",
+            color: "#d9a441",
+            fontStyle: "bold",
+          })
+          .setOrigin(0, 0.5)
+          .setDepth(10);
+        this.zoneLabelObjects.push(lbl);
+      });
+    }
 
     this.slotGuides = [];
     this.slots.forEach((slot) => {
@@ -253,24 +418,56 @@ export default class GameScene extends Phaser.Scene {
     });
   }
 
-  buildBooks(books) {
-    const scrambled = this.scramble(books);
-    this.order = scrambled.map((book, i) => this.createBookCard(book, this.slots[i]));
+  buildBooks() {
+    const zones = this.levelDef.zones;
+    this.order = [];
+
+    zones.forEach((zone, zi) => {
+      const scrambled = this.scrambleZone(zone.books, zone.rule);
+      const range = this.zoneRanges[zi];
+      const primaryAttr = this.primaryAttrFor(zone.rule);
+      scrambled.forEach((book, localIdx) => {
+        const slotIdx = range.start + localIdx;
+        const card = this.createBookCard(book, this.slots[slotIdx], primaryAttr);
+        card.setData("zoneIdx", zi);
+        this.order.push(card);
+      });
+    });
+
     this.enableDragging();
   }
 
-  scramble(books) {
+  /** The first sort key of a rule, used to surface the relevant attribute on cards. */
+  primaryAttrFor(rule) {
+    const { keys } = resolveRule(rule);
+    return keys[0]?.key ?? null;
+  }
+
+  sizeWord(size) {
+    const key = { small: "sizeSmall", medium: "sizeMedium", large: "sizeLarge" }[
+      String(size).toLowerCase()
+    ];
+    return key ? I18n.t(key) : String(size);
+  }
+
+  scrambleZone(books, rule) {
     if (books.length < 2) return [...books];
     let arr;
     let attempts = 0;
     do {
       arr = Phaser.Utils.Array.Shuffle([...books]);
       attempts++;
-    } while (evaluateOrder(arr, this.levelDef.rule).solved && attempts < 20);
+    } while (evaluateOrder(arr, rule).solved && attempts < 20);
     return arr;
   }
 
-  createBookCard(book, slot) {
+  /** @deprecated kept for any legacy call-sites; delegates to scrambleZone */
+  scramble(books) {
+    const rule = this.levelDef.zones?.[0]?.rule ?? this.levelDef.rule;
+    return this.scrambleZone(books, rule);
+  }
+
+  createBookCard(book, slot, primaryAttr = null) {
     const w = this.bookW;
     const h = this.bookH;
 
@@ -323,9 +520,16 @@ export default class GameScene extends Phaser.Scene {
       })
       .setOrigin(0.5, 0);
 
-    const yearOnly = !showAuthor && !showGenre;
+    // When the level sorts by pages or size, surface that attribute prominently
+    // so the puzzle is solvable at a glance (colour is already the spine fill).
+    const emphasize = primaryAttr === "pages" || primaryAttr === "size";
+    const yearOnly = emphasize || (!showAuthor && !showGenre);
     let metaStr;
-    if (showAuthor && showGenre) {
+    if (primaryAttr === "pages") {
+      metaStr = I18n.t("pagesCount", { n: book.pages });
+    } else if (primaryAttr === "size") {
+      metaStr = this.sizeWord(book.size);
+    } else if (showAuthor && showGenre) {
       metaStr = `${book.author}\n${book.genre} \u00b7 ${book.year}`;
     } else if (showGenre) {
       metaStr = `${book.genre} \u00b7 ${book.year}`;
@@ -361,7 +565,9 @@ export default class GameScene extends Phaser.Scene {
     const { width } = this.scale;
     const book = container.getData("book");
     const h = this.bookH;
-    const lines = `${book.title}\n${book.author}\n${book.genre} \u00b7 ${book.year}`;
+    const lines =
+      `${book.title}\n${book.author}\n${book.genre} \u00b7 ${book.year}\n` +
+      `${this.sizeWord(book.size)} \u00b7 ${I18n.t("pagesCount", { n: book.pages })}`;
 
     const txt = this.add
       .text(0, 0, lines, {
@@ -408,7 +614,7 @@ export default class GameScene extends Phaser.Scene {
     });
 
     this.input.on("dragstart", (_p, obj) => {
-      if (this.solved || this.autoArranging) return;
+      if (this.solved || this.autoArranging || this.paused) return;
       this.hideBookTooltip();
       this.dragging = obj;
       obj.setDepth(20);
@@ -417,7 +623,7 @@ export default class GameScene extends Phaser.Scene {
     });
 
     this.input.on("drag", (_p, obj, dragX, dragY) => {
-      if (this.solved || this.autoArranging) return;
+      if (this.solved || this.autoArranging || this.paused) return;
       obj.x = dragX;
       obj.y = dragY;
       this.updateFlipEdgeHints(dragX);
@@ -425,7 +631,7 @@ export default class GameScene extends Phaser.Scene {
     });
 
     this.input.on("dragend", (_p, obj) => {
-      if (this.solved || this.autoArranging) return;
+      if (this.solved || this.autoArranging || this.paused) return;
       obj.setDepth(1);
       this.tweens.add({ targets: obj, scale: 1, duration: 100 });
       this.handleDrop(obj);
@@ -450,23 +656,57 @@ export default class GameScene extends Phaser.Scene {
 
   handleDrop(obj) {
     const fromIndex = this.order.indexOf(obj);
-    const nearest = this.nearestSlot(obj.x, obj.y);
+    const zoneIdx = obj.getData("zoneIdx");
+    const multiZone = this.levelDef.zones.length > 1;
+    const nearest = this.nearestSlot(obj.x, obj.y, multiZone ? zoneIdx : null);
 
     if (nearest !== fromIndex) {
       this.order.splice(fromIndex, 1);
       this.order.splice(nearest, 0, obj);
       this.moves++;
       this.movesText.setText(I18n.t("movesLabel", { moves: this.moves }));
+      this.moveHistory.push({ fromIndex, nearest });
+      this.refreshUndoButton();
     }
     this.layoutBooks(true);
     this.checkSolved();
   }
 
-  nearestSlot(x, y) {
+  undoMove() {
+    if (this.solved || this.autoArranging || this.paused) return;
+    if (this.moveHistory.length === 0) return;
+
+    const { fromIndex, nearest } = this.moveHistory.pop();
+    const [obj] = this.order.splice(nearest, 1);
+    this.order.splice(fromIndex, 0, obj);
+
+    this.moves = Math.max(0, this.moves - 1);
+    this.movesText.setText(I18n.t("movesLabel", { moves: this.moves }));
+
+    // Bring the affected page into view so the change is visible
+    const slot = this.slots[fromIndex];
+    this.currentPage = Phaser.Math.Clamp(slot.page, 0, this.pageCount - 1);
+    this.layoutBooks(true);
+    this.showPage(this.currentPage);
+    this.refreshUndoButton();
+  }
+
+  refreshUndoButton() {
+    const canUndo = this.moveHistory.length > 0 && !this.solved && !this.autoArranging;
+    this.undoBtn?.setEnabled(canUndo);
+  }
+
+  /**
+   * Returns the index of the nearest slot on the current page.
+   * When zoneIdx is provided, only slots belonging to that zone are considered,
+   * which prevents books from being dropped into the wrong zone.
+   */
+  nearestSlot(x, y, zoneIdx = null) {
     let best = -1;
     let bestDist = Infinity;
     this.slots.forEach((slot, i) => {
       if (slot.page !== this.currentPage) return;
+      if (zoneIdx !== null && slot.zoneIdx !== zoneIdx) return;
       const d = Phaser.Math.Distance.Between(slot.x, slot.y, x, y);
       if (d < bestDist) {
         bestDist = d;
@@ -494,39 +734,57 @@ export default class GameScene extends Phaser.Scene {
       I18n.t("levelProgress", { level: this.levelNumber, total: this.totalLevels })
     );
 
-    const translated = I18n.t(`rule_${this.levelDef.rule}`);
-    const ruleName = translated.startsWith("rule_")
-      ? getRuleLabel(this.levelDef.rule)
-      : translated;
-    const ruleLine = I18n.t("ruleColon", { label: ruleName });
-    const detail =
-      I18n.pick(this.levelDef, "hint") || I18n.pick(this.levelDef, "description");
+    const zones = this.levelDef.zones;
     const bx = width / 2;
     const by = 74;
+    let bottomOfInstruction = by;
 
-    const ruleObj = this.add
-      .text(bx, by, ruleLine, {
-        fontFamily: FONTS.body,
-        fontSize: "18px",
-        color: "#d9a441",
-        fontStyle: "bold",
-        align: "center",
-      })
-      .setOrigin(0.5, 0);
+    if (zones.length === 1) {
+      // Single-zone: show "Rule: <label>" + optional hint
+      const ruleName = this.ruleDisplayName(zones[0].rule);
+      const ruleLine = I18n.t("ruleColon", { label: ruleName });
+      const detail =
+        I18n.pick(this.levelDef, "hint") || I18n.pick(this.levelDef, "description");
 
-    let bottomOfInstruction = by + ruleObj.height + 6;
-
-    if (detail) {
-      const detailObj = this.add
-        .text(bx, bottomOfInstruction, detail, {
+      const ruleObj = this.add
+        .text(bx, by, ruleLine, {
           fontFamily: FONTS.body,
-          fontSize: "14px",
+          fontSize: "18px",
+          color: "#d9a441",
+          fontStyle: "bold",
+          align: "center",
+        })
+        .setOrigin(0.5, 0);
+
+      bottomOfInstruction = by + ruleObj.height + 6;
+
+      if (detail) {
+        const detailObj = this.add
+          .text(bx, bottomOfInstruction, detail, {
+            fontFamily: FONTS.body,
+            fontSize: "14px",
+            color: "#f3e3c3",
+            align: "center",
+            wordWrap: { width: width - 200 },
+          })
+          .setOrigin(0.5, 0);
+        bottomOfInstruction += detailObj.height + 6;
+      }
+    } else {
+      // Multi-zone: show level-wide hint (or generic multi-zone hint)
+      const detail =
+        I18n.pick(this.levelDef, "hint") || I18n.pick(this.levelDef, "description");
+      const hintText = detail || I18n.t("multiZoneHint");
+      const hintObj = this.add
+        .text(bx, by, hintText, {
+          fontFamily: FONTS.body,
+          fontSize: "15px",
           color: "#f3e3c3",
           align: "center",
           wordWrap: { width: width - 200 },
         })
         .setOrigin(0.5, 0);
-      bottomOfInstruction += detailObj.height + 6;
+      bottomOfInstruction = by + hintObj.height + 6;
     }
 
     // Adjust AREA_TOP dynamically so the grid never overlaps the instructions
@@ -568,6 +826,21 @@ export default class GameScene extends Phaser.Scene {
       this.showActionTooltip(bx, by + 40, I18n.t("checkOrder"))
     );
     this.checkBtn.on("pointerout", () => this.hideActionTooltip());
+
+    // Undo — compact icon button below Check, disabled until a move is made
+    const uy = by + 56;
+    this.undoBtn = makeButton(
+      this,
+      bx,
+      uy,
+      "\u21B6",
+      () => this.undoMove(),
+      { width: 64, height: 44, fontSize: 24, fill: COLORS.woodLight, textColor: "#f3e3c3", enabled: false }
+    ).setDepth(51);
+    this.undoBtn.on("pointerover", () =>
+      this.showActionTooltip(bx, uy + 40, I18n.t("undo"))
+    );
+    this.undoBtn.on("pointerout", () => this.hideActionTooltip());
 
     this.actionMenuItems = [];
     this.actionMenuOpen = false;
@@ -738,6 +1011,79 @@ export default class GameScene extends Phaser.Scene {
     overlay.on("pointerdown", close);
   }
 
+  togglePause() {
+    if (this.solved || this.autoArranging) return;
+    if (this.paused) this.resumeGame();
+    else this.pauseGame();
+  }
+
+  pauseGame() {
+    if (this.paused || this.solved) return;
+    this.paused = true;
+    this.pauseStart = this.time.now;
+    this.hideBookTooltip();
+    this.hideActionTooltip();
+    this.closeActionMenu?.();
+
+    const { width, height } = this.scale;
+    const pw = 360, ph = 300;
+    const px = (width - pw) / 2, py = (height - ph) / 2;
+
+    const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.6)
+      .setOrigin(0).setDepth(80).setInteractive();
+
+    const panel = this.add.graphics().setDepth(81);
+    panel.fillStyle(COLORS.ink, 0.98);
+    panel.fillRoundedRect(px, py, pw, ph, 16);
+    panel.lineStyle(2, COLORS.accent, 1);
+    panel.strokeRoundedRect(px, py, pw, ph, 16);
+
+    const title = this.add.text(width / 2, py + 44, I18n.t("paused"), {
+      fontFamily: FONTS.title, fontSize: "28px", color: "#f3e3c3", fontStyle: "bold",
+    }).setOrigin(0.5).setDepth(82);
+
+    const elapsed = this.pauseStart - this.startTime;
+    const sub = this.add.text(width / 2, py + 84,
+      `${I18n.t("timeLabel", { time: formatTime(elapsed) })}  \u00b7  ${I18n.t("movesLabel", { moves: this.moves })}`,
+      { fontFamily: FONTS.body, fontSize: "15px", color: "#c9b08a" }
+    ).setOrigin(0.5).setDepth(82);
+
+    this.pauseItems = [overlay, panel, title, sub];
+
+    const resumeBtn = makeButton(this, width / 2, py + 140, I18n.t("resume"),
+      () => this.resumeGame(),
+      { width: 220, height: 52, fontSize: 20, fill: COLORS.good, textColor: "#ffffff" }
+    ).setDepth(82);
+
+    const restartBtn = makeButton(this, width / 2, py + 200, I18n.t("restartLevel"),
+      () => { this.clearPauseUI(); this.scene.restart({ level: this.levelNumber }); },
+      { width: 200, height: 44, fontSize: 16, fill: COLORS.woodLight, textColor: "#f3e3c3" }
+    ).setDepth(82);
+
+    const menuBtn = makeButton(this, width / 2, py + 252, I18n.t("menu"),
+      () => { this.clearPauseUI(); goToScene(this, "MenuScene"); },
+      { width: 200, height: 44, fontSize: 16, fill: COLORS.woodLight, textColor: "#f3e3c3" }
+    ).setDepth(82);
+
+    this.pauseItems.push(resumeBtn, restartBtn, menuBtn);
+
+    overlay.on("pointerdown", () => this.resumeGame());
+  }
+
+  resumeGame() {
+    if (!this.paused) return;
+    // Shift startTime forward by the paused duration so the timer stays accurate
+    this.startTime += this.time.now - this.pauseStart;
+    this.paused = false;
+    this.clearPauseUI();
+  }
+
+  clearPauseUI() {
+    if (!this.pauseItems) return;
+    this.pauseItems.forEach((o) => o.destroy());
+    this.pauseItems = null;
+  }
+
   buildPager() {
     const { width } = this.scale;
     const midY = (AREA_TOP + AREA_BOTTOM) / 2;
@@ -887,14 +1233,44 @@ export default class GameScene extends Phaser.Scene {
 
   checkSolved(manual = false) {
     if (this.solved) return;
-    const currentBooks = this.order.map((c) => c.getData("book"));
-    const result = evaluateOrder(currentBooks, this.levelDef.rule);
-
+    const result = this._evaluateAll();
     if (result.solved) {
       this.onSolved();
     } else if (manual) {
       this.flashFeedback(result.perSlot);
     }
+  }
+
+  /**
+   * Resolve a display name for a rule reference (string, keys array or object).
+   * Named string rules are localised via i18n; custom rules use their JSON
+   * label (localised) or an auto-generated description from getRuleLabel().
+   */
+  ruleDisplayName(rule) {
+    if (typeof rule === "string") {
+      const translated = I18n.t(`rule_${rule}`);
+      return translated.startsWith("rule_") ? getRuleLabel(rule) : translated;
+    }
+    if (rule && typeof rule === "object" && !Array.isArray(rule)) {
+      const lbl = I18n.lang === "es"
+        ? (rule.label_es || rule.label)
+        : (rule.label || rule.label_es);
+      if (lbl) return lbl;
+    }
+    return getRuleLabel(rule);
+  }
+
+  /** Evaluate every zone and return a combined {perSlot, solved} result. */
+  _evaluateAll() {
+    const perSlot = [];
+    let solved = true;
+    this.zoneRanges.forEach((range) => {
+      const books = this.order.slice(range.start, range.end + 1).map((c) => c.getData("book"));
+      const zr = evaluateOrder(books, range.rule);
+      perSlot.push(...zr.perSlot);
+      if (!zr.solved) solved = false;
+    });
+    return { perSlot, solved };
   }
 
   flashFeedback(perSlot) {
@@ -1006,6 +1382,7 @@ export default class GameScene extends Phaser.Scene {
 
   onSolved() {
     this.solved = true;
+    this.refreshUndoButton();
     const timeMs = this.time.now - this.startTime;
     const score = this.computeScore(timeMs, this.moves);
 
@@ -1093,15 +1470,24 @@ export default class GameScene extends Phaser.Scene {
 
   autosolve() {
     if (!this.levelDef || this.solved) return false;
-    const books = this.order.map((c) => c.getData("book"));
-    const { expected } = evaluateOrder(books, this.levelDef.rule);
-    this.order.sort(
-      (a, b) => expected.indexOf(a.getData("book")) - expected.indexOf(b.getData("book"))
-    );
+    this._sortAllZones();
     this.layoutBooks(false);
     this.showPage(0);
     this.checkSolved();
     return this.solved;
+  }
+
+  /** Sort books within each zone into their correct order (in-place on this.order). */
+  _sortAllZones() {
+    this.zoneRanges.forEach((range) => {
+      const slice = this.order.slice(range.start, range.end + 1);
+      const books = slice.map((c) => c.getData("book"));
+      const { expected } = evaluateOrder(books, range.rule);
+      const sorted = [...slice].sort(
+        (a, b) => expected.indexOf(a.getData("book")) - expected.indexOf(b.getData("book"))
+      );
+      sorted.forEach((c, i) => { this.order[range.start + i] = c; });
+    });
   }
 
   autoArrange() {
@@ -1195,12 +1581,9 @@ export default class GameScene extends Phaser.Scene {
     this.autoUsed = true;
     this.autoArranging = true;
     this.autoBtn?.setEnabled(false);
+    this.refreshUndoButton();
 
-    const books = this.order.map((c) => c.getData("book"));
-    const { expected } = evaluateOrder(books, this.levelDef.rule);
-    this.order.sort(
-      (a, b) => expected.indexOf(a.getData("book")) - expected.indexOf(b.getData("book"))
-    );
+    this._sortAllZones();
 
     this.currentPage = 0;
     this.showPage(0);
@@ -1239,7 +1622,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   update() {
-    if (this.timerStarted && !this.solved) {
+    if (this.timerStarted && !this.solved && !this.paused) {
       const elapsed = this.time.now - this.startTime;
       this.timeText.setText(I18n.t("timeLabel", { time: formatTime(elapsed) }));
     }
