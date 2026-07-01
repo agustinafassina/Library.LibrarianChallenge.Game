@@ -2,16 +2,17 @@ import { Storage } from "../utils/storage.js";
 import { loadLevels } from "../utils/dataLoader.js";
 import { I18n } from "../utils/i18n.js?v=2";
 import { makeButton, goToScene, COLORS, FONTS, formatTime } from "../utils/ui.js";
+import { LEVEL_SELECT_LAYOUT } from "../config/layout.js";
 
-const COLS        = 5;
-const ROWS_PAGE   = 4;
-const PER_PAGE    = COLS * ROWS_PAGE;
-const CELL_W      = 174;
-const CELL_H      = 122;
-const CARD_W      = 150;
-const CARD_H      = 104;
-const GRID_TOP    = 108;
-const GRID_BOTTOM = 580;
+const COLS = LEVEL_SELECT_LAYOUT.cols;
+const ROWS_PAGE = LEVEL_SELECT_LAYOUT.rowsPerPage;
+const PER_PAGE = LEVEL_SELECT_LAYOUT.perPage;
+const CELL_W = LEVEL_SELECT_LAYOUT.cellW;
+const CELL_H = LEVEL_SELECT_LAYOUT.cellH;
+const CARD_W = LEVEL_SELECT_LAYOUT.cardW;
+const CARD_H = LEVEL_SELECT_LAYOUT.cardH;
+const GRID_TOP = LEVEL_SELECT_LAYOUT.gridTop;
+const GRID_BOTTOM = LEVEL_SELECT_LAYOUT.gridBottom;
 
 const RULE_BADGE = {
   title_az:         { en: "Title A–Z",       es: "Título A–Z" },
@@ -110,8 +111,13 @@ export default class LevelSelectScene extends Phaser.Scene {
     try {
       levels = await loadLevels();
     } catch (err) {
-      loading.setText(I18n.t("levelsError"));
       console.error(err);
+      goToScene(this, "ErrorScene", {
+        title: I18n.t("errorTitle"),
+        messageKey: "levelsError",
+        details: err?.message || String(err),
+        retryScene: "LevelSelectScene",
+      });
       return;
     }
     loading.destroy();

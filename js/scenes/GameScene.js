@@ -1,22 +1,24 @@
 import { getLevelWithBooks, getLevelCount } from "../utils/dataLoader.js";
-import { evaluateOrder, getRuleLabel, resolveRule } from "../utils/rules.js";
+import { getRuleLabel, resolveRule } from "../utils/rules.js";
 import { Storage } from "../utils/storage.js";
 import { I18n } from "../utils/i18n.js?v=2";
 import { makeButton, goToScene, COLORS, FONTS, formatTime } from "../utils/ui.js";
+import { GAME_LAYOUT } from "../config/layout.js";
+import { BoardController } from "../game/BoardController.js";
 
-const BOOK_W_MAX = 102;
-const BOOK_H_MAX = 152;
-const GAP_X = 14;
-const GAP_Y = 18;
-const BOARD_H = 14;
-const MAX_PER_ROW = 6;
-const MAX_ROWS_PER_PAGE = 4;
 const HINT_SCORE_PENALTY = 120;
-let AREA_TOP = 150;
-const AREA_BOTTOM = 600;
-const LEFT_RESERVED = 24;
-const RIGHT_MARGIN = 24;
-const RIGHT_GUTTER = 60;
+const BOOK_W_MAX = GAME_LAYOUT.bookWMax;
+const BOOK_H_MAX = GAME_LAYOUT.bookHMax;
+const GAP_X = GAME_LAYOUT.gapX;
+const GAP_Y = GAME_LAYOUT.gapY;
+const BOARD_H = GAME_LAYOUT.boardH;
+const MAX_PER_ROW = GAME_LAYOUT.maxPerRow;
+const MAX_ROWS_PER_PAGE = GAME_LAYOUT.maxRowsPerPage;
+let AREA_TOP = GAME_LAYOUT.areaTopBase;
+const AREA_BOTTOM = GAME_LAYOUT.areaBottom;
+const LEFT_RESERVED = GAME_LAYOUT.leftReserved;
+const RIGHT_MARGIN = GAME_LAYOUT.rightMargin;
+const RIGHT_GUTTER = GAME_LAYOUT.rightGutter;
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -42,7 +44,7 @@ export default class GameScene extends Phaser.Scene {
     this.paused = false;
     this.pauseStart = 0;
     this.pauseItems = null;
-    this.moveHistory = [];
+    this.board = new BoardController();
     this.hintsUsed = 0;
     this.failed = false;
     this.challenge = null;
@@ -50,6 +52,8 @@ export default class GameScene extends Phaser.Scene {
     this.challengeBadgeBg = null;
     this.failItems = null;
     this.dropTargetIndex = -1;
+    this.bookTextureCache = new Map();
+    this.handlers = {};
   }
 
   async create() {
@@ -72,11 +76,21 @@ export default class GameScene extends Phaser.Scene {
       this.totalLevels = await getLevelCount();
     } catch (err) {
       console.error(err);
-      this.loadingText.setText(I18n.t("levelDataError"));
+      goToScene(this, "ErrorScene", {
+        title: I18n.t("errorTitle"),
+        messageKey: "levelDataError",
+        details: err?.message || String(err),
+        retryScene: "GameScene",
+        retryData: { level: this.levelNumber },
+      });
       return;
     }
     if (!level) {
-      this.loadingText.setText(I18n.t("levelNotFound", { level: this.levelNumber }));
+      goToScene(this, "ErrorScene", {
+        title: I18n.t("errorTitle"),
+        message: I18n.t("levelNotFound", { level: this.levelNumber }),
+        retryScene: "LevelSelectScene",
+      });
       return;
     }
     this.loadingText.destroy();
@@ -92,16 +106,22 @@ export default class GameScene extends Phaser.Scene {
     this.buildFlipEdgeHints();
     this.showPage(0);
 
-    this.input.keyboard.on("keydown-R", () => this.resetLevel());
-    this.input.keyboard.on("keydown-P", () => this.togglePause());
-    this.input.keyboard.on("keydown-ESC", () => this.togglePause());
-    this.input.keyboard.on("keydown-Z", (e) => {
+    this.handlers.onKeyR = () => this.resetLevel();
+    this.handlers.onKeyP = () => this.togglePause();
+    this.handlers.onKeyEsc = () => this.togglePause();
+    this.handlers.onKeyZ = (e) => {
       if (e.ctrlKey || e.metaKey) this.undoMove();
-    });
+    };
+    this.input.keyboard.on("keydown-R", this.handlers.onKeyR);
+    this.input.keyboard.on("keydown-P", this.handlers.onKeyP);
+    this.input.keyboard.on("keydown-ESC", this.handlers.onKeyEsc);
+    this.input.keyboard.on("keydown-Z", this.handlers.onKeyZ);
 
     this.startTime = this.time.now;
     this.timerStarted = true;
     this.updateChallengeDisplay();
+
+    this.events.once("shutdown", () => this.cleanupSceneListeners());
   }
 
   drawBackground() {
@@ -559,23 +579,31 @@ export default class GameScene extends Phaser.Scene {
       );
       this.slotGuides.push(guide);
     });
+
+    this.board.setStructure({
+      slots: this.slots,
+      zoneRanges: this.zoneRanges,
+      pageCount: this.pageCount,
+    });
+    this.board.setCurrentPage(this.currentPage);
   }
 
   buildBooks() {
     const zones = this.levelDef.zones;
     this.order = [];
 
-    zones.forEach((zone, zi) => {
-      const scrambled = this.scrambleZone(zone.books, zone.rule);
-      const range = this.zoneRanges[zi];
-      const primaryAttr = this.primaryAttrFor(zone.rule);
-      scrambled.forEach((book, localIdx) => {
-        const slotIdx = range.start + localIdx;
-        const card = this.createBookCard(book, this.slots[slotIdx], primaryAttr);
-        card.setData("zoneIdx", zi);
-        this.order.push(card);
-      });
+    const initialBooks = this.board.createInitialOrder(zones);
+    initialBooks.forEach((book, i) => {
+      const slot = this.slots[i];
+      const zoneIdx = slot.zoneIdx ?? 0;
+      const rule = this.zoneRanges[zoneIdx]?.rule;
+      const primaryAttr = this.primaryAttrFor(rule);
+      const card = this.createBookCard(book, slot, primaryAttr);
+      card.setData("zoneIdx", zoneIdx);
+      this.order.push(card);
     });
+
+    this.board.setItems(this.order);
 
     this.enableDragging();
   }
@@ -593,93 +621,50 @@ export default class GameScene extends Phaser.Scene {
     return key ? I18n.t(key) : String(size);
   }
 
-  /**
-   * Score a shuffled arrangement by how "easy" it is.
-   * Lower fixed slots and larger displacements mean better challenge starts.
-   */
-  scoreShuffle(arr, rule) {
-    const { expected, perSlot } = evaluateOrder(arr, rule);
-    const n = arr.length;
-    const expectedIndex = new Map(expected.map((b, i) => [b, i]));
-    let displaced = 0;
-    let farDisplaced = 0;
-    let displacementSum = 0;
-
-    arr.forEach((book, i) => {
-      const ei = expectedIndex.get(book);
-      const d = Math.abs(i - ei);
-      displacementSum += d;
-      if (d > 0) displaced++;
-      if (d >= 2) farDisplaced++;
-    });
-
-    const correctCount = perSlot.filter(Boolean).length;
-    return {
-      solved: perSlot.every(Boolean),
-      correctCount,
-      displaced,
-      farDisplaced,
-      avgDisplacement: n > 0 ? displacementSum / n : 0,
-    };
+  getBookTextureKey(book, w, h) {
+    return `book-${w}x${h}-${String(book.color).replace("#", "")}`;
   }
 
-  /**
-   * A controlled-difficulty start should avoid "almost solved" layouts.
-   * Rules are lenient on tiny levels and stricter on medium/large ones.
-   */
-  isGoodShuffle(score, n) {
-    if (score.solved) return false;
-    if (n <= 2) return true;
-
-    // Cap how many books may start in the right slot.
-    const maxCorrect = n <= 4 ? 1 : Math.floor(n * 0.3);
-    if (score.correctCount > maxCorrect) return false;
-
-    // Require enough books to move from their expected slot.
-    const minDisplaced = n <= 4 ? n - 1 : Math.ceil(n * 0.6);
-    if (score.displaced < minDisplaced) return false;
-
-    // Require at least one meaningful displacement.
-    if (n >= 5 && score.farDisplaced < 1) return false;
-
-    return true;
-  }
-
-  scrambleZone(books, rule) {
-    if (books.length < 2) return [...books];
-
-    let bestArr = [...books];
-    let bestScore = this.scoreShuffle(bestArr, rule);
-
-    // Try many shuffles and keep the best fallback if strict criteria aren't met.
-    for (let attempts = 0; attempts < 120; attempts++) {
-      const candidate = Phaser.Utils.Array.Shuffle([...books]);
-      const score = this.scoreShuffle(candidate, rule);
-
-      if (this.isGoodShuffle(score, books.length)) {
-        return candidate;
-      }
-
-      // Prefer fewer correct slots, then larger average displacement.
-      const isBetter =
-        score.correctCount < bestScore.correctCount ||
-        (
-          score.correctCount === bestScore.correctCount &&
-          score.avgDisplacement > bestScore.avgDisplacement
-        );
-      if (isBetter) {
-        bestArr = candidate;
-        bestScore = score;
-      }
+  ensureBookTexture(book, w, h) {
+    const key = this.getBookTextureKey(book, w, h);
+    if (this.bookTextureCache.has(key) || this.textures.exists(key)) {
+      this.bookTextureCache.set(key, true);
+      return key;
     }
 
-    return bestArr;
-  }
+    const g = this.make.graphics({ x: 0, y: 0, add: false });
+    const fill = Phaser.Display.Color.HexStringToColor(book.color).color;
 
-  /** @deprecated kept for any legacy call-sites; delegates to scrambleZone */
-  scramble(books) {
-    const rule = this.levelDef.zones?.[0]?.rule ?? this.levelDef.rule;
-    return this.scrambleZone(books, rule);
+    // Book body
+    g.fillStyle(fill, 1);
+    g.fillRoundedRect(0, 0, w, h, 7);
+
+    // Binding strip
+    const bindW = Math.max(5, Math.round(w * 0.1));
+    g.fillStyle(0x000000, 0.2);
+    g.fillRoundedRect(0, 0, bindW, h, { tl: 7, tr: 2, bl: 7, br: 2 });
+
+    // Page edges
+    const ex = w - 3;
+    g.fillStyle(0xffffff, 0.35);
+    g.fillRect(ex - 1, 5, 2, h - 10);
+    g.fillStyle(0xffffff, 0.2);
+    g.fillRect(ex - 4, 5, 2, h - 10);
+    g.fillStyle(0xffffff, 0.1);
+    g.fillRect(ex - 7, 5, 2, h - 10);
+
+    // Inner frame
+    g.lineStyle(1, 0xffffff, 0.22);
+    g.strokeRoundedRect(bindW + 2, 3, w - bindW - 8, h - 6, 4);
+
+    // Outer border
+    g.lineStyle(1.5, 0x000000, 0.35);
+    g.strokeRoundedRect(0, 0, w, h, 7);
+
+    g.generateTexture(key, w, h);
+    g.destroy();
+    this.bookTextureCache.set(key, true);
+    return key;
   }
 
   createBookCard(book, slot, primaryAttr = null) {
@@ -692,34 +677,8 @@ export default class GameScene extends Phaser.Scene {
     const titleSize = Math.round(Phaser.Math.Clamp(Math.min(h * 0.11, w * 0.2), 12, 15));
     const metaSize  = Math.round(Phaser.Math.Clamp(Math.min(h * 0.09, w * 0.17), 11, 13));
 
-    const spine = this.add.graphics();
-    const fill = Phaser.Display.Color.HexStringToColor(book.color).color;
-
-    // ── Book cover body ──────────────────────────────────────
-    spine.fillStyle(fill, 1);
-    spine.fillRoundedRect(-w / 2, -h / 2, w, h, 7);
-
-    // Binding strip on the left (spine edge)
-    const bindW = Math.max(5, Math.round(w * 0.1));
-    spine.fillStyle(0x000000, 0.2);
-    spine.fillRoundedRect(-w / 2, -h / 2, bindW, h, { tl: 7, tr: 2, bl: 7, br: 2 });
-
-    // Page edges on the right (stacked pages visible from front)
-    const ex = w / 2 - 3;
-    spine.fillStyle(0xffffff, 0.35);
-    spine.fillRect(ex - 1, -h / 2 + 5, 2, h - 10);
-    spine.fillStyle(0xffffff, 0.2);
-    spine.fillRect(ex - 4, -h / 2 + 5, 2, h - 10);
-    spine.fillStyle(0xffffff, 0.1);
-    spine.fillRect(ex - 7, -h / 2 + 5, 2, h - 10);
-
-    // Inner frame (book cover border)
-    spine.lineStyle(1, 0xffffff, 0.22);
-    spine.strokeRoundedRect(-w / 2 + bindW + 2, -h / 2 + 3, w - bindW - 8, h - 6, 4);
-
-    // Outer border
-    spine.lineStyle(1.5, 0x000000, 0.35);
-    spine.strokeRoundedRect(-w / 2, -h / 2, w, h, 7);
+    const coverTex = this.ensureBookTexture(book, Math.round(w), Math.round(h));
+    const spine = this.add.image(0, 0, coverTex).setOrigin(0.5);
 
     const shadow = { offsetX: 0, offsetY: 1, color: "#000000", blur: 3, fill: true };
 
@@ -768,7 +727,6 @@ export default class GameScene extends Phaser.Scene {
     const container = this.add.container(slot.x, slot.y, [spine, titleTxt, metaTxt]);
     container.setSize(w, h);
     container.setData("book", book);
-    container.setData("spine", spine);
     container.setData("compact", !showAuthor || !showGenre);
     return container;
   }
@@ -883,7 +841,7 @@ export default class GameScene extends Phaser.Scene {
       c.on("pointerout",  () => this.hideBookTooltip());
     });
 
-    this.input.on("dragstart", (_p, obj) => {
+    this.handlers.onDragStart = (_p, obj) => {
       if (this.solved || this.failed || this.autoArranging || this.paused) return;
       this.hideBookTooltip();
       this.dragging = obj;
@@ -892,21 +850,23 @@ export default class GameScene extends Phaser.Scene {
       const fromIndex = this.order.indexOf(obj);
       this.showDropTarget(fromIndex);
       this.updateFlipEdgeHints(obj.x);
-    });
+    };
+    this.input.on("dragstart", this.handlers.onDragStart);
 
-    this.input.on("drag", (_p, obj, dragX, dragY) => {
+    this.handlers.onDrag = (_p, obj, dragX, dragY) => {
       if (this.solved || this.failed || this.autoArranging || this.paused) return;
       obj.x = dragX;
       obj.y = dragY;
       const zoneIdx = obj.getData("zoneIdx");
       const multiZone = this.levelDef.zones.length > 1;
-      const nearest = this.nearestSlot(dragX, dragY, multiZone ? zoneIdx : null);
+      const nearest = this.board.nearestSlot(dragX, dragY, multiZone ? zoneIdx : null);
       this.showDropTarget(nearest);
       this.updateFlipEdgeHints(dragX);
       this.maybeFlipPage(dragX);
-    });
+    };
+    this.input.on("drag", this.handlers.onDrag);
 
-    this.input.on("dragend", (_p, obj) => {
+    this.handlers.onDragEnd = (_p, obj) => {
       if (this.solved || this.failed || this.autoArranging || this.paused) return;
       obj.setDepth(1);
       this.tweens.add({ targets: obj, scale: 1, duration: 100 });
@@ -915,7 +875,21 @@ export default class GameScene extends Phaser.Scene {
       this.dragging = null;
       this.hideFlipEdgeHints();
       this.showPage(this.currentPage);
-    });
+    };
+    this.input.on("dragend", this.handlers.onDragEnd);
+  }
+
+  cleanupSceneListeners() {
+    this.input.off("dragstart", this.handlers.onDragStart);
+    this.input.off("drag", this.handlers.onDrag);
+    this.input.off("dragend", this.handlers.onDragEnd);
+
+    this.input.keyboard.off("keydown-R", this.handlers.onKeyR);
+    this.input.keyboard.off("keydown-P", this.handlers.onKeyP);
+    this.input.keyboard.off("keydown-ESC", this.handlers.onKeyEsc);
+    this.input.keyboard.off("keydown-Z", this.handlers.onKeyZ);
+
+    this.handlers = {};
   }
 
   maybeFlipPage(dragX) {
@@ -935,17 +909,14 @@ export default class GameScene extends Phaser.Scene {
     const fromIndex = this.order.indexOf(obj);
     const zoneIdx = obj.getData("zoneIdx");
     const multiZone = this.levelDef.zones.length > 1;
-    const nearest = this.nearestSlot(obj.x, obj.y, multiZone ? zoneIdx : null);
+    const nearest = this.board.nearestSlot(obj.x, obj.y, multiZone ? zoneIdx : null);
 
     let moved = false;
-    if (nearest !== fromIndex) {
-      this.order.splice(fromIndex, 1);
-      this.order.splice(nearest, 0, obj);
+    if (this.board.dropAt(fromIndex, nearest)) {
       moved = true;
       this.moves++;
       this.movesText.setText(I18n.t("movesLabel", { moves: this.moves }));
       this.updateTopBarLayout();
-      this.moveHistory.push({ fromIndex, nearest });
       this.refreshUndoButton();
     }
     this.layoutBooks(true);
@@ -958,11 +929,9 @@ export default class GameScene extends Phaser.Scene {
 
   undoMove() {
     if (this.solved || this.failed || this.autoArranging || this.paused) return;
-    if (this.moveHistory.length === 0) return;
-
-    const { fromIndex, nearest } = this.moveHistory.pop();
-    const [obj] = this.order.splice(nearest, 1);
-    this.order.splice(fromIndex, 0, obj);
+    const move = this.board.undoLast();
+    if (!move) return;
+    const { fromIndex } = move;
 
     this.moves = Math.max(0, this.moves - 1);
     this.movesText.setText(I18n.t("movesLabel", { moves: this.moves }));
@@ -979,7 +948,7 @@ export default class GameScene extends Phaser.Scene {
 
   refreshUndoButton() {
     const canUndo =
-      this.moveHistory.length > 0 && !this.solved && !this.failed && !this.autoArranging;
+      this.board.hasUndo() && !this.solved && !this.failed && !this.autoArranging;
     this.undoBtn?.setEnabled(canUndo);
   }
 
@@ -991,19 +960,11 @@ export default class GameScene extends Phaser.Scene {
   giveHint() {
     if (this.solved || this.failed || this.autoArranging || this.paused) return;
 
-    const result = this._evaluateAll();
-    const wrongIndices = result.perSlot
-      .map((ok, i) => (!ok ? i : -1))
-      .filter((i) => i >= 0);
-
-    if (wrongIndices.length === 0) {
+    const targetIndex = this.board.pickHintTargetIndex((c) => c.getData("book"));
+    if (targetIndex < 0) {
       this.showFeedbackToast(I18n.t("alreadySorted"));
       return;
     }
-
-    // Prefer showing a wrong book on the current page to avoid abrupt context jumps.
-    let targetIndex = wrongIndices.find((i) => this.slots[i].page === this.currentPage);
-    if (targetIndex == null) targetIndex = wrongIndices[0];
 
     const slot = this.slots[targetIndex];
     if (slot.page !== this.currentPage) {
@@ -1054,26 +1015,6 @@ export default class GameScene extends Phaser.Scene {
     this.showFeedbackToast(I18n.t("hintUsed", { points: HINT_SCORE_PENALTY }));
   }
 
-  /**
-   * Returns the index of the nearest slot on the current page.
-   * When zoneIdx is provided, only slots belonging to that zone are considered,
-   * which prevents books from being dropped into the wrong zone.
-   */
-  nearestSlot(x, y, zoneIdx = null) {
-    let best = -1;
-    let bestDist = Infinity;
-    this.slots.forEach((slot, i) => {
-      if (slot.page !== this.currentPage) return;
-      if (zoneIdx !== null && slot.zoneIdx !== zoneIdx) return;
-      const d = Phaser.Math.Distance.Between(slot.x, slot.y, x, y);
-      if (d < bestDist) {
-        bestDist = d;
-        best = i;
-      }
-    });
-    return best;
-  }
-
   layoutBooks(animate) {
     this.order.forEach((c, i) => {
       const { x, y } = this.slots[i];
@@ -1096,7 +1037,7 @@ export default class GameScene extends Phaser.Scene {
     const zones = this.levelDef.zones;
     const bx = width / 2;
     const by = 74;
-    let bottomOfInstruction = by;
+    let bottomOfInstruction;
 
     if (zones.length === 1) {
       // Single-zone: show "Rule: <label>" + optional hint
@@ -1677,6 +1618,7 @@ export default class GameScene extends Phaser.Scene {
 
   showPage(p) {
     this.currentPage = Phaser.Math.Clamp(p, 0, this.pageCount - 1);
+    this.board.setCurrentPage(this.currentPage);
 
     this.order.forEach((c, i) => {
       const onPage = this.slots[i].page === this.currentPage;
@@ -1714,7 +1656,7 @@ export default class GameScene extends Phaser.Scene {
 
   checkSolved(manual = false) {
     if (this.solved || this.failed) return;
-    const result = this._evaluateAll();
+    const result = this.board.evaluateAll((c) => c.getData("book"));
     if (result.solved) {
       this.onSolved();
     } else if (manual) {
@@ -1739,19 +1681,6 @@ export default class GameScene extends Phaser.Scene {
       if (lbl) return lbl;
     }
     return getRuleLabel(rule);
-  }
-
-  /** Evaluate every zone and return a combined {perSlot, solved} result. */
-  _evaluateAll() {
-    const perSlot = [];
-    let solved = true;
-    this.zoneRanges.forEach((range) => {
-      const books = this.order.slice(range.start, range.end + 1).map((c) => c.getData("book"));
-      const zr = evaluateOrder(books, range.rule);
-      perSlot.push(...zr.perSlot);
-      if (!zr.solved) solved = false;
-    });
-    return { perSlot, solved };
   }
 
   flashFeedback(perSlot) {
@@ -1937,6 +1866,8 @@ export default class GameScene extends Phaser.Scene {
       emitting: false,
     });
     emitter.explode(40);
+    // Explode is fire-and-forget; explicitly destroy the emitter to avoid leaks.
+    this.time.delayedCall(1200, () => emitter.destroy());
   }
 
   computeScore(timeMs, moves) {
@@ -1954,24 +1885,11 @@ export default class GameScene extends Phaser.Scene {
 
   autosolve() {
     if (!this.levelDef || this.solved) return false;
-    this._sortAllZones();
+    this.board.sortAllZones((c) => c.getData("book"));
     this.layoutBooks(false);
     this.showPage(0);
     this.checkSolved();
     return this.solved;
-  }
-
-  /** Sort books within each zone into their correct order (in-place on this.order). */
-  _sortAllZones() {
-    this.zoneRanges.forEach((range) => {
-      const slice = this.order.slice(range.start, range.end + 1);
-      const books = slice.map((c) => c.getData("book"));
-      const { expected } = evaluateOrder(books, range.rule);
-      const sorted = [...slice].sort(
-        (a, b) => expected.indexOf(a.getData("book")) - expected.indexOf(b.getData("book"))
-      );
-      sorted.forEach((c, i) => { this.order[range.start + i] = c; });
-    });
   }
 
   autoArrange() {
@@ -2068,7 +1986,7 @@ export default class GameScene extends Phaser.Scene {
     this.refreshUndoButton();
     this.refreshHintButton();
 
-    this._sortAllZones();
+    this.board.sortAllZones((c) => c.getData("book"));
 
     this.currentPage = 0;
     this.showPage(0);

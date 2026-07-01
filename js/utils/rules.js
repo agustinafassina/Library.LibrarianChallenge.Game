@@ -8,6 +8,8 @@ const KEY_EXTRACTORS = {
   color: (b) => hexToHue(b.color),
 };
 
+export const VALID_SORT_KEYS = Object.freeze(Object.keys(KEY_EXTRACTORS));
+
 const SIZE_ORDER = { small: 0, medium: 1, large: 2 };
 
 function hexToHue(hex) {
@@ -92,6 +94,10 @@ const RULES = {
     keys: ["pages:desc", "title"],
   },
 };
+
+export function isKnownRuleName(ruleName) {
+  return !!RULES[ruleName];
+}
 
 /**
  * Parse a single key token into { key, dir }.

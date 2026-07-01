@@ -5,11 +5,19 @@
   "type": "module",
   "description": "A small 2D browser game where you sort books shelf by shelf.",
   "scripts": {
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
     "test": "node tests/runAllLevels.mjs",
     "test:e2e": "node tests/runAllLevels.mjs",
     "pretest": "playwright install chromium"
   },
   "devDependencies": {
-    "playwright": "^1.49.0"
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.6.0",
+    "globals": "^17.7.0",
+    "playwright": "^1.49.0",
+    "prettier": "^3.9.4"
   }
 }
