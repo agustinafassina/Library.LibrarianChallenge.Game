@@ -9,6 +9,9 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
+    "level:preview": "node tools/level-designer.mjs",
+    "test:unit": "vitest run",
+    "test:unit:watch": "vitest",
     "test": "node tests/runAllLevels.mjs",
     "test:e2e": "node tests/runAllLevels.mjs",
     "pretest": "playwright install chromium"
@@ -18,6 +21,7 @@
     "eslint": "^10.6.0",
     "globals": "^17.7.0",
     "playwright": "^1.49.0",
-    "prettier": "^3.9.4"
+    "prettier": "^3.9.4",
+    "vitest": "^4.1.9"
   }
 }
