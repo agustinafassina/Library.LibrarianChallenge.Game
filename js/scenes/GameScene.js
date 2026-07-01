@@ -2,7 +2,7 @@ import { getLevelWithBooks, getLevelCount } from "../utils/dataLoader.js";
 import { evaluateOrder, getRuleLabel } from "../utils/rules.js";
 import { Storage } from "../utils/storage.js";
 import { I18n } from "../utils/i18n.js?v=2";
-import { makeButton, COLORS, FONTS, formatTime } from "../utils/ui.js";
+import { makeButton, goToScene, COLORS, FONTS, formatTime } from "../utils/ui.js";
 
 const BOOK_W_MAX = 102;
 const BOOK_H_MAX = 152;
@@ -11,7 +11,7 @@ const GAP_Y = 18;
 const BOARD_H = 14;
 const MAX_PER_ROW = 6;
 const MAX_ROWS_PER_PAGE = 4;
-const AREA_TOP = 150;
+let AREA_TOP = 150;
 const AREA_BOTTOM = 600;
 const LEFT_RESERVED = 24;
 const RIGHT_MARGIN = 24;
@@ -42,6 +42,7 @@ export default class GameScene extends Phaser.Scene {
 
   async create() {
     const { width, height } = this.scale;
+    this.cameras.main.fadeIn(200, 0, 0, 0);
     this.drawBackground();
     this.buildTopBar();
 
@@ -69,9 +70,9 @@ export default class GameScene extends Phaser.Scene {
     this.loadingText.destroy();
     this.levelDef = level;
 
+    this.buildLevelInstruction();
     this.buildShelf(level.books.length);
     this.buildBooks(level.books);
-    this.buildLevelInstruction();
     this.buildLibrarian();
     this.buildControls();
     this.buildPager();
@@ -501,9 +502,9 @@ export default class GameScene extends Phaser.Scene {
     const detail =
       I18n.pick(this.levelDef, "hint") || I18n.pick(this.levelDef, "description");
     const bx = width / 2;
-    const by = 78;
+    const by = 74;
 
-    this.add
+    const ruleObj = this.add
       .text(bx, by, ruleLine, {
         fontFamily: FONTS.body,
         fontSize: "18px",
@@ -511,19 +512,25 @@ export default class GameScene extends Phaser.Scene {
         fontStyle: "bold",
         align: "center",
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5, 0);
+
+    let bottomOfInstruction = by + ruleObj.height + 6;
 
     if (detail) {
-      this.add
-        .text(bx, by + 26, detail, {
+      const detailObj = this.add
+        .text(bx, bottomOfInstruction, detail, {
           fontFamily: FONTS.body,
-          fontSize: "15px",
+          fontSize: "14px",
           color: "#f3e3c3",
           align: "center",
-          wordWrap: { width: width - 120 },
+          wordWrap: { width: width - 200 },
         })
         .setOrigin(0.5, 0);
+      bottomOfInstruction += detailObj.height + 6;
     }
+
+    // Adjust AREA_TOP dynamically so the grid never overlaps the instructions
+    AREA_TOP = Math.max(140, bottomOfInstruction + 10);
   }
 
   buildLibrarian() {
@@ -634,10 +641,16 @@ export default class GameScene extends Phaser.Scene {
         onTap: () => this.resetLevel(),
       },
       {
+        label: I18n.t("language"),
+        fill: COLORS.woodLight,
+        textColor: "#f3e3c3",
+        onTap: () => this.showLanguageModal(),
+      },
+      {
         label: I18n.t("menu"),
         fill: COLORS.woodLight,
         textColor: "#f3e3c3",
-        onTap: () => this.scene.start("MenuScene"),
+        onTap: () => goToScene(this, "MenuScene"),
       },
     ];
 
@@ -663,6 +676,66 @@ export default class GameScene extends Phaser.Scene {
     this.actionOverlay = null;
     this.actionMenuItems?.forEach((b) => b.destroy());
     this.actionMenuItems = [];
+  }
+
+  showLanguageModal() {
+    const { width, height } = this.scale;
+    const pw = 380, ph = 200;
+    const px = (width - pw) / 2, py = (height - ph) / 2;
+
+    const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.55)
+      .setOrigin(0).setDepth(60).setInteractive();
+
+    const panel = this.add.graphics().setDepth(61);
+    panel.fillStyle(COLORS.ink, 0.97);
+    panel.fillRoundedRect(px, py, pw, ph, 14);
+    panel.lineStyle(2, COLORS.accent, 1);
+    panel.strokeRoundedRect(px, py, pw, ph, 14);
+
+    const title = this.add.text(width / 2, py + 30, I18n.t("language"), {
+      fontFamily: FONTS.title, fontSize: "22px", color: "#f3e3c3", fontStyle: "bold",
+    }).setOrigin(0.5).setDepth(62);
+
+    const modalItems = [overlay, panel, title];
+
+    const close = () => modalItems.forEach((o) => o.destroy());
+
+    const langs = I18n.available;
+    const totalW = langs.length * 150 + (langs.length - 1) * 16;
+    const startX = width / 2 - totalW / 2 + 75;
+
+    langs.forEach((lang, i) => {
+      const isCurrent = lang.code === I18n.lang;
+      const btn = makeButton(
+        this,
+        startX + i * 166,
+        py + 98,
+        lang.label,
+        () => {
+          if (lang.code !== I18n.lang) {
+            I18n.set(lang.code);
+            close();
+            this.scene.restart({ level: this.levelNumber });
+          } else {
+            close();
+          }
+        },
+        {
+          width: 150, height: 46, fontSize: 17,
+          fill: isCurrent ? COLORS.accent : COLORS.woodLight,
+          textColor: isCurrent ? "#2c1d14" : "#f3e3c3",
+        }
+      ).setDepth(62);
+      modalItems.push(btn);
+    });
+
+    const doneBtn = makeButton(this, width / 2, py + ph - 28, I18n.t("done"), close, {
+      width: 130, height: 38, fontSize: 15,
+      fill: COLORS.woodLight, textColor: "#f3e3c3",
+    }).setDepth(62);
+    modalItems.push(doneBtn);
+
+    overlay.on("pointerdown", close);
   }
 
   buildPager() {
@@ -856,6 +929,14 @@ export default class GameScene extends Phaser.Scene {
       }
     });
 
+    // Toast for visible-page errors
+    const hasCurrentPageErrors = this.order.some((c, i) =>
+      !perSlot[i] && this.slots[i].page === this.currentPage
+    );
+    if (hasCurrentPageErrors) {
+      this.showFeedbackToast(I18n.t("orderWrong"));
+    }
+
     // Toast warning for errors on hidden pages
     if (wrongPages.size > 0) {
       const pages = [...wrongPages].sort().join(", ");
@@ -960,17 +1041,27 @@ export default class GameScene extends Phaser.Scene {
 
     this.celebrate();
 
-    this.time.delayedCall(900, () => {
-      this.scene.start("LevelCompleteScene", {
-        level: this.levelNumber,
-        totalLevels: this.totalLevels,
-        timeMs,
-        moves: this.moves,
-        score,
-        isBest,
-        autoUsed: this.autoUsed,
-      });
-    });
+    const sceneData = {
+      level: this.levelNumber,
+      totalLevels: this.totalLevels,
+      timeMs,
+      moves: this.moves,
+      score,
+      isBest,
+      autoUsed: this.autoUsed,
+    };
+
+    const doTransition = () => {
+      if (this.solveTimer) {
+        this.solveTimer.remove();
+        this.solveTimer = null;
+      }
+      this.input.off("pointerdown", doTransition);
+      goToScene(this, "LevelCompleteScene", sceneData);
+    };
+
+    this.solveTimer = this.time.delayedCall(900, doTransition);
+    this.input.once("pointerdown", doTransition);
   }
 
   celebrate() {

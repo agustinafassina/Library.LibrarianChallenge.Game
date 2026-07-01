@@ -84,6 +84,12 @@ export function makeButton(scene, x, y, label, onClick, opts = {}) {
   return container;
 }
 
+export function goToScene(scene, key, data = {}) {
+  const cam = scene.cameras.main;
+  cam.fadeOut(180, 0, 0, 0);
+  cam.once("camerafadeoutcomplete", () => scene.scene.start(key, data));
+}
+
 export function formatTime(ms) {
   const totalSeconds = Math.floor(ms / 1000);
   const m = Math.floor(totalSeconds / 60);

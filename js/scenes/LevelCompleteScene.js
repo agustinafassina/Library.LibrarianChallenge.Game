@@ -1,5 +1,5 @@
 import { I18n } from "../utils/i18n.js?v=2";
-import { makeButton, COLORS, FONTS, formatTime } from "../utils/ui.js";
+import { makeButton, goToScene, COLORS, FONTS, formatTime } from "../utils/ui.js";
 
 export default class LevelCompleteScene extends Phaser.Scene {
   constructor() {
@@ -12,6 +12,7 @@ export default class LevelCompleteScene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.scale;
+    this.cameras.main.fadeIn(200, 0, 0, 0);
     const { level, totalLevels, timeMs, moves, score, isBest, autoUsed } = this.result;
 
     this.add.graphics().fillStyle(COLORS.woodDark, 1).fillRect(0, 0, width, height);
@@ -80,11 +81,23 @@ export default class LevelCompleteScene extends Phaser.Scene {
     }
 
     const hasNext = level < totalLevels;
-    let by = py + 300;
+    let by = py + 295;
 
     if (hasNext) {
+      // Primary CTA — large green
       makeButton(this, width / 2, by, I18n.t("nextLevel"), () =>
-        this.scene.start("GameScene", { level: level + 1 })
+        goToScene(this, "GameScene", { level: level + 1 }),
+        { width: 280, height: 54, fontSize: 22, fill: COLORS.good, textColor: "#ffffff" }
+      );
+      by += 70;
+      // Secondary row — smaller, muted
+      makeButton(this, width / 2 - 110, by, I18n.t("replay"), () =>
+        goToScene(this, "GameScene", { level }),
+        { width: 160, height: 42, fontSize: 16, fill: COLORS.woodLight, textColor: "#f3e3c3" }
+      );
+      makeButton(this, width / 2 + 110, by, I18n.t("levels"), () =>
+        goToScene(this, "LevelSelectScene"),
+        { width: 160, height: 42, fontSize: 16, fill: COLORS.woodLight, textColor: "#f3e3c3" }
       );
     } else {
       this.add
@@ -96,15 +109,15 @@ export default class LevelCompleteScene extends Phaser.Scene {
           wordWrap: { width: pw - 60 },
         })
         .setOrigin(0.5);
+      by += 60;
+      makeButton(this, width / 2 - 110, by, I18n.t("replay"), () =>
+        goToScene(this, "GameScene", { level }),
+        { width: 160, height: 42, fontSize: 16, fill: COLORS.woodLight, textColor: "#f3e3c3" }
+      );
+      makeButton(this, width / 2 + 110, by, I18n.t("levels"), () =>
+        goToScene(this, "LevelSelectScene"),
+        { width: 160, height: 42, fontSize: 16, fill: COLORS.woodLight, textColor: "#f3e3c3" }
+      );
     }
-
-    by += 64;
-    makeButton(this, width / 2 - 120, by, I18n.t("replay"), () =>
-      this.scene.start("GameScene", { level })
-    , { width: 150, height: 48, fontSize: 18, fill: COLORS.woodLight, textColor: "#f3e3c3" });
-
-    makeButton(this, width / 2 + 120, by, I18n.t("levels"), () =>
-      this.scene.start("LevelSelectScene")
-    , { width: 150, height: 48, fontSize: 18, fill: COLORS.woodLight, textColor: "#f3e3c3" });
   }
 }

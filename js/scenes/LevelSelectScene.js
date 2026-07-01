@@ -1,7 +1,7 @@
 import { Storage } from "../utils/storage.js";
 import { loadLevels } from "../utils/dataLoader.js";
 import { I18n } from "../utils/i18n.js?v=2";
-import { makeButton, COLORS, FONTS, formatTime } from "../utils/ui.js";
+import { makeButton, goToScene, COLORS, FONTS, formatTime } from "../utils/ui.js";
 
 const COLS        = 5;
 const ROWS_PAGE   = 4;
@@ -41,6 +41,7 @@ export default class LevelSelectScene extends Phaser.Scene {
 
   async create() {
     const { width, height } = this.scale;
+    this.cameras.main.fadeIn(200, 0, 0, 0);
 
     // Background
     const bg = this.add.graphics();
@@ -57,7 +58,7 @@ export default class LevelSelectScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    makeButton(this, 80, 40, I18n.t("back"), () => this.scene.start("MenuScene"), {
+    makeButton(this, 80, 40, I18n.t("back"), () => goToScene(this, "MenuScene"), {
       width: 120,
       height: 40,
       fontSize: 16,
@@ -215,7 +216,7 @@ export default class LevelSelectScene extends Phaser.Scene {
           this.tweens.add({ targets: [numTxt, titleTxt], y: `+=2`, duration: 80 });
         });
         hit.on("pointerdown", () =>
-          this.scene.start("GameScene", { level: lvl.level })
+          goToScene(this, "GameScene", { level: lvl.level })
         );
         objects.push(hit);
       } else {
