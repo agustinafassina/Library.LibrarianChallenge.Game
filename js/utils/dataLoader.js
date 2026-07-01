@@ -1,4 +1,5 @@
 import { isKnownRuleName, resolveRule, VALID_SORT_KEYS } from "./rules.js";
+import { fetchBooksFromApi, mergeApiBooksIntoLocalCatalog } from "./apiBooks.js";
 
 const DATA_SOURCE = {
   booksUrl: "data/books.json",
@@ -18,7 +19,18 @@ async function fetchJSON(url) {
 }
 
 async function fetchBooks() {
-  return fetchJSON(DATA_SOURCE.booksUrl);
+  const localBooks = await fetchJSON(DATA_SOURCE.booksUrl);
+  try {
+    const apiBooks = await fetchBooksFromApi();
+    const merged = mergeApiBooksIntoLocalCatalog(localBooks, apiBooks);
+    if (apiBooks.length > 0) {
+      console.info(`[books-api] loaded ${apiBooks.length} real books from the API`);
+    }
+    return merged;
+  } catch (err) {
+    console.warn("[books-api] falling back to local books.json:", err);
+    return localBooks;
+  }
 }
 
 async function fetchLevels() {
@@ -152,7 +164,7 @@ async function validateSchemasOnce() {
   if (warns.length > 0) {
     console.warn(
       `[schema] validation found ${warns.length} issue(s):\n` +
-      warns.map((w) => `- ${w}`).join("\n")
+        warns.map((w) => `- ${w}`).join("\n")
     );
   } else {
     console.info("[schema] books.json and levels.json validation OK");
@@ -166,7 +178,8 @@ export async function getLevelWithBooks(levelNumber) {
   if (!def) return null;
 
   let zones;
-  if (def.zones) {    zones = def.zones.map((z) => ({
+  if (def.zones) {
+    zones = def.zones.map((z) => ({
       ...z,
       rule: buildRuleSpec(z),
       books: (z.books ?? []).map((id) => byId.get(id)).filter(Boolean),
