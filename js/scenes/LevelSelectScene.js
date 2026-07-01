@@ -36,6 +36,7 @@ export default class LevelSelectScene extends Phaser.Scene {
     this.currentPage = 0;
     this.pageCount   = 1;
     this.cardGroups  = []; // [{page, objects:[]}]
+    this.lockedFeedback = null;
   }
 
   async create() {
@@ -190,13 +191,14 @@ export default class LevelSelectScene extends Phaser.Scene {
       }
 
       // ── Lock icon ─────────────────────────────────────────
+      let lockIcon = null;
       if (!unlocked) {
-        const lock = this.add
+        lockIcon = this.add
           .text(x, y + 4, "🔒", {
             fontSize: "22px",
           })
           .setOrigin(0.5);
-        objects.push(lock);
+        objects.push(lockIcon);
       }
 
       // ── Interaction ───────────────────────────────────────
@@ -216,6 +218,23 @@ export default class LevelSelectScene extends Phaser.Scene {
           this.scene.start("GameScene", { level: lvl.level })
         );
         objects.push(hit);
+      } else {
+        const hit = this.add
+          .rectangle(x, y, CARD_W, CARD_H, 0xffffff, 0.001)
+          .setInteractive({ useHandCursor: true });
+        hit.on("pointerover", () => {
+          card.setAlpha(0.9);
+        });
+        hit.on("pointerout", () => {
+          card.setAlpha(1);
+        });
+        hit.on("pointerdown", () => {
+          this.showLockedFeedback(Math.max(1, lvl.level - 1));
+          if (lockIcon) {
+            this.tweens.add({ targets: lockIcon, y: `-=3`, duration: 70, yoyo: true });
+          }
+        });
+        objects.push(hit);
       }
 
       if (!this.cardGroups[page]) this.cardGroups[page] = [];
@@ -224,6 +243,51 @@ export default class LevelSelectScene extends Phaser.Scene {
 
     this.buildPager(width, height);
     this.showPage(0);
+  }
+
+  showLockedFeedback(requiredLevel) {
+    const { width, height } = this.scale;
+    const message = I18n.t("lockedPrevHint", { level: requiredLevel });
+
+    if (this.lockedFeedback) {
+      this.lockedFeedback.bg.destroy();
+      this.lockedFeedback.txt.destroy();
+      this.lockedFeedback = null;
+    }
+
+    const txt = this.add
+      .text(width / 2, height - 74, message, {
+        fontFamily: FONTS.body,
+        fontSize: "15px",
+        color: "#2c1d14",
+        fontStyle: "bold",
+        align: "center",
+      })
+      .setOrigin(0.5)
+      .setDepth(30);
+
+    const padX = 14;
+    const padY = 8;
+    const bw = txt.width + padX * 2;
+    const bh = txt.height + padY * 2;
+    const bg = this.add.graphics().setDepth(29);
+    bg.fillStyle(COLORS.parchment, 0.97);
+    bg.fillRoundedRect(width / 2 - bw / 2, height - 74 - bh / 2, bw, bh, 8);
+    bg.lineStyle(1.5, COLORS.accent, 0.85);
+    bg.strokeRoundedRect(width / 2 - bw / 2, height - 74 - bh / 2, bw, bh, 8);
+
+    this.lockedFeedback = { bg, txt };
+    this.tweens.add({
+      targets: [bg, txt],
+      alpha: 0,
+      delay: 1200,
+      duration: 260,
+      onComplete: () => {
+        bg.destroy();
+        txt.destroy();
+        if (this.lockedFeedback?.bg === bg) this.lockedFeedback = null;
+      },
+    });
   }
 
   buildPager(width, height) {

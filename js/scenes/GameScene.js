@@ -75,6 +75,7 @@ export default class GameScene extends Phaser.Scene {
     this.buildLibrarian();
     this.buildControls();
     this.buildPager();
+    this.buildFlipEdgeHints();
     this.showPage(0);
 
     this.input.keyboard.on("keydown-R", () => this.resetLevel());
@@ -231,7 +232,15 @@ export default class GameScene extends Phaser.Scene {
     this.slotGuides = [];
     this.slots.forEach((slot) => {
       const guide = this.add.graphics();
-      guide.lineStyle(2, COLORS.accent, 0.12);
+      guide.fillStyle(COLORS.parchment, 0.08);
+      guide.fillRoundedRect(
+        slot.x - this.bookW / 2,
+        slot.y - this.bookH / 2,
+        this.bookW,
+        this.bookH,
+        8
+      );
+      guide.lineStyle(2, COLORS.accent, 0.34);
       guide.strokeRoundedRect(
         slot.x - this.bookW / 2,
         slot.y - this.bookH / 2,
@@ -403,12 +412,14 @@ export default class GameScene extends Phaser.Scene {
       this.dragging = obj;
       obj.setDepth(20);
       this.tweens.add({ targets: obj, scale: 1.06, duration: 100 });
+      this.updateFlipEdgeHints(obj.x);
     });
 
     this.input.on("drag", (_p, obj, dragX, dragY) => {
       if (this.solved || this.autoArranging) return;
       obj.x = dragX;
       obj.y = dragY;
+      this.updateFlipEdgeHints(dragX);
       this.maybeFlipPage(dragX);
     });
 
@@ -418,6 +429,7 @@ export default class GameScene extends Phaser.Scene {
       this.tweens.add({ targets: obj, scale: 1, duration: 100 });
       this.handleDrop(obj);
       this.dragging = null;
+      this.hideFlipEdgeHints();
       this.showPage(this.currentPage);
     });
   }
@@ -689,6 +701,80 @@ export default class GameScene extends Phaser.Scene {
       .setDepth(40);
   }
 
+  buildFlipEdgeHints() {
+    const { width } = this.scale;
+    const midY = (AREA_TOP + AREA_BOTTOM) / 2;
+    const hintW = RIGHT_GUTTER - 8;
+    const hintH = AREA_BOTTOM - AREA_TOP + 16;
+
+    const leftBg = this.add
+      .rectangle(0, midY, hintW, hintH, COLORS.accent, 0.18)
+      .setOrigin(0, 0.5)
+      .setDepth(39)
+      .setVisible(false);
+    const leftArrow = this.add
+      .text(18, midY, "‹", {
+        fontFamily: FONTS.body,
+        fontSize: "34px",
+        color: "#f3e3c3",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5)
+      .setDepth(40)
+      .setVisible(false);
+
+    const rightBg = this.add
+      .rectangle(width, midY, hintW, hintH, COLORS.accent, 0.18)
+      .setOrigin(1, 0.5)
+      .setDepth(39)
+      .setVisible(false);
+    const rightArrow = this.add
+      .text(width - 18, midY, "›", {
+        fontFamily: FONTS.body,
+        fontSize: "34px",
+        color: "#f3e3c3",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5)
+      .setDepth(40)
+      .setVisible(false);
+
+    this.flipEdgeHints = {
+      left: { bg: leftBg, arrow: leftArrow },
+      right: { bg: rightBg, arrow: rightArrow },
+    };
+  }
+
+  updateFlipEdgeHints(dragX = null) {
+    if (!this.flipEdgeHints) return;
+    const { width } = this.scale;
+    const dragging = !!this.dragging && this.pageCount > 1;
+    const canLeft = dragging && this.currentPage > 0;
+    const canRight = dragging && this.currentPage < this.pageCount - 1;
+    const nearLeft = dragX != null && dragX < RIGHT_GUTTER;
+    const nearRight = dragX != null && dragX > width - RIGHT_GUTTER;
+
+    const setHint = (hint, visible, active) => {
+      hint.bg.setVisible(visible);
+      hint.arrow.setVisible(visible);
+      if (!visible) return;
+      hint.bg.setAlpha(active ? 0.32 : 0.16);
+      hint.arrow.setAlpha(active ? 1 : 0.6);
+      hint.arrow.setScale(active ? 1.08 : 1);
+    };
+
+    setHint(this.flipEdgeHints.left, canLeft, nearLeft);
+    setHint(this.flipEdgeHints.right, canRight, nearRight);
+  }
+
+  hideFlipEdgeHints() {
+    if (!this.flipEdgeHints) return;
+    this.flipEdgeHints.left.bg.setVisible(false);
+    this.flipEdgeHints.left.arrow.setVisible(false);
+    this.flipEdgeHints.right.bg.setVisible(false);
+    this.flipEdgeHints.right.arrow.setVisible(false);
+  }
+
   showPage(p) {
     this.currentPage = Phaser.Math.Clamp(p, 0, this.pageCount - 1);
 
@@ -718,6 +804,7 @@ export default class GameScene extends Phaser.Scene {
     this.sidePrev?.setVisible(multi && notFirst);
     this.sideNext?.setVisible(multi && notLast);
     this.pagerLabel?.setVisible(multi);
+    this.updateFlipEdgeHints(this.dragging ? this.dragging.x : null);
     if (!multi) return;
 
     this.pagerLabel.setText(
