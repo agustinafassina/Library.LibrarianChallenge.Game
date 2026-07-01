@@ -14,9 +14,10 @@ export default class MenuScene extends Phaser.Scene {
     this.drawBackground();
 
     this.add
-      .image(width * 0.8, height * 0.62, "librarian")
+      .sprite(width * 0.8, height * 0.62, "librarian", "idle")
       .setScale(1.6)
-      .setOrigin(0.5);
+      .setOrigin(0.5)
+      .play("librarian-idle");
 
     this.add
       .text(width / 2, height * 0.2, I18n.t("appTitle"), {

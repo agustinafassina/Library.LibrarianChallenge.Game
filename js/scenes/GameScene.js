@@ -305,6 +305,19 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
+  fitTextToBox(textObj, maxWidth, maxHeight, baseSize, minSize = 10) {
+    if (!textObj) return;
+
+    let fontSize = baseSize;
+    textObj.setFontSize(fontSize);
+
+    const fits = () => textObj.width <= maxWidth && textObj.height <= maxHeight;
+    while (!fits() && fontSize > minSize) {
+      fontSize -= 1;
+      textObj.setFontSize(fontSize);
+    }
+  }
+
   updateTopBarLayout() {
     if (!this.titleText || !this.levelText || !this.movesText || !this.timeText) return;
 
@@ -674,22 +687,38 @@ export default class GameScene extends Phaser.Scene {
     const showAuthor = w >= 78;
     const showGenre  = h >= 88;
 
-    const titleSize = Math.round(Phaser.Math.Clamp(Math.min(h * 0.11, w * 0.2), 12, 15));
-    const metaSize  = Math.round(Phaser.Math.Clamp(Math.min(h * 0.09, w * 0.17), 11, 13));
+    const titleSize = Math.round(Phaser.Math.Clamp(Math.min(h * 0.11, w * 0.2), 12, 16));
+    const metaSize  = Math.round(Phaser.Math.Clamp(Math.min(h * 0.09, w * 0.17), 12, 13));
 
     const coverTex = this.ensureBookTexture(book, Math.round(w), Math.round(h));
     const spine = this.add.image(0, 0, coverTex).setOrigin(0.5);
+    const bindW = Math.max(5, Math.round(w * 0.1));
+    const textA11y = {
+      textColor: "#ffffff",
+      strokeColor: "#000000",
+      shadowColor: "#000000",
+      bandFill: 0x000000,
+      bandAlpha: 0.2,
+    };
 
-    const shadow = { offsetX: 0, offsetY: 1, color: "#000000", blur: 3, fill: true };
+    const shadow = {
+      offsetX: 0,
+      offsetY: 1,
+      color: textA11y.shadowColor,
+      blur: 3,
+      fill: true,
+    };
 
     const titleTxt = this.add
       .text(0, -h / 2 + 10, book.title, {
         fontFamily: FONTS.body,
         fontSize: `${titleSize}px`,
-        color: "#ffffff",
+        color: textA11y.textColor,
         align: "center",
         fontStyle: "bold",
-        wordWrap: { width: w - 10 },
+        stroke: textA11y.strokeColor,
+        strokeThickness: 2,
+        wordWrap: { width: w - bindW - 10, useAdvancedWrap: true },
         shadow,
       })
       .setOrigin(0.5, 0);
@@ -716,15 +745,48 @@ export default class GameScene extends Phaser.Scene {
         fontFamily: FONTS.body,
         fontSize: `${yearOnly ? metaSize + 1 : metaSize}px`,
         fontStyle: yearOnly ? "bold" : "normal",
-        color: "#ffffff",
+        color: textA11y.textColor,
         align: "center",
+        stroke: textA11y.strokeColor,
+        strokeThickness: 2,
         lineSpacing: 3,
-        wordWrap: { width: w - 10 },
+        wordWrap: { width: w - bindW - 10, useAdvancedWrap: true },
         shadow,
       })
       .setOrigin(0.5, 1);
 
-    const container = this.add.container(slot.x, slot.y, [spine, titleTxt, metaTxt]);
+    const titleMaxHeight = Math.max(24, Math.round(h * 0.34));
+    const metaMaxHeight = Math.max(18, Math.round(h * 0.3));
+    const textMaxWidth = w - bindW - 10;
+    this.fitTextToBox(titleTxt, textMaxWidth, titleMaxHeight, titleSize, 10);
+    this.fitTextToBox(metaTxt, textMaxWidth, metaMaxHeight, yearOnly ? metaSize + 1 : metaSize, 10);
+
+    // Translucent bands behind text improve contrast on very light/dark covers.
+    const titleBand = this.add.graphics();
+    const titleBandY = -h / 2 + 8;
+    const titleBandH = Math.min(h * 0.36, titleTxt.height + 6);
+    titleBand.fillStyle(textA11y.bandFill, textA11y.bandAlpha);
+    titleBand.fillRoundedRect(
+      -w / 2 + bindW + 2,
+      titleBandY,
+      w - bindW - 8,
+      titleBandH,
+      4
+    );
+
+    const metaBand = this.add.graphics();
+    const metaBandH = Math.min(h * 0.34, metaTxt.height + 6);
+    const metaBandY = h / 2 - metaBandH - 8;
+    metaBand.fillStyle(textA11y.bandFill, textA11y.bandAlpha);
+    metaBand.fillRoundedRect(
+      -w / 2 + bindW + 2,
+      metaBandY,
+      w - bindW - 8,
+      metaBandH,
+      4
+    );
+
+    const container = this.add.container(slot.x, slot.y, [spine, titleBand, metaBand, titleTxt, metaTxt]);
     container.setSize(w, h);
     container.setData("book", book);
     container.setData("compact", !showAuthor || !showGenre);
@@ -1115,10 +1177,11 @@ export default class GameScene extends Phaser.Scene {
   buildLibrarian() {
     const { height } = this.scale;
     this.librarian = this.add
-      .image(44, height - 28, "librarian")
+      .sprite(44, height - 28, "librarian", "thinking")
       .setScale(0.74)
       .setOrigin(0.5, 1)
       .setDepth(5);
+    this.librarian.play("librarian-thinking");
 
     this.tweens.add({
       targets: this.librarian,
@@ -1794,6 +1857,7 @@ export default class GameScene extends Phaser.Scene {
     this.solved = true;
     this.refreshUndoButton();
     this.refreshHintButton();
+    this.librarian?.play("librarian-happy");
     const timeMs = this.time.now - this.startTime;
     const score = this.computeScore(timeMs, this.moves);
 
