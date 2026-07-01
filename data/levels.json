@@ -597,6 +597,7 @@
     "title_es": "Lo m\u00e1s nuevo a la izquierda",
     "hint": "Newest book first. The year is shown on each cover.",
     "hint_es": "El libro m\u00e1s nuevo primero. El a\u00f1o est\u00e1 en cada portada.",
+    "challenge": { "maxMoves": 10, "maxTimeSec": 50 },
     "books": [15, 13, 9, 25, 20]
   },
   {
@@ -615,6 +616,7 @@
     "title_es": "Persiguiendo el arco\u00edris",
     "hint": "Arrange the spines by colour, like a rainbow (red \u2192 violet).",
     "hint_es": "Acomod\u00e1 los lomos por color, como un arco\u00edris (rojo \u2192 violeta).",
+    "challenge": { "maxMoves": 11 },
     "books": [9, 4, 3, 20, 27, 18]
   },
   {
@@ -624,6 +626,7 @@
     "title_es": "De fino a grueso",
     "hint": "Fewest pages first. The page count is shown on each cover.",
     "hint_es": "Menos p\u00e1ginas primero. La cantidad de p\u00e1ginas est\u00e1 en cada portada.",
+    "challenge": { "maxTimeSec": 45 },
     "books": [34, 39, 44, 49, 54, 59]
   },
   {
@@ -642,6 +645,7 @@
     "title_es": "Los gigantes primero",
     "hint": "Largest books first, down to the smallest. Same size? By title.",
     "hint_es": "Los libros m\u00e1s grandes primero, hasta el m\u00e1s chico. \u00bfMismo tama\u00f1o? Por t\u00edtulo.",
+    "challenge": { "maxMoves": 12, "maxTimeSec": 65 },
     "books": [7, 8, 10, 11, 12, 13]
   },
   {
@@ -651,6 +655,7 @@
     "title_es": "Los pesos pesados",
     "hint": "Most pages first. Check the page count on each cover.",
     "hint_es": "M\u00e1s p\u00e1ginas primero. Fijate la cantidad de p\u00e1ginas en cada portada.",
+    "challenge": { "maxMoves": 13 },
     "books": [5, 10, 15, 20, 25, 30]
   },
   {
@@ -659,6 +664,7 @@
     "title_es": "Color y cantidad",
     "hint": "Top shelf by colour (rainbow); bottom shelf by page count (fewest first).",
     "hint_es": "Estante de arriba por color (arco\u00edris); estante de abajo por p\u00e1ginas (menos primero).",
+    "challenge": { "maxTimeSec": 70 },
     "zones": [
       {
         "rule": "color_rainbow",
@@ -680,6 +686,7 @@
     "title_es": "Todas las herramientas",
     "hint": "Top shelf by size (small first); bottom shelf by pages (most first).",
     "hint_es": "Estante de arriba por tama\u00f1o (chico primero); estante de abajo por p\u00e1ginas (m\u00e1s primero).",
+    "challenge": { "maxMoves": 16, "maxTimeSec": 85 },
     "zones": [
       {
         "rule": "size_asc",

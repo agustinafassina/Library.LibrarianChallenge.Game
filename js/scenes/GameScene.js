@@ -42,6 +42,11 @@ export default class GameScene extends Phaser.Scene {
     this.pauseStart = 0;
     this.pauseItems = null;
     this.moveHistory = [];
+    this.failed = false;
+    this.challenge = null;
+    this.challengeText = null;
+    this.challengeBadgeBg = null;
+    this.failItems = null;
   }
 
   async create() {
@@ -73,6 +78,7 @@ export default class GameScene extends Phaser.Scene {
     }
     this.loadingText.destroy();
     this.levelDef = level;
+    this.initChallenge();
 
     this.buildLevelInstruction();
     this.buildShelf();
@@ -92,6 +98,7 @@ export default class GameScene extends Phaser.Scene {
 
     this.startTime = this.time.now;
     this.timerStarted = true;
+    this.updateChallengeDisplay();
   }
 
   drawBackground() {
@@ -103,6 +110,69 @@ export default class GameScene extends Phaser.Scene {
     for (let yy = 90; yy < height - 60; yy += 70) {
       g.fillRect(20, yy, width - 40, 40);
     }
+  }
+
+  initChallenge() {
+    const raw = this.levelDef?.challenge;
+    if (!raw) {
+      this.challenge = null;
+      return;
+    }
+    const maxMoves = Number.isFinite(raw.maxMoves) ? raw.maxMoves : null;
+    const maxTimeMs = Number.isFinite(raw.maxTimeSec) ? raw.maxTimeSec * 1000 : null;
+    this.challenge = maxMoves == null && maxTimeMs == null
+      ? null
+      : { maxMoves, maxTimeMs };
+  }
+
+  buildChallengeDisplayText() {
+    if (!this.challenge) return "";
+    const chunks = [];
+    if (this.challenge.maxMoves != null) {
+      const left = Math.max(0, this.challenge.maxMoves - this.moves);
+      chunks.push(I18n.t("challengeMovesLeft", { n: left }));
+    }
+    if (this.challenge.maxTimeMs != null) {
+      const elapsed = Math.max(0, this.time.now - this.startTime);
+      const leftMs = Math.max(0, this.challenge.maxTimeMs - elapsed);
+      chunks.push(I18n.t("challengeTimeLeft", { time: formatTime(leftMs) }));
+    }
+    return I18n.t("challengeGoal", { goal: chunks.join(" · ") });
+  }
+
+  updateChallengeDisplay() {
+    if (!this.challengeText || !this.challenge) return;
+    this.challengeText.setText(this.buildChallengeDisplayText());
+    this.refreshChallengeBadge();
+  }
+
+  refreshChallengeBadge() {
+    if (!this.challengeBadgeBg || !this.challengeText) return;
+    const padX = 12;
+    const padY = 6;
+    const x = this.challengeText.x - this.challengeText.width / 2 - padX;
+    const y = this.challengeText.y - padY;
+    const w = this.challengeText.width + padX * 2;
+    const h = this.challengeText.height + padY * 2;
+    this.challengeBadgeBg.clear();
+    this.challengeBadgeBg.fillStyle(0x5a1f1f, 0.9);
+    this.challengeBadgeBg.fillRoundedRect(x, y, w, h, 8);
+    this.challengeBadgeBg.lineStyle(1.5, 0xff8f8f, 0.95);
+    this.challengeBadgeBg.strokeRoundedRect(x, y, w, h, 8);
+  }
+
+  checkChallengeLimits() {
+    if (!this.challenge || this.solved || this.failed) return false;
+    if (this.challenge.maxMoves != null && this.moves > this.challenge.maxMoves) {
+      this.onChallengeFailed("moves");
+      return true;
+    }
+    const elapsed = this.time.now - this.startTime;
+    if (this.challenge.maxTimeMs != null && elapsed > this.challenge.maxTimeMs) {
+      this.onChallengeFailed("time");
+      return true;
+    }
+    return false;
   }
 
   buildTopBar() {
@@ -450,15 +520,87 @@ export default class GameScene extends Phaser.Scene {
     return key ? I18n.t(key) : String(size);
   }
 
+  /**
+   * Score a shuffled arrangement by how "easy" it is.
+   * Lower fixed slots and larger displacements mean better challenge starts.
+   */
+  scoreShuffle(arr, rule) {
+    const { expected, perSlot } = evaluateOrder(arr, rule);
+    const n = arr.length;
+    const expectedIndex = new Map(expected.map((b, i) => [b, i]));
+    let displaced = 0;
+    let farDisplaced = 0;
+    let displacementSum = 0;
+
+    arr.forEach((book, i) => {
+      const ei = expectedIndex.get(book);
+      const d = Math.abs(i - ei);
+      displacementSum += d;
+      if (d > 0) displaced++;
+      if (d >= 2) farDisplaced++;
+    });
+
+    const correctCount = perSlot.filter(Boolean).length;
+    return {
+      solved: perSlot.every(Boolean),
+      correctCount,
+      displaced,
+      farDisplaced,
+      avgDisplacement: n > 0 ? displacementSum / n : 0,
+    };
+  }
+
+  /**
+   * A controlled-difficulty start should avoid "almost solved" layouts.
+   * Rules are lenient on tiny levels and stricter on medium/large ones.
+   */
+  isGoodShuffle(score, n) {
+    if (score.solved) return false;
+    if (n <= 2) return true;
+
+    // Cap how many books may start in the right slot.
+    const maxCorrect = n <= 4 ? 1 : Math.floor(n * 0.3);
+    if (score.correctCount > maxCorrect) return false;
+
+    // Require enough books to move from their expected slot.
+    const minDisplaced = n <= 4 ? n - 1 : Math.ceil(n * 0.6);
+    if (score.displaced < minDisplaced) return false;
+
+    // Require at least one meaningful displacement.
+    if (n >= 5 && score.farDisplaced < 1) return false;
+
+    return true;
+  }
+
   scrambleZone(books, rule) {
     if (books.length < 2) return [...books];
-    let arr;
-    let attempts = 0;
-    do {
-      arr = Phaser.Utils.Array.Shuffle([...books]);
-      attempts++;
-    } while (evaluateOrder(arr, rule).solved && attempts < 20);
-    return arr;
+
+    let bestArr = [...books];
+    let bestScore = this.scoreShuffle(bestArr, rule);
+
+    // Try many shuffles and keep the best fallback if strict criteria aren't met.
+    for (let attempts = 0; attempts < 120; attempts++) {
+      const candidate = Phaser.Utils.Array.Shuffle([...books]);
+      const score = this.scoreShuffle(candidate, rule);
+
+      if (this.isGoodShuffle(score, books.length)) {
+        return candidate;
+      }
+
+      // Prefer fewer correct slots, then larger average displacement.
+      const isBetter =
+        score.correctCount < bestScore.correctCount ||
+        (
+          score.correctCount === bestScore.correctCount &&
+          score.avgDisplacement > bestScore.avgDisplacement
+        );
+      if (isBetter) {
+        bestArr = candidate;
+        bestScore = score;
+      }
+    }
+
+    return bestArr;
   }
 
   /** @deprecated kept for any legacy call-sites; delegates to scrambleZone */
@@ -614,7 +756,7 @@ export default class GameScene extends Phaser.Scene {
     });
 
     this.input.on("dragstart", (_p, obj) => {
-      if (this.solved || this.autoArranging || this.paused) return;
+      if (this.solved || this.failed || this.autoArranging || this.paused) return;
       this.hideBookTooltip();
       this.dragging = obj;
       obj.setDepth(20);
@@ -623,7 +765,7 @@ export default class GameScene extends Phaser.Scene {
     });
 
     this.input.on("drag", (_p, obj, dragX, dragY) => {
-      if (this.solved || this.autoArranging || this.paused) return;
+      if (this.solved || this.failed || this.autoArranging || this.paused) return;
       obj.x = dragX;
       obj.y = dragY;
       this.updateFlipEdgeHints(dragX);
@@ -631,7 +773,7 @@ export default class GameScene extends Phaser.Scene {
     });
 
     this.input.on("dragend", (_p, obj) => {
-      if (this.solved || this.autoArranging || this.paused) return;
+      if (this.solved || this.failed || this.autoArranging || this.paused) return;
       obj.setDepth(1);
       this.tweens.add({ targets: obj, scale: 1, duration: 100 });
       this.handleDrop(obj);
@@ -660,20 +802,26 @@ export default class GameScene extends Phaser.Scene {
     const multiZone = this.levelDef.zones.length > 1;
     const nearest = this.nearestSlot(obj.x, obj.y, multiZone ? zoneIdx : null);
 
+    let moved = false;
     if (nearest !== fromIndex) {
       this.order.splice(fromIndex, 1);
       this.order.splice(nearest, 0, obj);
+      moved = true;
       this.moves++;
       this.movesText.setText(I18n.t("movesLabel", { moves: this.moves }));
       this.moveHistory.push({ fromIndex, nearest });
       this.refreshUndoButton();
     }
     this.layoutBooks(true);
+    if (moved) {
+      this.updateChallengeDisplay();
+      if (this.checkChallengeLimits()) return;
+    }
     this.checkSolved();
   }
 
   undoMove() {
-    if (this.solved || this.autoArranging || this.paused) return;
+    if (this.solved || this.failed || this.autoArranging || this.paused) return;
     if (this.moveHistory.length === 0) return;
 
     const { fromIndex, nearest } = this.moveHistory.pop();
@@ -682,6 +830,7 @@ export default class GameScene extends Phaser.Scene {
 
     this.moves = Math.max(0, this.moves - 1);
     this.movesText.setText(I18n.t("movesLabel", { moves: this.moves }));
+    this.updateChallengeDisplay();
 
     // Bring the affected page into view so the change is visible
     const slot = this.slots[fromIndex];
@@ -692,7 +841,8 @@ export default class GameScene extends Phaser.Scene {
   }
 
   refreshUndoButton() {
-    const canUndo = this.moveHistory.length > 0 && !this.solved && !this.autoArranging;
+    const canUndo =
+      this.moveHistory.length > 0 && !this.solved && !this.failed && !this.autoArranging;
     this.undoBtn?.setEnabled(canUndo);
   }
 
@@ -785,6 +935,27 @@ export default class GameScene extends Phaser.Scene {
         })
         .setOrigin(0.5, 0);
       bottomOfInstruction = by + hintObj.height + 6;
+    }
+
+    if (this.challenge) {
+      const challengeY = bottomOfInstruction + 8;
+      this.challengeBadgeBg = this.add.graphics().setDepth(51);
+      this.challengeText = this.add
+        .text(bx, challengeY, this.buildChallengeDisplayText(), {
+          fontFamily: FONTS.body,
+          fontSize: "16px",
+          color: "#ffdede",
+          align: "center",
+          fontStyle: "bold",
+          wordWrap: { width: width - 180 },
+        })
+        .setOrigin(0.5, 0)
+        .setDepth(52);
+      this.refreshChallengeBadge();
+      bottomOfInstruction = challengeY + this.challengeText.height + 16;
+    } else {
+      this.challengeText = null;
+      this.challengeBadgeBg = null;
     }
 
     // Adjust AREA_TOP dynamically so the grid never overlaps the instructions
@@ -1012,7 +1183,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   togglePause() {
-    if (this.solved || this.autoArranging) return;
+    if (this.solved || this.failed || this.autoArranging) return;
     if (this.paused) this.resumeGame();
     else this.pauseGame();
   }
@@ -1082,6 +1253,84 @@ export default class GameScene extends Phaser.Scene {
     if (!this.pauseItems) return;
     this.pauseItems.forEach((o) => o.destroy());
     this.pauseItems = null;
+  }
+
+  onChallengeFailed(reason) {
+    if (this.failed || this.solved) return;
+    this.failed = true;
+    this.paused = false;
+    this.clearPauseUI();
+    this.hideBookTooltip();
+    this.hideActionTooltip();
+    this.closeActionMenu();
+    this.dragging = null;
+    this.refreshUndoButton();
+    this.checkBtn?.setEnabled(false);
+    this.pauseBtn?.setEnabled(false);
+    this.showChallengeFailModal(reason);
+  }
+
+  showChallengeFailModal(reason) {
+    const { width, height } = this.scale;
+    const pw = 390;
+    const ph = 230;
+    const px = (width - pw) / 2;
+    const py = (height - ph) / 2;
+
+    const overlay = this.add
+      .rectangle(0, 0, width, height, 0x000000, 0.62)
+      .setOrigin(0)
+      .setDepth(90)
+      .setInteractive();
+
+    const panel = this.add.graphics().setDepth(91);
+    panel.fillStyle(COLORS.ink, 0.98);
+    panel.fillRoundedRect(px, py, pw, ph, 14);
+    panel.lineStyle(2, COLORS.bad, 1);
+    panel.strokeRoundedRect(px, py, pw, ph, 14);
+
+    const title = this.add
+      .text(width / 2, py + 38, I18n.t("challengeFailed"), {
+        fontFamily: FONTS.title,
+        fontSize: "28px",
+        color: "#ffd5d5",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5)
+      .setDepth(92);
+
+    const reasonText = reason === "time"
+      ? I18n.t("challengeFailTime")
+      : I18n.t("challengeFailMoves");
+    const body = this.add
+      .text(width / 2, py + 86, reasonText, {
+        fontFamily: FONTS.body,
+        fontSize: "15px",
+        color: "#f3e3c3",
+        align: "center",
+      })
+      .setOrigin(0.5)
+      .setDepth(92);
+
+    const retryBtn = makeButton(
+      this,
+      width / 2,
+      py + 146,
+      I18n.t("retryLevel"),
+      () => this.scene.restart({ level: this.levelNumber }),
+      { width: 220, height: 50, fontSize: 20, fill: COLORS.good, textColor: "#ffffff" }
+    ).setDepth(92);
+
+    const menuBtn = makeButton(
+      this,
+      width / 2,
+      py + 198,
+      I18n.t("menu"),
+      () => goToScene(this, "MenuScene"),
+      { width: 180, height: 40, fontSize: 16, fill: COLORS.woodLight, textColor: "#f3e3c3" }
+    ).setDepth(92);
+
+    this.failItems = [overlay, panel, title, body, retryBtn, menuBtn];
   }
 
   buildPager() {
@@ -1232,7 +1481,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   checkSolved(manual = false) {
-    if (this.solved) return;
+    if (this.solved || this.failed) return;
     const result = this._evaluateAll();
     if (result.solved) {
       this.onSolved();
@@ -1491,7 +1740,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   autoArrange() {
-    if (!this.levelDef || this.solved || this.autoArranging) return;
+    if (!this.levelDef || this.solved || this.failed || this.autoArranging) return;
     this.showAutoConfirm();
   }
 
@@ -1622,9 +1871,11 @@ export default class GameScene extends Phaser.Scene {
   }
 
   update() {
-    if (this.timerStarted && !this.solved && !this.paused) {
+    if (this.timerStarted && !this.solved && !this.failed && !this.paused) {
+      if (this.checkChallengeLimits()) return;
       const elapsed = this.time.now - this.startTime;
       this.timeText.setText(I18n.t("timeLabel", { time: formatTime(elapsed) }));
+      this.updateChallengeDisplay();
     }
   }
 }
