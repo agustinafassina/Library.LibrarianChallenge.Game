@@ -13,7 +13,7 @@ export default class LevelCompleteScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
     this.cameras.main.fadeIn(200, 0, 0, 0);
-    const { level, totalLevels, timeMs, moves, score, isBest, autoUsed } = this.result;
+    const { level, totalLevels, timeMs, moves, score, isBest, autoUsed, hintsUsed = 0 } = this.result;
 
     this.add.graphics().fillStyle(COLORS.woodDark, 1).fillRect(0, 0, width, height);
 
@@ -65,6 +65,16 @@ export default class LevelCompleteScene extends Phaser.Scene {
           fontFamily: FONTS.body,
           fontSize: "13px",
           color: "#c87060",
+          fontStyle: "italic",
+          align: "center",
+        })
+        .setOrigin(0.5);
+    } else if (hintsUsed > 0) {
+      this.add
+        .text(width / 2, py + 235, I18n.t("hintUsedNote", { count: hintsUsed }), {
+          fontFamily: FONTS.body,
+          fontSize: "13px",
+          color: "#d0b27e",
           fontStyle: "italic",
           align: "center",
         })

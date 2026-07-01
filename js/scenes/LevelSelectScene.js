@@ -35,6 +35,29 @@ function ruleBadgeLabel(rule) {
   return entry[I18n.lang] ?? entry.en;
 }
 
+function levelBookCount(levelDef) {
+  if (Array.isArray(levelDef.zones)) {
+    return levelDef.zones.reduce((sum, z) => sum + (z.books?.length ?? 0), 0);
+  }
+  return levelDef.books?.length ?? 0;
+}
+
+function computeStars(best, levelDef) {
+  if (!best) return 0;
+  const books = Math.max(1, levelBookCount(levelDef));
+  const seconds = Math.floor(best.timeMs / 1000);
+
+  const targetMoves = Math.max(4, Math.round(books * 0.9));
+  const targetSeconds = Math.max(25, Math.round(books * 7));
+
+  if (best.moves <= targetMoves && seconds <= targetSeconds) return 3;
+  if (
+    best.moves <= Math.round(targetMoves * 1.35) &&
+    seconds <= Math.round(targetSeconds * 1.35)
+  ) return 2;
+  return 1;
+}
+
 export default class LevelSelectScene extends Phaser.Scene {
   constructor() {
     super("LevelSelectScene");
@@ -114,6 +137,7 @@ export default class LevelSelectScene extends Phaser.Scene {
       const unlocked = lvl.level <= maxUnlocked;
       const best     = Storage.getBestForLevel(lvl.level);
       const played   = !!best;
+      const stars    = played ? computeStars(best, lvl) : 0;
 
       const objects = [];
 
@@ -208,6 +232,20 @@ export default class LevelSelectScene extends Phaser.Scene {
           })
           .setOrigin(0.5);
         objects.push(st);
+
+        // ── Stars by time + moves ──────────────────────────────
+        const starsText = "★".repeat(stars) + "☆".repeat(3 - stars);
+        const starsColor = stars === 3 ? "#ffd766" : stars === 2 ? "#e9c77b" : stars === 1 ? "#caa56a" : "#6e5a43";
+        const starsObj = this.add
+          .text(x, y + 14, starsText, {
+            fontFamily: FONTS.body,
+            fontSize: "14px",
+            color: starsColor,
+            align: "center",
+            fontStyle: "bold",
+          })
+          .setOrigin(0.5);
+        objects.push(starsObj);
       }
 
       // ── Lock icon ─────────────────────────────────────────
