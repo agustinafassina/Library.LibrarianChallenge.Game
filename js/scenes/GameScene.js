@@ -1909,13 +1909,15 @@ export default class GameScene extends Phaser.Scene {
     this.librarian?.play("librarian-happy");
     const timeMs = this.time.now - this.startTime;
     const score = this.computeScore(timeMs, this.moves);
-
-    Storage.unlockLevel(this.levelNumber + 1);
-    const isBest = Storage.saveResult(this.levelNumber, {
+    const result = {
       score,
       timeMs,
       moves: this.moves,
-    });
+    };
+
+    Storage.unlockLevel(this.levelNumber + 1);
+    const isBest = Storage.saveResult(this.levelNumber, result);
+    Storage.recordLevelCompletion(this.levelNumber, result);
 
     this.order.forEach((_, i) => {
       const guide = this.slotGuides[i];

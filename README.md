@@ -54,6 +54,7 @@ By default the game reads book endpoints from `http://localhost:5142`:
 ```js
 window.LIBRARIAN_CHALLENGE_CONFIG = {
   apiBaseUrl: "http://localhost:5142",
+  apiKey: "dev-librarian-game-key",
   useApiBooks: true,
   maxResultsPerTag: 20,
   autoTag: true,
@@ -75,6 +76,10 @@ window.LIBRARIAN_CHALLENGE_CONFIG = {
 If the API is down, CORS blocks the request, or there are no books yet, the game
 falls back to `data/books.json` so levels remain playable.
 
+The API key is sent as `X-API-Key` on every request to
+`Library.LibrarianChallenge.Game.Api`. For local development, it must match
+`GameApi:ApiKey` in the API's `appsettings.Development.json`.
+
 ## Controls
 
 - **Drag & drop** a book to move it into a slot; the row reshuffles to make room.
@@ -88,7 +93,7 @@ falls back to `data/books.json` so levels remain playable.
 
 ## Levels
 
-50 levels with a steadily increasing book count (4 → 67), spread across shelves
+100 levels with a steadily increasing difficulty curve and book count (4 → 67), spread across shelves
 and up to three pages. See the full breakdown (books, shelves and pages per
 level) in **[LEVELS.md](LEVELS.md)**.
 
@@ -155,6 +160,7 @@ All data access goes through `js/utils/dataLoader.js`:
 - `loadBooks()` reads `data/books.json` as the local base/fallback, then tries
   `GET /api/v1/Book/google/by-tag/{tag}?maxResults=20&autoTag=true` for LGTBIQ+,
   queer, lesbian, trans, feminist and activism tags.
+- API requests include the configured `X-API-Key` header.
 - `loadLevels()` reads `data/levels.json`.
 - `getLevelWithBooks(level)` resolves a level's book ids into full book objects.
 - API books are mapped in `js/utils/apiBooks.js` to the shape required by the
@@ -208,6 +214,10 @@ Change tags or API URL in `index.html` via
 - `maxLevelUnlocked` — highest unlocked level (drives **Continue** + locks).
 - `bestScores` — best `{ score, timeMs, moves }` per level (shown in Level
   Select and the results screen).
+- `guestProfile` — anonymous local demo profile (`id`, `createdAt`,
+  `lastSeenAt`, `mode`).
+- `globalStats` — aggregate local stats such as completed levels, total
+  completions, moves and play time.
 
 ## Replacing placeholder art
 

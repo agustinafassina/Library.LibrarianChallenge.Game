@@ -9,6 +9,7 @@ export default class MenuScene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.scale;
+    Storage.touchSession();
     this.cameras.main.fadeIn(200, 0, 0, 0);
 
     this.drawBackground();
@@ -62,13 +63,14 @@ export default class MenuScene extends Phaser.Scene {
       goToScene(this, "LevelSelectScene");
     });
 
-    // ── Secondary row: Tutorial + Settings side by side ───────
+    // ── Secondary row: Tutorial + Books + Settings ────────────
     y += gap + 20;
-    const secW = 120;
+    const secW = 110;
     const secH = 56;
     const secOpts = { width: secW, height: secH, fontSize: 16, fill: COLORS.woodLight, textColor: "#f3e3c3" };
-    makeButton(this, cx - secW / 2 - 8, y, I18n.t("tutorial"), () => this.openTutorial(), secOpts);
-    makeButton(this, cx + secW / 2 + 8, y, I18n.t("settings"), () => this.openSettings(), secOpts);
+    makeButton(this, cx - secW - 10, y, I18n.t("tutorial"), () => this.openTutorial(), secOpts);
+    makeButton(this, cx, y, I18n.t("books"), () => goToScene(this, "BooksScene"), secOpts);
+    makeButton(this, cx + secW + 10, y, I18n.t("settings"), () => this.openSettings(), secOpts);
 
     // ── Danger zone: reset, small, bottom ─────────────────────
     makeButton(this, cx, height - 52, I18n.t("resetProgress"), () => this.confirmReset(), {

@@ -1,6 +1,8 @@
 const PREFIX = "librarians-challenge:";
 const KEY_MAX_LEVEL = PREFIX + "maxLevelUnlocked";
 const KEY_BEST = PREFIX + "bestScores";
+const KEY_PROFILE = PREFIX + "guestProfile";
+const KEY_STATS = PREFIX + "globalStats";
 
 function readJSON(key, fallback) {
   try {
@@ -20,7 +22,37 @@ function writeJSON(key, value) {
   }
 }
 
+function nowIso() {
+  return new Date().toISOString();
+}
+
+function createGuestId() {
+  if (globalThis.crypto?.randomUUID) return globalThis.crypto.randomUUID();
+  return `guest-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
 export const Storage = {
+  getGuestProfile() {
+    const existing = readJSON(KEY_PROFILE, null);
+    if (existing?.id) return existing;
+
+    const profile = {
+      id: createGuestId(),
+      createdAt: nowIso(),
+      lastSeenAt: nowIso(),
+      mode: "guest",
+    };
+    writeJSON(KEY_PROFILE, profile);
+    return profile;
+  },
+
+  touchSession() {
+    const profile = this.getGuestProfile();
+    const updated = { ...profile, lastSeenAt: nowIso() };
+    writeJSON(KEY_PROFILE, updated);
+    return updated;
+  },
+
   getMaxLevelUnlocked() {
     return Math.max(1, Number(readJSON(KEY_MAX_LEVEL, 1)) || 1);
   },
@@ -57,8 +89,40 @@ export const Storage = {
     return isBetter;
   },
 
+  getGlobalStats() {
+    return readJSON(KEY_STATS, {
+      completedLevels: [],
+      totalCompletions: 0,
+      totalMoves: 0,
+      totalTimeMs: 0,
+      lastCompletedLevel: null,
+      lastPlayedAt: null,
+    });
+  },
+
+  recordLevelCompletion(level, result) {
+    this.touchSession();
+    const stats = this.getGlobalStats();
+    const completed = new Set(stats.completedLevels ?? []);
+    completed.add(level);
+
+    const updated = {
+      ...stats,
+      completedLevels: [...completed].sort((a, b) => a - b),
+      totalCompletions: (stats.totalCompletions ?? 0) + 1,
+      totalMoves: (stats.totalMoves ?? 0) + (result.moves ?? 0),
+      totalTimeMs: (stats.totalTimeMs ?? 0) + (result.timeMs ?? 0),
+      lastCompletedLevel: level,
+      lastPlayedAt: nowIso(),
+    };
+    writeJSON(KEY_STATS, updated);
+    return updated;
+  },
+
   clearAll() {
     localStorage.removeItem(KEY_MAX_LEVEL);
     localStorage.removeItem(KEY_BEST);
+    localStorage.removeItem(KEY_PROFILE);
+    localStorage.removeItem(KEY_STATS);
   },
 };

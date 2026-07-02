@@ -42,6 +42,7 @@ function readRuntimeConfig() {
   const cfg = globalThis.LIBRARIAN_CHALLENGE_CONFIG ?? {};
   return {
     apiBaseUrl: (cfg.apiBaseUrl || DEFAULT_API_BASE_URL).replace(/\/+$/, ""),
+    apiKey: cfg.apiKey || "",
     tags: Array.isArray(cfg.bookTags) && cfg.bookTags.length ? cfg.bookTags : DEFAULT_TAGS,
     enabled: cfg.useApiBooks !== false,
     maxResults: Number.isFinite(cfg.maxResultsPerTag) ? cfg.maxResultsPerTag : 20,
@@ -49,8 +50,9 @@ function readRuntimeConfig() {
   };
 }
 
-async function fetchJson(url) {
-  const res = await fetch(url, { cache: "no-cache" });
+async function fetchJson(url, apiKey) {
+  const headers = apiKey ? { "X-API-Key": apiKey } : undefined;
+  const res = await fetch(url, { cache: "no-cache", headers });
   if (!res.ok) {
     throw new Error(`Failed to load ${url} (HTTP ${res.status})`);
   }
@@ -186,7 +188,8 @@ export async function fetchBooksFromApi() {
         autoTag: String(config.autoTag),
       });
       const payload = await fetchJson(
-        `${config.apiBaseUrl}/api/v1/Book/google/by-tag/${encodeURIComponent(tag)}?${params}`
+        `${config.apiBaseUrl}/api/v1/Book/google/by-tag/${encodeURIComponent(tag)}?${params}`,
+        config.apiKey
       );
       return readBooksPayload(payload).map((book) => ({
         ...book,

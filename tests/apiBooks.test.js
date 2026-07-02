@@ -123,13 +123,16 @@ describe("apiBooks.js", () => {
     const originalConfig = globalThis.LIBRARIAN_CHALLENGE_CONFIG;
     globalThis.LIBRARIAN_CHALLENGE_CONFIG = {
       apiBaseUrl: "http://localhost:5142",
+      apiKey: "test-key",
       bookTags: ["Bisexual"],
       maxResultsPerTag: 20,
       autoTag: true,
     };
     let requestedUrl = "";
-    globalThis.fetch = async (url) => {
+    let requestedHeaders = {};
+    globalThis.fetch = async (url, options) => {
       requestedUrl = String(url);
+      requestedHeaders = options?.headers ?? {};
       return {
         ok: true,
         json: async () => ({
@@ -144,6 +147,7 @@ describe("apiBooks.js", () => {
     expect(requestedUrl).toBe(
       "http://localhost:5142/api/v1/Book/google/by-tag/Bisexual?maxResults=20&autoTag=true"
     );
+    expect(requestedHeaders["X-API-Key"]).toBe("test-key");
     expect(books).toHaveLength(1);
     expect(books[0]).toMatchObject({ title: "Real API Book", tags: ["Bisexual"] });
 

@@ -1,6 +1,7 @@
 import BootScene from "./scenes/BootScene.js";
 import MenuScene from "./scenes/MenuScene.js";
 import LevelSelectScene from "./scenes/LevelSelectScene.js";
+import BooksScene from "./scenes/BooksScene.js";
 import GameScene from "./scenes/GameScene.js";
 import LevelCompleteScene from "./scenes/LevelCompleteScene.js";
 import ErrorScene from "./scenes/ErrorScene.js";
@@ -23,8 +24,11 @@ const config = {
     width: 960,
     height: 640,
   },
+  dom: {
+    createContainer: true,
+  },
   input: { activePointers: 2 },
-  scene: [BootScene, MenuScene, LevelSelectScene, GameScene, LevelCompleteScene, ErrorScene],
+  scene: [BootScene, MenuScene, LevelSelectScene, BooksScene, GameScene, LevelCompleteScene, ErrorScene],
 };
 
 const game = new Phaser.Game(config);
