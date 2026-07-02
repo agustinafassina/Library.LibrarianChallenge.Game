@@ -1968,16 +1968,18 @@ export default class GameScene extends Phaser.Scene {
 
   celebrate() {
     const { width } = this.scale;
-    const emitter = this.add.particles(width / 2, this.celebrateY, "spark", {
-      speed: { min: -260, max: 260 },
-      angle: { min: 200, max: 340 },
-      scale: { start: 0.9, end: 0 },
-      lifespan: 900,
-      gravityY: 420,
-      quantity: 30,
-      tint: [0xd9a441, 0x5bbf6a, 0xffffff, 0x4f86c6],
-      emitting: false,
-    });
+    const emitter = this.add
+      .particles(width / 2, this.celebrateY, "spark", {
+        speed: { min: -260, max: 260 },
+        angle: { min: 200, max: 340 },
+        scale: { start: 0.9, end: 0 },
+        lifespan: 900,
+        gravityY: 420,
+        quantity: 30,
+        tint: [0xd9a441, 0x5bbf6a, 0xffffff, 0x4f86c6],
+        emitting: false,
+      })
+      .setDepth(68);
     emitter.explode(40);
     // Explode is fire-and-forget; explicitly destroy the emitter to avoid leaks.
     this.time.delayedCall(1200, () => emitter.destroy());
