@@ -318,6 +318,64 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
+  truncateTextToWidth(textObj, fullText, maxWidth, baseSize, minSize = 10) {
+    if (!textObj) return;
+
+    const normalized = String(fullText ?? "").replace(/\s+/g, " ").trim();
+    if (normalized.length === 0) { textObj.setText(""); return; }
+
+    const ellipsis = "\u2026";
+
+    // Helper: set text + font and return whether it fits.
+    const tryAt = (text, size) => {
+      textObj.setText(text);
+      textObj.setFontSize(size);
+      return textObj.width <= maxWidth;
+    };
+
+    // 1. Try full text at baseSize — if it fits, we're done.
+    if (tryAt(normalized, baseSize)) return;
+
+    // 2. Try full text at smaller sizes down to minSize.
+    for (let sz = baseSize - 1; sz >= minSize; sz--) {
+      if (tryAt(normalized, sz)) return;
+    }
+
+    // 3. Full text doesn't fit even at minSize — truncate with ellipsis.
+    //    After finding the truncated string, scale font back up to max that fits.
+    const words = normalized.split(" ");
+    let truncated = null;
+
+    outer: while (words.length > 1) {
+      words.pop();
+      const candidate = `${words.join(" ")}${ellipsis}`;
+      for (let sz = baseSize; sz >= minSize; sz--) {
+        if (tryAt(candidate, sz)) { truncated = { text: candidate, size: sz }; break outer; }
+      }
+    }
+
+    if (!truncated) {
+      // Last resort: trim char by char.
+      let chars = normalized.length;
+      while (chars > 1) {
+        chars -= 1;
+        const candidate = `${normalized.slice(0, chars).trimEnd()}${ellipsis}`;
+        for (let sz = baseSize; sz >= minSize; sz--) {
+          if (tryAt(candidate, sz)) { truncated = { text: candidate, size: sz }; break; }
+        }
+        if (truncated) break;
+      }
+    }
+
+    if (truncated) {
+      textObj.setText(truncated.text);
+      textObj.setFontSize(truncated.size);
+    } else {
+      textObj.setText(ellipsis);
+      textObj.setFontSize(minSize);
+    }
+  }
+
   updateTopBarLayout() {
     if (!this.titleText || !this.levelText || !this.movesText || !this.timeText) return;
 
@@ -391,10 +449,12 @@ export default class GameScene extends Phaser.Scene {
       (availW - (widestRow - 1) * GAP_X) / widestRow,
       60, BOOK_W_MAX
     );
-    this.bookH = Phaser.Math.Clamp(
-      (availH - rowsOnScreen * BOARD_H - (rowsOnScreen - 1) * GAP_Y) / rowsOnScreen,
-      78, BOOK_H_MAX
-    );
+    const rawBookH = (availH - rowsOnScreen * BOARD_H - (rowsOnScreen - 1) * GAP_Y) / rowsOnScreen;
+    // Cap height so a single-row level doesn't fill the whole vertical space.
+    const maxBookHForRows = rowsOnScreen === 1 ? Math.min(rawBookH, this.bookW * 1.6)
+      : rowsOnScreen === 2 ? Math.min(rawBookH, this.bookW * 1.8)
+      : rawBookH;
+    this.bookH = Phaser.Math.Clamp(maxBookHForRows, 78, BOOK_H_MAX);
 
     const rowStride = this.bookH + BOARD_H + GAP_Y;
     const totalH = rowsOnScreen * this.bookH + rowsOnScreen * BOARD_H + (rowsOnScreen - 1) * GAP_Y;
@@ -684,11 +744,12 @@ export default class GameScene extends Phaser.Scene {
     const w = this.bookW;
     const h = this.bookH;
 
-    const showAuthor = w >= 78;
+    const showAuthor = w >= 96 && h >= 96;
     const showGenre  = h >= 88;
 
-    const titleSize = Math.round(Phaser.Math.Clamp(Math.min(h * 0.11, w * 0.2), 12, 16));
-    const metaSize  = Math.round(Phaser.Math.Clamp(Math.min(h * 0.09, w * 0.17), 12, 13));
+    // Scale font generously with card size; allow larger text on big cards.
+    const titleSize = Math.round(Phaser.Math.Clamp(Math.min(h * 0.13, w * 0.22), 13, 22));
+    const metaSize  = Math.round(Phaser.Math.Clamp(Math.min(h * 0.12, w * 0.20), 12, 20));
 
     const coverTex = this.ensureBookTexture(book, Math.round(w), Math.round(h));
     const spine = this.add.image(0, 0, coverTex).setOrigin(0.5);
@@ -709,8 +770,10 @@ export default class GameScene extends Phaser.Scene {
       fill: true,
     };
 
+    // Position title in the upper third of the card (not pinned to the very top).
+    const titleY = -h * 0.28;
     const titleTxt = this.add
-      .text(0, -h / 2 + 10, book.title, {
+      .text(0, titleY, book.title, {
         fontFamily: FONTS.body,
         fontSize: `${titleSize}px`,
         color: textA11y.textColor,
@@ -718,10 +781,9 @@ export default class GameScene extends Phaser.Scene {
         fontStyle: "bold",
         stroke: textA11y.strokeColor,
         strokeThickness: 2,
-        wordWrap: { width: w - bindW - 10, useAdvancedWrap: true },
         shadow,
       })
-      .setOrigin(0.5, 0);
+      .setOrigin(0.5, 0.5);
 
     // When the level sorts by pages or size, surface that attribute prominently
     // so the puzzle is solvable at a glance (colour is already the spine fill).
@@ -733,58 +795,45 @@ export default class GameScene extends Phaser.Scene {
     } else if (primaryAttr === "size") {
       metaStr = this.sizeWord(book.size);
     } else if (showAuthor && showGenre) {
-      metaStr = `${book.author}\n${book.genre} \u00b7 ${book.year}`;
+      metaStr = `${book.author} \u00b7 ${book.genre} \u00b7 ${book.year}`;
     } else if (showGenre) {
       metaStr = `${book.genre} \u00b7 ${book.year}`;
     } else {
       metaStr = `${book.year}`;
     }
 
+    const metaY = h * 0.28;
     const metaTxt = this.add
-      .text(0, h / 2 - 8, metaStr, {
+      .text(0, metaY, metaStr, {
         fontFamily: FONTS.body,
         fontSize: `${yearOnly ? metaSize + 1 : metaSize}px`,
-        fontStyle: yearOnly ? "bold" : "normal",
+        fontStyle: "bold",
         color: textA11y.textColor,
         align: "center",
         stroke: textA11y.strokeColor,
         strokeThickness: 2,
         lineSpacing: 3,
-        wordWrap: { width: w - bindW - 10, useAdvancedWrap: true },
         shadow,
       })
-      .setOrigin(0.5, 1);
+      .setOrigin(0.5, 0.5);
 
-    const titleMaxHeight = Math.max(24, Math.round(h * 0.34));
-    const metaMaxHeight = Math.max(18, Math.round(h * 0.3));
-    const textMaxWidth = w - bindW - 10;
-    this.fitTextToBox(titleTxt, textMaxWidth, titleMaxHeight, titleSize, 10);
-    this.fitTextToBox(metaTxt, textMaxWidth, metaMaxHeight, yearOnly ? metaSize + 1 : metaSize, 10);
+    const textMaxWidth = w - bindW - 14;
+    this.truncateTextToWidth(titleTxt, book.title, textMaxWidth, titleSize, 12);
+    this.truncateTextToWidth(metaTxt, metaStr, textMaxWidth, yearOnly ? metaSize + 1 : metaSize, 11);
 
-    // Translucent bands behind text improve contrast on very light/dark covers.
+    // Translucent bands behind each text block for contrast.
+    const bandW = w - bindW - 8;
+    const bandX = -w / 2 + bindW + 2;
+
     const titleBand = this.add.graphics();
-    const titleBandY = -h / 2 + 8;
-    const titleBandH = Math.min(h * 0.36, titleTxt.height + 6);
+    const titleBandH = titleTxt.height + 10;
     titleBand.fillStyle(textA11y.bandFill, textA11y.bandAlpha);
-    titleBand.fillRoundedRect(
-      -w / 2 + bindW + 2,
-      titleBandY,
-      w - bindW - 8,
-      titleBandH,
-      4
-    );
+    titleBand.fillRoundedRect(bandX, titleY - titleBandH / 2, bandW, titleBandH, 4);
 
     const metaBand = this.add.graphics();
-    const metaBandH = Math.min(h * 0.34, metaTxt.height + 6);
-    const metaBandY = h / 2 - metaBandH - 8;
+    const metaBandH = metaTxt.height + 10;
     metaBand.fillStyle(textA11y.bandFill, textA11y.bandAlpha);
-    metaBand.fillRoundedRect(
-      -w / 2 + bindW + 2,
-      metaBandY,
-      w - bindW - 8,
-      metaBandH,
-      4
-    );
+    metaBand.fillRoundedRect(bandX, metaY - metaBandH / 2, bandW, metaBandH, 4);
 
     const container = this.add.container(slot.x, slot.y, [spine, titleBand, metaBand, titleTxt, metaTxt]);
     container.setSize(w, h);
