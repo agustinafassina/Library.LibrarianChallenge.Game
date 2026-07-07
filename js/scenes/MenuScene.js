@@ -1,5 +1,6 @@
 import { Storage } from "../utils/storage.js";
 import { I18n } from "../utils/i18n.js?v=2";
+import { openFeedbackForm, closeFeedbackForm } from "../utils/feedbackForm.js";
 import { makeButton, goToScene, COLORS, FONTS } from "../utils/ui.js";
 
 export default class MenuScene extends Phaser.Scene {
@@ -63,14 +64,20 @@ export default class MenuScene extends Phaser.Scene {
       goToScene(this, "LevelSelectScene");
     });
 
-    // ── Secondary row: Tutorial + Books + Settings ────────────
+    // ── Secondary actions (2x2) ───────────────────────────────
     y += gap + 20;
     const secW = 110;
-    const secH = 56;
-    const secOpts = { width: secW, height: secH, fontSize: 16, fill: COLORS.woodLight, textColor: "#f3e3c3" };
-    makeButton(this, cx - secW - 10, y, I18n.t("tutorial"), () => this.openTutorial(), secOpts);
-    makeButton(this, cx, y, I18n.t("books"), () => goToScene(this, "BooksScene"), secOpts);
-    makeButton(this, cx + secW + 10, y, I18n.t("settings"), () => this.openSettings(), secOpts);
+    const secH = 50;
+    const secGapX = 12;
+    const secGapY = 12;
+    const secOpts = { width: secW, height: secH, fontSize: 15, fill: COLORS.woodLight, textColor: "#f3e3c3" };
+    const secRow1Y = y;
+    const secRow2Y = y + secH + secGapY;
+
+    makeButton(this, cx - secW / 2 - secGapX / 2, secRow1Y, I18n.t("tutorial"), () => this.openTutorial(), secOpts);
+    makeButton(this, cx + secW / 2 + secGapX / 2, secRow1Y, I18n.t("books"), () => goToScene(this, "BooksScene"), secOpts);
+    makeButton(this, cx - secW / 2 - secGapX / 2, secRow2Y, I18n.t("settings"), () => this.openSettings(), secOpts);
+    makeButton(this, cx + secW / 2 + secGapX / 2, secRow2Y, I18n.t("feedback"), () => openFeedbackForm({ scene: this }), secOpts);
 
     // ── Danger zone: reset, small, bottom ─────────────────────
     makeButton(this, cx, height - 52, I18n.t("resetProgress"), () => this.confirmReset(), {
@@ -92,6 +99,8 @@ export default class MenuScene extends Phaser.Scene {
         wordWrap: { width: width - 60 },
       })
       .setOrigin(0.5);
+
+    this.events.once("shutdown", () => closeFeedbackForm());
   }
 
   openModal(pw, ph) {

@@ -44,3 +44,134 @@ body {
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
   border-radius: 8px;
 }
+
+#game-container.lc-feedback-open canvas {
+  pointer-events: none;
+}
+
+#lc-feedback-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, 0.65);
+  pointer-events: auto;
+}
+
+.lc-feedback-panel {
+  width: min(460px, 100%);
+  padding: 24px 22px 20px;
+  border: 3px solid var(--accent);
+  border-radius: 16px;
+  background: rgba(44, 29, 20, 0.98);
+  box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+  pointer-events: auto;
+}
+
+.lc-feedback-title {
+  margin-bottom: 6px;
+  font-size: 28px;
+  font-weight: 700;
+  color: #f3e3c3;
+  text-align: center;
+}
+
+.lc-feedback-subtitle {
+  margin-bottom: 18px;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #c9b08a;
+  text-align: center;
+}
+
+.lc-feedback-label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #d9a441;
+}
+
+.lc-feedback-select,
+.lc-feedback-input,
+.lc-feedback-textarea {
+  width: 100%;
+  margin-bottom: 14px;
+  border: 2px solid #8a5a2b;
+  border-radius: 10px;
+  background: #1e1410;
+  color: #f3e3c3;
+  font: 15px "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  outline: none;
+}
+
+.lc-feedback-select,
+.lc-feedback-input {
+  height: 38px;
+  padding: 0 12px;
+}
+
+.lc-feedback-textarea {
+  padding: 10px 12px;
+  resize: vertical;
+  min-height: 110px;
+}
+
+.lc-feedback-select:focus,
+.lc-feedback-input:focus,
+.lc-feedback-textarea:focus {
+  border-color: var(--accent);
+}
+
+.lc-feedback-honeypot {
+  display: none;
+}
+
+.lc-feedback-status {
+  min-height: 20px;
+  margin-bottom: 12px;
+  font-size: 14px;
+  text-align: center;
+  color: #c9b08a;
+}
+
+.lc-feedback-status[data-kind="error"] {
+  color: #e88a89;
+}
+
+.lc-feedback-status[data-kind="success"] {
+  color: #7fd68a;
+}
+
+.lc-feedback-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+}
+
+.lc-feedback-btn {
+  min-width: 130px;
+  height: 42px;
+  border: none;
+  border-radius: 10px;
+  font: 700 16px "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.lc-feedback-cancel {
+  background: #8a5a2b;
+  color: #f3e3c3;
+}
+
+.lc-feedback-submit {
+  background: var(--accent);
+  color: #2c1d14;
+}
+
+.lc-feedback-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
