@@ -16,8 +16,9 @@ year, and a combined rule).
   responsiveness and built-in mouse + touch drag input.
 - **Web Storage API (`localStorage`)** — saves progress (unlocked levels, best
   scores) and the selected language.
-- **Fetch API** — loads levels from local JSON and real books from
-  `Library.LibrarianChallenge.Game.Api` when available.
+- **Fetch API** — loads levels from local JSON, real books from
+  `Library.LibrarianChallenge.Game.Api` when available, and submits player
+  feedback to [Formspree](https://formspree.io/) (optional reCAPTCHA v3).
 - **No build system** — runs from any static file server. Books fall back to
   local mocked JSON when the API is unavailable. Art (librarian, particles) is
   generated procedurally at runtime via Phaser `Graphics` textures.
@@ -55,6 +56,8 @@ By default the game reads book endpoints from `http://localhost:5142`:
 window.LIBRARIAN_CHALLENGE_CONFIG = {
   apiBaseUrl: "http://localhost:5142",
   apiKey: "dev-librarian-game-key",
+  formspreeUrl: "https://formspree.io/f/xbdvbarg",
+  recaptchaSiteKey: "", // Google reCAPTCHA v3 site key (required if captcha is enabled in Formspree)
   useApiBooks: true,
   maxResultsPerTag: 20,
   autoTag: true,
@@ -89,6 +92,8 @@ The API key is sent as `X-API-Key` on every request to
 - On big levels the shelves span several **pages**: use the right-edge arrow or
   the `‹ Page X / Y ›` pager next to the buttons. While dragging a book, push it
   against the left/right edge to carry it to the previous/next page.
+- Some levels add an optional **challenge** (move and/or time limit). Exceeding
+  either limit shows a fail modal; you can retry or continue without the bonus.
 - Works with mouse and touch.
 
 ## Levels
@@ -127,6 +132,23 @@ translated via `_<lang>` fields in `data/levels.json` (e.g. `description_es`),
 resolved by `I18n.pick()` with the base field as fallback. Book data (titles,
 authors, genres) stays as-is since it's catalogue content.
 
+## Feedback (Formspree)
+
+The main menu **Feedback** button opens a DOM modal (`js/utils/feedbackForm.js`)
+that posts to Formspree via `fetch`. Fields: type, message (required), email
+(required), plus hidden metadata (`guestId`, language, progress stats, etc.).
+
+To enable spam protection, turn on reCAPTCHA v3 in the Formspree form settings
+(secret key in Formspree, site key in `recaptchaSiteKey`). The game loads
+Google's script on demand and sends the token as `g-recaptcha-response` with each
+submission. Leave `recaptchaSiteKey` empty for local testing without captcha.
+
+## Books library
+
+**Books** on the main menu opens `BooksScene`: a browsable catalogue filtered by
+tag (from `bookTags` in config), with search and pagination. It uses the same
+book data as gameplay (`loadBooks()`), including API results when available.
+
 ## How it works
 
 ```
@@ -134,17 +156,24 @@ index.html            page shell, loads Phaser (CDN) + js/main.js (ES module)
 css/styles.css        page background + canvas centering / responsiveness
 js/
   main.js             Phaser config + scene registration
+  config/
+    layout.js         shelf/book layout constants (rows, spacing, areas)
+  game/
+    BoardController.js  shelf paging + slot logic used by GameScene
   scenes/
     BootScene.js          generates placeholder art (librarian, spark) at runtime
-    MenuScene.js          Start / Continue / Level Select
+    MenuScene.js          Start / Continue / Level Select + Tutorial / Books / Settings / Feedback
     LevelSelectScene.js   grid of unlocked levels + best scores
+    BooksScene.js         tag-filtered book catalogue (search + pagination)
     GameScene.js          core gameplay (multi-shelf layout, drag & drop, win check)
     LevelCompleteScene.js results screen (time / moves / score)
+    ErrorScene.js         fatal load/runtime error screen
   utils/
     dataLoader.js     SINGLE place data is loaded (local levels + API books)
     apiBooks.js       API client + mapper from API DTOs to game book shape
+    feedbackForm.js   DOM feedback modal + Formspree POST (optional reCAPTCHA v3)
     rules.js          defines + checks each sorting rule
-    storage.js        localStorage progress (max level, best scores)
+    storage.js        localStorage progress (max level, best scores, guest stats)
     i18n.js           UI translations (English / Spanish), language persisted
     ui.js             shared buttons / colors / helpers
 data/
