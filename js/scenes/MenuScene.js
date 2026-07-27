@@ -39,18 +39,8 @@ export default class MenuScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    this.add
-      .text(width / 2, height * 0.32, I18n.t("tip"), {
-        fontFamily: FONTS.body,
-        fontSize: "15px",
-        color: "#c9b08a",
-        align: "center",
-        wordWrap: { width: width - 80 },
-      })
-      .setOrigin(0.5);
-
     const cx = width * 0.34;
-    let y = height * 0.42;
+    let y = height * 0.38;
     const gap = 58;
 
     // ── Primary actions ───────────────────────────────────────
@@ -126,11 +116,16 @@ export default class MenuScene extends Phaser.Scene {
 
   openTutorial() {
     const { width, height } = this.scale;
-    const { items, close } = this.openModal(520, 340);
+    const pw = 520;
+    const ph = 420;
+    const { items, close } = this.openModal(pw, ph);
+    const panelTop = height / 2 - ph / 2;
+    const panelBottom = height / 2 + ph / 2;
+    const cx = width / 2;
 
     items.push(
       this.add
-        .text(width / 2, height / 2 - 138, I18n.t("tutorialTitle"), {
+        .text(cx, panelTop + 40, I18n.t("tutorialTitle"), {
           fontFamily: FONTS.title,
           fontSize: "28px",
           color: "#f3e3c3",
@@ -142,20 +137,20 @@ export default class MenuScene extends Phaser.Scene {
 
     items.push(
       this.add
-        .text(width / 2, height / 2 - 72, I18n.t("tutorialBody"), {
+        .text(cx, panelTop + 88, I18n.t("tutorialBody"), {
           fontFamily: FONTS.body,
           fontSize: "15px",
           color: "#c9b08a",
           align: "left",
           lineSpacing: 6,
-          wordWrap: { width: 460 },
+          wordWrap: { width: pw - 60 },
         })
         .setOrigin(0.5, 0)
         .setDepth(102)
     );
 
     items.push(
-      makeButton(this, width / 2, height / 2 + 138, I18n.t("done"), () => close(), {
+      makeButton(this, cx, panelBottom - 44, I18n.t("done"), () => close(), {
         width: 160,
         height: 46,
         fontSize: 18,
