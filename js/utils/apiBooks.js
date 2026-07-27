@@ -44,7 +44,7 @@ function readRuntimeConfig() {
     apiBaseUrl: (cfg.apiBaseUrl || DEFAULT_API_BASE_URL).replace(/\/+$/, ""),
     apiKey: cfg.apiKey || "",
     tags: Array.isArray(cfg.bookTags) && cfg.bookTags.length ? cfg.bookTags : DEFAULT_TAGS,
-    enabled: cfg.useApiBooks !== false,
+    enabled: cfg.useApiBooks === true,
     maxResults: Number.isFinite(cfg.maxResultsPerTag) ? cfg.maxResultsPerTag : 20,
     autoTag: cfg.autoTag !== false,
   };

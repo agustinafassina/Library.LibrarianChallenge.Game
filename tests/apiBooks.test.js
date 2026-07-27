@@ -124,6 +124,7 @@ describe("apiBooks.js", () => {
     globalThis.LIBRARIAN_CHALLENGE_CONFIG = {
       apiBaseUrl: "http://localhost:5142",
       apiKey: "test-key",
+      useApiBooks: true,
       bookTags: ["Bisexual"],
       maxResultsPerTag: 20,
       autoTag: true,

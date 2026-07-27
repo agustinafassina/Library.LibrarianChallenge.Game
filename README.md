@@ -11,17 +11,19 @@ year, and a combined rule).
 - **CSS3** — page background, layout and a responsive, centered canvas.
 - **JavaScript (ES Modules)** — vanilla JS, no framework or transpiler; scenes
   and utilities are split into native `import`/`export` modules.
-- **Phaser 3** (v3.80.1, via CDN) — 2D game framework, rendered on a **WebGL**
-  canvas (`Phaser.AUTO` falls back to Canvas2D) with `Scale.FIT` for
-  responsiveness and built-in mouse + touch drag input.
+- **Phaser 3** (v3.80.1, vendored in `vendor/phaser.min.js`) — 2D game
+  framework, rendered on a **WebGL** canvas (`Phaser.AUTO` falls back to
+  Canvas2D) with `Scale.FIT` for responsiveness and built-in mouse + touch drag
+  input.
 - **Web Storage API (`localStorage`)** — saves progress (unlocked levels, best
   scores) and the selected language.
-- **Fetch API** — loads levels from local JSON, real books from
-  `Library.LibrarianChallenge.Game.Api` when available, and submits player
-  feedback to [Formspree](https://formspree.io/) (optional reCAPTCHA v3).
-- **No build system** — runs from any static file server. Books fall back to
-  local mocked JSON when the API is unavailable. Art (librarian, particles) is
-  generated procedurally at runtime via Phaser `Graphics` textures.
+- **Fetch API** — loads levels from local JSON, optionally real books from
+  `Library.LibrarianChallenge.Game.Api`, and submits player feedback to
+  [Formspree](https://formspree.io/) (reCAPTCHA v3 recommended for production).
+- **No build system** — runs from any static file server. Production defaults to
+  the local catalogue in `data/books.json` (`useApiBooks: false`). Art
+  (librarian, particles) is generated procedurally at runtime via Phaser
+  `Graphics` textures.
 
 Tooling used during development: any static server (e.g. Python's
 `http.server` or `npx serve`) and a modern WebGL-capable browser.
@@ -42,22 +44,38 @@ npx serve .
 
 Then open <http://localhost:8000>.
 
+### Docker
+
+```bash
+docker build -t librarians-challenge .
+docker run --rm -p 8080:80 librarians-challenge
+```
+
+Then open <http://localhost:8080>. The image serves static files over HTTP on
+port 80; put a reverse proxy or CDN with **HTTPS** in front for public internet
+(Cloudflare, Caddy, Traefik, etc.). Do not expose the container port raw to the
+public internet without TLS.
+
 ### Run with real books from the API
 
-Start the API from `../Library.LibrarianChallenge.Game.Api`:
+By default production/static config uses only `data/books.json`
+(`useApiBooks: false` in `js/runtime-config.js`) — no API key is shipped.
+
+For local development against the API, start it from
+`../Library.LibrarianChallenge.Game.Api`:
 
 ```bash
 dotnet run --project Library.LibrarianChallenge.Api
 ```
 
-By default the game reads book endpoints from `http://localhost:5142`:
+Then edit `js/runtime-config.js`:
 
 ```js
 window.LIBRARIAN_CHALLENGE_CONFIG = {
-  apiBaseUrl: "http://localhost:5142",
-  apiKey: "dev-librarian-game-key",
+  apiBaseUrl: "http://localhost:5142", // or your HTTPS API in production
+  apiKey: "dev-librarian-game-key", // client-visible; rate-limit + CORS on the API
   formspreeUrl: "https://formspree.io/f/xbdvbarg",
-  recaptchaSiteKey: "", // Google reCAPTCHA v3 site key (required if captcha is enabled in Formspree)
+  recaptchaSiteKey: "YOUR_RECAPTCHA_V3_SITE_KEY",
   useApiBooks: true,
   maxResultsPerTag: 20,
   autoTag: true,
@@ -76,13 +94,32 @@ window.LIBRARIAN_CHALLENGE_CONFIG = {
 };
 ```
 
-If the API is down, CORS blocks the request, or there are no books yet, the game
-falls back to `data/books.json` so levels remain playable.
+If the API is down, CORS blocks the request, or `useApiBooks` is false, the game
+uses `data/books.json` so levels remain playable.
 
-The API key is sent as `X-API-Key` on every request to
-`Library.LibrarianChallenge.Game.Api`. For local development, it must match
+The API key is sent as `X-API-Key` on every request. It is **not a secret** once
+shipped in the browser — protect the API with rate limits and a CORS allowlist
+for your game origin. For local development, the key must match
 `GameApi:ApiKey` in the API's `appsettings.Development.json`.
 
+### Production checklist (security)
+
+Before public deploy:
+
+1. Keep `useApiBooks: false` unless you have an HTTPS API with rate limits + CORS.
+2. Set `recaptchaSiteKey` to your Google reCAPTCHA v3 **site** key and enable
+   captcha (secret key) in the Formspree form settings — otherwise bots can spam
+   the public Formspree endpoint.
+3. Serve the game only behind HTTPS; nginx in Docker listens on :80 by design
+   (TLS belongs on the reverse proxy / CDN in front — do not expose :80 raw to
+   the public internet).
+4. Phaser is vendored under `vendor/phaser.min.js` (no third-party CDN at
+   runtime). `nginx.conf` sends CSP and other security headers. The CSP allows
+   `'unsafe-eval'` (needed by Phaser) plus Google reCAPTCHA and Formspree for
+   the feedback form.
+
+Progress and scores live only in `localStorage` and can be edited in DevTools —
+expected for a client-only demo, not anti-cheat.
 ## Controls
 
 - **Drag & drop** a book to move it into a slot; the row reshuffles to make room.
@@ -136,12 +173,18 @@ authors, genres) stays as-is since it's catalogue content.
 
 The main menu **Feedback** button opens a DOM modal (`js/utils/feedbackForm.js`)
 that posts to Formspree via `fetch`. Fields: type, message (required), email
-(required), plus hidden metadata (`guestId`, language, progress stats, etc.).
+(required), plus a short privacy note and hidden metadata (`guestId`, language,
+progress stats, etc.). Email is used only to reply to the feedback.
 
-To enable spam protection, turn on reCAPTCHA v3 in the Formspree form settings
-(secret key in Formspree, site key in `recaptchaSiteKey`). The game loads
-Google's script on demand and sends the token as `g-recaptcha-response` with each
-submission. Leave `recaptchaSiteKey` empty for local testing without captcha.
+**Spam protection (required for public deploy):**
+
+1. Create a reCAPTCHA v3 key at the [Google reCAPTCHA admin](https://www.google.com/recaptcha/admin).
+2. Paste the **secret** key into Formspree form settings and enable captcha.
+3. Paste the **site** key into `recaptchaSiteKey` in `js/runtime-config.js`.
+
+The game loads Google's script on demand and sends the token as
+`g-recaptcha-response`. Leaving the site key empty skips captcha (local testing
+only) and logs a console warning.
 
 ## Books library
 
@@ -152,9 +195,12 @@ book data as gameplay (`loadBooks()`), including API results when available.
 ## How it works
 
 ```
-index.html            page shell, loads Phaser (CDN) + js/main.js (ES module)
+index.html            page shell, loads Phaser (vendored) + runtime config + js/main.js
 css/styles.css        page background + canvas centering / responsiveness
+vendor/
+  phaser.min.js       Phaser 3.80.1 (self-hosted; no CDN)
 js/
+  runtime-config.js   window.LIBRARIAN_CHALLENGE_CONFIG (prod-safe defaults)
   main.js             Phaser config + scene registration
   config/
     layout.js         shelf/book layout constants (rows, spacing, areas)
@@ -177,7 +223,7 @@ js/
     i18n.js           UI translations (English / Spanish), language persisted
     ui.js             shared buttons / colors / helpers
 data/
-  books.json          the book catalogue (70 books across 6 genres)
+  books.json          offline book catalogue (70 real titles + metadata)
   levels.json         level definitions (each references book ids)
 assets/               drop real images/audio here to replace placeholders
 ```
@@ -233,7 +279,7 @@ GET /api/v1/Book/google/by-tag/Activism?maxResults=20&autoTag=true
 array until books are ingested. The game uses the Google live-search endpoint so
 it can display real books without requiring a previous ingest.
 
-Change tags or API URL in `index.html` via
+Change tags or API URL in `js/runtime-config.js` via
 `window.LIBRARIAN_CHALLENGE_CONFIG`.
 
 ## Progress / saving

@@ -109,6 +109,7 @@ export function openFeedbackForm({ scene } = {}) {
     <form class="lc-feedback-panel" novalidate>
       <h2 class="lc-feedback-title"></h2>
       <p class="lc-feedback-subtitle"></p>
+      <p class="lc-feedback-privacy"></p>
 
       <label class="lc-feedback-label lc-feedback-type-label"></label>
       <select name="type" class="lc-feedback-select"></select>
@@ -138,6 +139,7 @@ export function openFeedbackForm({ scene } = {}) {
   const form = overlay.querySelector("form");
   const title = overlay.querySelector(".lc-feedback-title");
   const subtitle = overlay.querySelector(".lc-feedback-subtitle");
+  const privacy = overlay.querySelector(".lc-feedback-privacy");
   const typeLabel = overlay.querySelector(".lc-feedback-type-label");
   const messageLabel = overlay.querySelector(".lc-feedback-message-label");
   const emailLabel = overlay.querySelector(".lc-feedback-email-label");
@@ -150,6 +152,7 @@ export function openFeedbackForm({ scene } = {}) {
 
   title.textContent = I18n.t("feedbackTitle");
   subtitle.textContent = I18n.t("feedbackSubtitle");
+  privacy.textContent = I18n.t("feedbackPrivacy");
   typeLabel.textContent = I18n.t("feedbackType");
   messageLabel.textContent = I18n.t("feedbackMessage");
   emailLabel.textContent = I18n.t("feedbackEmail");
@@ -157,6 +160,12 @@ export function openFeedbackForm({ scene } = {}) {
   emailInput.placeholder = I18n.t("feedbackEmailPlaceholder");
   cancelBtn.textContent = I18n.t("cancel");
   submitBtn.textContent = I18n.t("feedbackSend");
+
+  if (!recaptchaSiteKey()) {
+    console.warn(
+      "[feedback] recaptchaSiteKey is empty. Enable reCAPTCHA v3 in Formspree and set the site key in js/runtime-config.js before public deploy."
+    );
+  }
 
   feedbackTypes().forEach((opt) => {
     const option = document.createElement("option");

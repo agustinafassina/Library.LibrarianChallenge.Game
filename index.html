@@ -8,31 +8,8 @@
     />
     <title>Librarian's Challenge</title>
     <link rel="stylesheet" href="css/styles.css" />
-    <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
-    <script>
-      window.LIBRARIAN_CHALLENGE_CONFIG = {
-        apiBaseUrl: "http://localhost:5142",
-        apiKey: "dev-librarian-game-key",
-        formspreeUrl: "https://formspree.io/f/xbdvbarg",
-        // Google reCAPTCHA v3 site key — required when captcha is enabled in Formspree.
-        recaptchaSiteKey: "",
-        useApiBooks: true,
-        maxResultsPerTag: 20,
-        autoTag: true,
-        bookTags: [
-          "Lgbtiq",
-          "Queer",
-          "Lesbian",
-          "Gay",
-          "Bisexual",
-          "Trans",
-          "NonBinary",
-          "Intersex",
-          "Feminism",
-          "Activism",
-        ],
-      };
-    </script>
+    <script src="vendor/phaser.min.js"></script>
+    <script src="js/runtime-config.js"></script>
   </head>
   <body>
     <div id="game-container"></div>

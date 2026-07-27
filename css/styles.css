@@ -80,10 +80,18 @@ body {
 }
 
 .lc-feedback-subtitle {
-  margin-bottom: 18px;
+  margin-bottom: 8px;
   font-size: 14px;
   line-height: 1.4;
   color: #c9b08a;
+  text-align: center;
+}
+
+.lc-feedback-privacy {
+  margin-bottom: 18px;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #a89274;
   text-align: center;
 }
 
