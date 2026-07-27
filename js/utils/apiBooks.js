@@ -68,7 +68,7 @@ function stableHash(value) {
   return hash;
 }
 
-function uniqueBySourceId(books) {
+export function uniqueBySourceId(books) {
   const seen = new Set();
   const unique = [];
   for (const book of books) {
