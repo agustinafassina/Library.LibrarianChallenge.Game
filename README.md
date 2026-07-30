@@ -1,12 +1,10 @@
 # Librarian's Challenge
-
 A small 2D browser game built with **Phaser 3** (no build system). You play a
 librarian who must restore order to a messy library by sorting books on a shelf,
 level by level. Each level introduces a new sorting rule (title, author, genre,
 year, and a combined rule).
 
 ## Tech stack
-
 - **HTML5** — single `index.html` entry point.
 - **CSS3** — page background, layout and a responsive, centered canvas.
 - **JavaScript (ES Modules)** — vanilla JS, no framework or transpiler; scenes
