@@ -36,7 +36,9 @@ export default class BootScene extends Phaser.Scene {
     tex.add("thinking", 0, w * 2, 0, w, h);
     // Backward-compatible static key used by old scene code paths.
     tex.add("legacy", 0, 0, 0, w, h);
-    this.textures.remove("librarian");
+    if (this.textures.exists("librarian")) {
+      this.textures.remove("librarian");
+    }
     this.textures.renameTexture("librarianSheet", "librarian");
   }
 

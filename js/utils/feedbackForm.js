@@ -46,17 +46,28 @@ function waitForRecaptchaReady() {
   });
 }
 
+function recaptchaScriptMatches(siteKey) {
+  const script = document.getElementById(RECAPTCHA_SCRIPT_ID);
+  if (!script?.src) return false;
+  return script.src.includes(encodeURIComponent(siteKey));
+}
+
 function loadRecaptchaScript(siteKey) {
   return new Promise((resolve, reject) => {
-    if (globalThis.grecaptcha?.execute) {
+    const existing = document.getElementById(RECAPTCHA_SCRIPT_ID);
+    if (existing && !recaptchaScriptMatches(siteKey)) {
+      resetRecaptchaScript();
+    }
+
+    if (globalThis.grecaptcha?.execute && recaptchaScriptMatches(siteKey)) {
       resolve();
       return;
     }
 
-    const existing = document.getElementById(RECAPTCHA_SCRIPT_ID);
-    if (existing) {
+    const scriptEl = document.getElementById(RECAPTCHA_SCRIPT_ID);
+    if (scriptEl) {
       waitForRecaptchaReady().then(resolve).catch(reject);
-      existing.addEventListener("error", () => reject(new Error("recaptcha-load")), { once: true });
+      scriptEl.addEventListener("error", () => reject(new Error("recaptcha-load")), { once: true });
       return;
     }
 
@@ -90,8 +101,10 @@ async function getRecaptchaToken(siteKey) {
 
 function captchaErrorMessage(err) {
   const message = err?.message || "";
+  const hostname = window.location.hostname;
   if (message.includes("timeout")) return I18n.t("feedbackCaptchaTimeout");
-  return `${I18n.t("feedbackCaptchaError")} ${I18n.t("feedbackCaptchaHint")}`;
+  if (message.includes("Invalid site key")) return I18n.t("feedbackCaptchaInvalidKey", { hostname });
+  return I18n.t("feedbackCaptchaHint", { hostname });
 }
 
 function feedbackTypes() {
@@ -326,7 +339,7 @@ export function openFeedbackForm({ scene } = {}) {
         try {
           payload["g-recaptcha-response"] = await getRecaptchaToken(siteKey);
         } catch (err) {
-          console.error("[feedback] recaptcha", err);
+          console.error("[feedback] recaptcha", window.location.hostname, err);
           setStatus(captchaErrorMessage(err), "error");
           setSubmitting(false);
           return;

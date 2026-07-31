@@ -148,6 +148,9 @@ body {
 
 .lc-feedback-status[data-kind="error"] {
   color: #e88a89;
+  font-size: 13px;
+  line-height: 1.4;
+  word-break: break-word;
 }
 
 .lc-feedback-status[data-kind="success"] {
