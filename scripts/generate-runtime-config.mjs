@@ -1,0 +1,78 @@
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+const root = path.dirname(path.dirname(fileURLToPath(import.meta.url)));
+const outPath = path.join(root, "js", "runtime-config.js");
+
+function loadEnvFile(filePath) {
+  if (!fs.existsSync(filePath)) return;
+  const content = fs.readFileSync(filePath, "utf8");
+  for (const line of content.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const eq = trimmed.indexOf("=");
+    if (eq === -1) continue;
+    const key = trimmed.slice(0, eq).trim();
+    let value = trimmed.slice(eq + 1).trim();
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+    if (process.env[key] === undefined) {
+      process.env[key] = value;
+    }
+  }
+}
+
+loadEnvFile(path.join(root, ".env"));
+
+const DEFAULT_TAGS = [
+  "Lgbtiq",
+  "Queer",
+  "Lesbian",
+  "Gay",
+  "Bisexual",
+  "Trans",
+  "NonBinary",
+  "Intersex",
+  "Feminism",
+  "Activism",
+];
+
+function env(name, fallback = "") {
+  const value = process.env[name];
+  return value === undefined || value === null ? fallback : value;
+}
+
+function envBool(name, fallback = false) {
+  const value = process.env[name];
+  if (value === undefined || value === null || value === "") return fallback;
+  return value === "true" || value === "1";
+}
+
+function envInt(name, fallback) {
+  const parsed = Number.parseInt(env(name, String(fallback)), 10);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+const config = {
+  apiBaseUrl: env("LC_API_BASE_URL", ""),
+  apiKey: env("LC_API_KEY", ""),
+  formspreeUrl: env("LC_FORMSPREE_URL", "https://formspree.io/f/xbdvbarg"),
+  recaptchaSiteKey: env("LC_RECAPTCHA_SITE_KEY", ""),
+  useApiBooks: envBool("LC_USE_API_BOOKS", false),
+  maxResultsPerTag: envInt("LC_MAX_RESULTS_PER_TAG", 20),
+  autoTag: envBool("LC_AUTO_TAG", true),
+  bookTags: DEFAULT_TAGS,
+};
+
+const contents = `window.LIBRARIAN_CHALLENGE_CONFIG = ${JSON.stringify(config, null, 2)};\n`;
+
+fs.writeFileSync(outPath, contents, "utf8");
+console.log(`[build] wrote ${outPath}`);
+console.log(
+  `[build] useApiBooks=${config.useApiBooks}, apiBaseUrl=${config.apiBaseUrl ? "(set)" : "(empty)"}`
+);

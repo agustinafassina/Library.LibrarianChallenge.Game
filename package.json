@@ -5,6 +5,7 @@
   "type": "module",
   "description": "A small 2D browser game where you sort books shelf by shelf.",
   "scripts": {
+    "build": "node scripts/generate-runtime-config.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",

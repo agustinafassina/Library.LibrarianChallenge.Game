@@ -27,7 +27,6 @@ Tooling used during development: any static server (e.g. Python's
 `http.server` or `npx serve`) and a modern WebGL-capable browser.
 
 ## Run it
-
 The game loads JSON from `data/` with `fetch()`, so it must be served over HTTP
 (opening `index.html` directly via `file://` will be blocked by the browser).
 Use any static server from the project root:
@@ -43,7 +42,6 @@ npx serve .
 Then open <http://localhost:8000>.
 
 ### Docker
-
 ```bash
 docker build -t librarians-challenge .
 docker run --rm -p 8080:80 librarians-challenge
@@ -54,8 +52,39 @@ port 80; put a reverse proxy or CDN with **HTTPS** in front for public internet
 (Cloudflare, Caddy, Traefik, etc.). Do not expose the container port raw to the
 public internet without TLS.
 
-### Run with real books from the API
+### Deploy on Vercel
+Vercel runs `npm run build` before deploy. That script reads **environment
+variables** and writes `js/runtime-config.js` (the browser cannot read
+`process.env` directly).
 
+1. Import the repo in [Vercel](https://vercel.com).
+2. **Project Settings → Environment Variables** — add:
+
+| Variable | Example | Notes |
+|----------|---------|-------|
+| `LC_API_BASE_URL` | `https://api.tudominio.com` | HTTPS API URL. Leave empty if static-only. |
+| `LC_API_KEY` | `your-game-api-key` | Client-visible; protect API with CORS + rate limits. |
+| `LC_USE_API_BOOKS` | `false` | `true` only if using the live API. |
+| `LC_RECAPTCHA_SITE_KEY` | `6Lc...` | reCAPTCHA v3 **site** key for feedback spam protection. |
+| `LC_FORMSPREE_URL` | `https://formspree.io/f/...` | Optional; defaults to the project form. |
+| `LC_MAX_RESULTS_PER_TAG` | `20` | Optional. |
+| `LC_AUTO_TAG` | `true` | Optional. |
+
+3. Deploy. Vercel uses `vercel.json` for the build command and security headers.
+
+**Local build with env vars** (same as Vercel):
+
+```bash
+# copy .env.example → .env, edit values, then:
+set LC_API_BASE_URL=https://api.example.com   # PowerShell: $env:LC_API_BASE_URL="..."
+set LC_API_KEY=your-key
+set LC_USE_API_BOOKS=true
+npm run build
+```
+
+Or edit `js/runtime-config.js` by hand for quick local testing without a build.
+
+### Run with real books from the API
 By default production/static config uses only `data/books.json`
 (`useApiBooks: false` in `js/runtime-config.js`) — no API key is shipped.
 
@@ -101,7 +130,6 @@ for your game origin. For local development, the key must match
 `GameApi:ApiKey` in the API's `appsettings.Development.json`.
 
 ### Production checklist (security)
-
 Before public deploy:
 
 1. Keep `useApiBooks: false` unless you have an HTTPS API with rate limits + CORS.
@@ -132,13 +160,11 @@ expected for a client-only demo, not anti-cheat.
 - Works with mouse and touch.
 
 ## Levels
-
 100 levels with a steadily increasing difficulty curve and book count (4 → 67), spread across shelves
 and up to three pages. See the full breakdown (books, shelves and pages per
 level) in **[LEVELS.md](LEVELS.md)**.
 
 ## Automated test (run every level)
-
 An end-to-end smoke test opens a real browser tab, plays through **every level**
 automatically, verifies each one is solvable and that progress is saved, then
 closes the tab. It uses [Playwright](https://playwright.dev/) and a tiny built-in
@@ -158,7 +184,6 @@ This exercises real level loading, rule evaluation, win detection and progress
 saving. The `autosolve` hook and `window.__GAME__` are only active with `?test=1`.
 
 ## Language (English / Spanish)
-
 Open **Settings** from the main menu to switch the interface language. The choice
 is saved to `localStorage` and applied across all menus and the in-game HUD.
 Translations live in `js/utils/i18n.js`; add a new language by adding an entry to
@@ -168,7 +193,6 @@ resolved by `I18n.pick()` with the base field as fallback. Book data (titles,
 authors, genres) stays as-is since it's catalogue content.
 
 ## Feedback (Formspree)
-
 The main menu **Feedback** button opens a DOM modal (`js/utils/feedbackForm.js`)
 that posts to Formspree via `fetch`. Fields: type, message (required), email
 (required), plus a short privacy note and hidden metadata (`guestId`, language,
@@ -185,13 +209,11 @@ The game loads Google's script on demand and sends the token as
 only) and logs a console warning.
 
 ## Books library
-
 **Books** on the main menu opens `BooksScene`: a browsable catalogue filtered by
 tag (from `bookTags` in config), with search and pagination. It uses the same
 book data as gameplay (`loadBooks()`), including API results when available.
 
 ## How it works
-
 ```
 index.html            page shell, loads Phaser (vendored) + runtime config + js/main.js
 css/styles.css        page background + canvas centering / responsiveness
@@ -227,7 +249,6 @@ assets/               drop real images/audio here to replace placeholders
 ```
 
 ### Where books / levels are loaded
-
 All data access goes through `js/utils/dataLoader.js`:
 
 - `loadBooks()` reads `data/books.json` as the local base/fallback, then tries
@@ -243,7 +264,6 @@ All data access goes through `js/utils/dataLoader.js`:
   fallback content.
 
 ### How rules are checked
-
 `js/utils/rules.js` maps each level's `rule` string (e.g. `title_az`,
 `author_az`, `genre_az`, `year_asc`, `genre_then_title`) to an ordered list of
 sort keys. `getExpectedOrder()` produces the correct order and `evaluateOrder()`
@@ -251,13 +271,11 @@ compares the player's left-to-right arrangement against it, returning a
 per-slot correctness array plus a `solved` flag.
 
 ### Adding a new rule
-
 1. Add an entry to `RULES` in `rules.js` with a `label` and ordered `keys`.
 2. (Only if it uses a new book field) add a `KEY_EXTRACTORS` entry.
 3. Reference the new rule name from a level in `data/levels.json`.
 
 ### API endpoints used
-
 The game currently consumes:
 
 ```text
@@ -281,7 +299,6 @@ Change tags or API URL in `js/runtime-config.js` via
 `window.LIBRARIAN_CHALLENGE_CONFIG`.
 
 ## Progress / saving
-
 `js/utils/storage.js` persists to `localStorage`:
 
 - `maxLevelUnlocked` — highest unlocked level (drives **Continue** + locks).
@@ -293,7 +310,6 @@ Change tags or API URL in `js/runtime-config.js` via
   completions, moves and play time.
 
 ## Replacing placeholder art
-
 The librarian and particle are drawn at runtime in `BootScene.js`. To use real
 art, add PNGs under `assets/images/`, load them in `BootScene.preload()`, and
 remove the matching generated texture.
