@@ -29,6 +29,8 @@ function loadEnvFile(filePath) {
 
 loadEnvFile(path.join(root, ".env"));
 
+const packageJson = JSON.parse(fs.readFileSync(path.join(root, "package.json"), "utf8"));
+
 const DEFAULT_TAGS = [
   "Lgbtiq",
   "Queer",
@@ -59,6 +61,7 @@ function envInt(name, fallback) {
 }
 
 const config = {
+  version: packageJson.version || "0.0.0",
   apiBaseUrl: env("LC_API_BASE_URL", ""),
   apiKey: env("LC_API_KEY", ""),
   formspreeUrl: env("LC_FORMSPREE_URL", "https://formspree.io/f/xbdvbarg"),

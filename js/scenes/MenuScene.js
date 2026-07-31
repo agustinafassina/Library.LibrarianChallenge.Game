@@ -1,6 +1,7 @@
 import { Storage } from "../utils/storage.js";
 import { I18n } from "../utils/i18n.js?v=2";
 import { openFeedbackForm, closeFeedbackForm } from "../utils/feedbackForm.js";
+import { appVersion } from "../utils/appInfo.js";
 import { makeButton, goToScene, COLORS, FONTS } from "../utils/ui.js";
 
 export default class MenuScene extends Phaser.Scene {
@@ -38,6 +39,15 @@ export default class MenuScene extends Phaser.Scene {
         color: "#d9a441",
       })
       .setOrigin(0.5);
+
+    this.add
+      .text(width / 2, height * 0.33, I18n.t("appVersion", { version: appVersion() }), {
+        fontFamily: FONTS.body,
+        fontSize: "15px",
+        color: "#c9b08a",
+      })
+      .setOrigin(0.5)
+      .setDepth(10);
 
     const cx = width * 0.34;
     let y = height * 0.38;
@@ -162,7 +172,7 @@ export default class MenuScene extends Phaser.Scene {
 
   openSettings() {
     const { width, height } = this.scale;
-    const { items, close } = this.openModal(440, 260);
+    const { items, close } = this.openModal(440, 290);
 
     items.push(
       this.add
@@ -216,7 +226,18 @@ export default class MenuScene extends Phaser.Scene {
     });
 
     items.push(
-      makeButton(this, width / 2, height / 2 + 78, I18n.t("done"), () => close(), {
+      this.add
+        .text(width / 2, height / 2 + 52, I18n.t("appVersion", { version: appVersion() }), {
+          fontFamily: FONTS.body,
+          fontSize: "15px",
+          color: "#c9b08a",
+        })
+        .setOrigin(0.5)
+        .setDepth(102)
+    );
+
+    items.push(
+      makeButton(this, width / 2, height / 2 + 98, I18n.t("done"), () => close(), {
         width: 160,
         height: 46,
         fontSize: 18,

@@ -1,8 +1,20 @@
 import { I18n } from "./i18n.js?v=2";
 import { Storage } from "./storage.js";
+import { appVersion } from "./appInfo.js";
 
 const DEFAULT_FORMSPREE_URL = "https://formspree.io/f/xbdvbarg";
 const RECAPTCHA_SCRIPT_ID = "lc-recaptcha-script";
+const RECAPTCHA_TIMEOUT_MS = 15000;
+const FORMSPREE_TIMEOUT_MS = 20000;
+
+function withTimeout(promise, ms, label) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => {
+      window.setTimeout(() => reject(new Error(`${label}-timeout`)), ms);
+    }),
+  ]);
+}
 
 function formspreeUrl() {
   return globalThis.LIBRARIAN_CHALLENGE_CONFIG?.formspreeUrl || DEFAULT_FORMSPREE_URL;
@@ -45,13 +57,21 @@ function loadRecaptchaScript(siteKey) {
 }
 
 function getRecaptchaToken(siteKey) {
-  return loadRecaptchaScript(siteKey).then(
-    () =>
-      new Promise((resolve, reject) => {
-        globalThis.grecaptcha.ready(() => {
-          globalThis.grecaptcha.execute(siteKey, { action: "submit" }).then(resolve).catch(reject);
-        });
-      })
+  return withTimeout(
+    loadRecaptchaScript(siteKey).then(
+      () =>
+        new Promise((resolve, reject) => {
+          if (!globalThis.grecaptcha?.execute) {
+            reject(new Error("recaptcha-unavailable"));
+            return;
+          }
+          globalThis.grecaptcha.ready(() => {
+            globalThis.grecaptcha.execute(siteKey, { action: "submit" }).then(resolve).catch(reject);
+          });
+        })
+    ),
+    RECAPTCHA_TIMEOUT_MS,
+    "recaptcha"
   );
 }
 
@@ -70,6 +90,7 @@ function buildMetadata() {
   return {
     guestId: profile.id,
     language: I18n.lang,
+    appVersion: appVersion(),
     scene: "MenuScene",
     maxLevelUnlocked: Storage.getMaxLevelUnlocked(),
     completedLevels: (stats.completedLevels ?? []).length,
@@ -293,14 +314,19 @@ export function openFeedbackForm({ scene } = {}) {
         }
       }
 
-      const response = await fetch(formspreeUrl(), {
-        method: "POST",
-        headers: {
-          Accept: "application/json",
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
+      const response = await withTimeout(
+        fetch(formspreeUrl(), {
+          method: "POST",
+          headers: {
+            Accept: "application/json",
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+          signal: AbortSignal.timeout(FORMSPREE_TIMEOUT_MS),
+        }),
+        FORMSPREE_TIMEOUT_MS,
+        "formspree"
+      );
 
       const data = await response.json().catch(() => ({}));
       if (!response.ok) {

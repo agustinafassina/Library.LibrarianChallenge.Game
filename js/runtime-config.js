@@ -1,4 +1,5 @@
 window.LIBRARIAN_CHALLENGE_CONFIG = {
+  version: "1.0.0",
   apiBaseUrl: "",
   apiKey: "",
   formspreeUrl: "https://formspree.io/f/xbdvbarg",
