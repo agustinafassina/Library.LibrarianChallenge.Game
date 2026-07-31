@@ -24,6 +24,28 @@ function recaptchaSiteKey() {
   return globalThis.LIBRARIAN_CHALLENGE_CONFIG?.recaptchaSiteKey?.trim() || "";
 }
 
+function resetRecaptchaScript() {
+  document.getElementById(RECAPTCHA_SCRIPT_ID)?.remove();
+  delete globalThis.grecaptcha;
+}
+
+function waitForRecaptchaReady() {
+  return new Promise((resolve, reject) => {
+    if (globalThis.grecaptcha?.execute) {
+      resolve();
+      return;
+    }
+    if (!globalThis.grecaptcha?.ready) {
+      reject(new Error("recaptcha-unavailable"));
+      return;
+    }
+    globalThis.grecaptcha.ready(() => {
+      if (globalThis.grecaptcha?.execute) resolve();
+      else reject(new Error("recaptcha-unavailable"));
+    });
+  });
+}
+
 function loadRecaptchaScript(siteKey) {
   return new Promise((resolve, reject) => {
     if (globalThis.grecaptcha?.execute) {
@@ -33,15 +55,7 @@ function loadRecaptchaScript(siteKey) {
 
     const existing = document.getElementById(RECAPTCHA_SCRIPT_ID);
     if (existing) {
-      if (globalThis.grecaptcha?.execute) {
-        resolve();
-        return;
-      }
-      if (existing.complete) {
-        globalThis.grecaptcha?.ready?.(() => resolve()) ?? reject(new Error("recaptcha-load"));
-        return;
-      }
-      existing.addEventListener("load", () => resolve(), { once: true });
+      waitForRecaptchaReady().then(resolve).catch(reject);
       existing.addEventListener("error", () => reject(new Error("recaptcha-load")), { once: true });
       return;
     }
@@ -50,29 +64,34 @@ function loadRecaptchaScript(siteKey) {
     script.id = RECAPTCHA_SCRIPT_ID;
     script.src = `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(siteKey)}`;
     script.async = true;
-    script.onload = () => resolve();
+    script.onload = () => waitForRecaptchaReady().then(resolve).catch(reject);
     script.onerror = () => reject(new Error("recaptcha-load"));
     document.head.appendChild(script);
   });
 }
 
-function getRecaptchaToken(siteKey) {
-  return withTimeout(
-    loadRecaptchaScript(siteKey).then(
-      () =>
-        new Promise((resolve, reject) => {
-          if (!globalThis.grecaptcha?.execute) {
-            reject(new Error("recaptcha-unavailable"));
-            return;
-          }
-          globalThis.grecaptcha.ready(() => {
+async function getRecaptchaToken(siteKey) {
+  try {
+    return await withTimeout(
+      loadRecaptchaScript(siteKey).then(
+        () =>
+          new Promise((resolve, reject) => {
             globalThis.grecaptcha.execute(siteKey, { action: "submit" }).then(resolve).catch(reject);
-          });
-        })
-    ),
-    RECAPTCHA_TIMEOUT_MS,
-    "recaptcha"
-  );
+          })
+      ),
+      RECAPTCHA_TIMEOUT_MS,
+      "recaptcha"
+    );
+  } catch (err) {
+    resetRecaptchaScript();
+    throw err;
+  }
+}
+
+function captchaErrorMessage(err) {
+  const message = err?.message || "";
+  if (message.includes("timeout")) return I18n.t("feedbackCaptchaTimeout");
+  return `${I18n.t("feedbackCaptchaError")} ${I18n.t("feedbackCaptchaHint")}`;
 }
 
 function feedbackTypes() {
@@ -308,7 +327,7 @@ export function openFeedbackForm({ scene } = {}) {
           payload["g-recaptcha-response"] = await getRecaptchaToken(siteKey);
         } catch (err) {
           console.error("[feedback] recaptcha", err);
-          setStatus(I18n.t("feedbackCaptchaError"), "error");
+          setStatus(captchaErrorMessage(err), "error");
           setSubmitting(false);
           return;
         }

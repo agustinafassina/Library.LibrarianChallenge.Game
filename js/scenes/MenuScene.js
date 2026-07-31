@@ -40,15 +40,6 @@ export default class MenuScene extends Phaser.Scene {
       })
       .setOrigin(0.5);
 
-    this.add
-      .text(width / 2, height * 0.33, I18n.t("appVersion", { version: appVersion() }), {
-        fontFamily: FONTS.body,
-        fontSize: "15px",
-        color: "#c9b08a",
-      })
-      .setOrigin(0.5)
-      .setDepth(10);
-
     const cx = width * 0.34;
     let y = height * 0.38;
     const gap = 58;
@@ -99,6 +90,15 @@ export default class MenuScene extends Phaser.Scene {
       textColor: "#ffffff",
       enabled: hasProgress,
     });
+
+    this.add
+      .text(width - 16, height - 12, I18n.t("appVersion", { version: appVersion() }), {
+        fontFamily: FONTS.body,
+        fontSize: "14px",
+        color: "#c9b08a",
+      })
+      .setOrigin(1, 1)
+      .setDepth(10);
 
     this.events.once("shutdown", () => closeFeedbackForm());
   }
