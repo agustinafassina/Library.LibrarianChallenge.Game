@@ -21,6 +21,14 @@ function loadRecaptchaScript(siteKey) {
 
     const existing = document.getElementById(RECAPTCHA_SCRIPT_ID);
     if (existing) {
+      if (globalThis.grecaptcha?.execute) {
+        resolve();
+        return;
+      }
+      if (existing.complete) {
+        globalThis.grecaptcha?.ready?.(() => resolve()) ?? reject(new Error("recaptcha-load"));
+        return;
+      }
       existing.addEventListener("load", () => resolve(), { once: true });
       existing.addEventListener("error", () => reject(new Error("recaptcha-load")), { once: true });
       return;
@@ -92,11 +100,40 @@ function stopPointerPropagation(event) {
   event.stopPropagation();
 }
 
+function renderCaptchaNotice(container) {
+  container.replaceChildren();
+  container.append(I18n.t("feedbackCaptchaNoticeBefore"), " ");
+
+  const privacyLink = document.createElement("a");
+  privacyLink.href = "https://policies.google.com/privacy";
+  privacyLink.target = "_blank";
+  privacyLink.rel = "noopener noreferrer";
+  privacyLink.textContent = I18n.t("feedbackCaptchaPrivacy");
+
+  const termsLink = document.createElement("a");
+  termsLink.href = "https://policies.google.com/terms";
+  termsLink.target = "_blank";
+  termsLink.rel = "noopener noreferrer";
+  termsLink.textContent = I18n.t("feedbackCaptchaTerms");
+
+  container.append(
+    privacyLink,
+    ` ${I18n.t("feedbackCaptchaNoticeMiddle")} `,
+    termsLink,
+    ` ${I18n.t("feedbackCaptchaNoticeAfter")}`
+  );
+}
+
+function setRecaptchaActive(active) {
+  document.body.classList.toggle("lc-recaptcha-active", active);
+}
+
 export function closeFeedbackForm() {
   activeRestore?.();
   activeRestore = null;
   activeOverlay?.remove();
   activeOverlay = null;
+  setRecaptchaActive(false);
 }
 
 export function openFeedbackForm({ scene } = {}) {
@@ -129,6 +166,8 @@ export function openFeedbackForm({ scene } = {}) {
 
       <p class="lc-feedback-status" aria-live="polite"></p>
 
+      <p class="lc-feedback-captcha" hidden></p>
+
       <div class="lc-feedback-actions">
         <button type="button" class="lc-feedback-btn lc-feedback-cancel"></button>
         <button type="submit" class="lc-feedback-btn lc-feedback-submit"></button>
@@ -147,6 +186,7 @@ export function openFeedbackForm({ scene } = {}) {
   const messageInput = overlay.querySelector('textarea[name="message"]');
   const emailInput = overlay.querySelector('input[name="email"]');
   const statusEl = overlay.querySelector(".lc-feedback-status");
+  const captchaNoticeEl = overlay.querySelector(".lc-feedback-captcha");
   const cancelBtn = overlay.querySelector(".lc-feedback-cancel");
   const submitBtn = overlay.querySelector(".lc-feedback-submit");
 
@@ -165,6 +205,13 @@ export function openFeedbackForm({ scene } = {}) {
     console.warn(
       "[feedback] recaptchaSiteKey is empty. Enable reCAPTCHA v3 in Formspree and set the site key in js/runtime-config.js before public deploy."
     );
+  } else {
+    captchaNoticeEl.hidden = false;
+    renderCaptchaNotice(captchaNoticeEl);
+    setRecaptchaActive(true);
+    loadRecaptchaScript(recaptchaSiteKey()).catch((err) => {
+      console.warn("[feedback] recaptcha preload", err);
+    });
   }
 
   feedbackTypes().forEach((opt) => {

@@ -183,3 +183,21 @@ body {
   opacity: 0.55;
   cursor: not-allowed;
 }
+
+.lc-feedback-captcha {
+  margin-bottom: 12px;
+  font-size: 11px;
+  line-height: 1.45;
+  text-align: center;
+  color: #9a8570;
+}
+
+.lc-feedback-captcha a {
+  color: var(--accent);
+  text-decoration: underline;
+}
+
+body.lc-recaptcha-active .grecaptcha-badge {
+  z-index: 40 !important;
+  visibility: visible !important;
+}
