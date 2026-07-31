@@ -3,15 +3,37 @@ import {
   fetchBooksFromApi,
   mapApiBookToGameBook,
   mergeApiBooksIntoLocalCatalog,
+  stripHtml,
 } from "../js/utils/apiBooks.js";
 
 describe("apiBooks.js", () => {
+  it("strips HTML from API descriptions", () => {
+    expect(stripHtml("<p>A <b>bold</b> synopsis.<br/>Second line.</p>")).toBe(
+      "A bold synopsis. Second line."
+    );
+  });
+
+  it("maps description from the API without truncating", () => {
+    const longDescription = "word ".repeat(400).trim();
+    const mapped = mapApiBookToGameBook(
+      {
+        title: "Long Book",
+        authors: ["Author"],
+        description: `<p>${longDescription}</p>`,
+      },
+      1
+    );
+
+    expect(mapped.description).toBe(longDescription);
+  });
+
   it("maps an API book into the game book shape", () => {
     const mapped = mapApiBookToGameBook(
       {
         title: "Sister Outsider",
         authors: ["Audre Lorde"],
         publishedDate: "1984-01-01",
+        description: "Essential essays and speeches.",
         tags: ["Lesbian", "Activism"],
         source: "GoogleBooks",
         externalId: "abc",
@@ -26,6 +48,7 @@ describe("apiBooks.js", () => {
       genre: "Lesbian",
       year: 1984,
       color: "#d96f8a",
+      description: "Essential essays and speeches.",
       source: "GoogleBooks",
       externalId: "abc",
     });

@@ -117,6 +117,26 @@ function pickGenre(book, tags) {
   return "Literature";
 }
 
+export function stripHtml(html) {
+  return String(html ?? "")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<\/p>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#39;/gi, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function normalizeDescription(value) {
+  const text = stripHtml(value);
+  return text || null;
+}
+
 function pickColor(tags, seed) {
   const tagColor = tags.map((t) => TAG_COLORS[t]).find(Boolean);
   if (tagColor) return tagColor;
@@ -154,6 +174,7 @@ export function mapApiBookToGameBook(apiBook, id) {
     color: pickColor(tags, title),
     pages,
     tags,
+    description: normalizeDescription(apiBook.description),
     source: apiBook.source ?? "Library.LibrarianChallenge.Game.Api",
     externalId: apiBook.externalId ?? null,
   };

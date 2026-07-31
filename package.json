@@ -1,6 +1,6 @@
 {
   "name": "librarians-challenge",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "private": true,
   "type": "module",
   "description": "A small 2D browser game where you sort books shelf by shelf.",

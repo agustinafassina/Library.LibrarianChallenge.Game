@@ -2,6 +2,7 @@ import BootScene from "./scenes/BootScene.js";
 import MenuScene from "./scenes/MenuScene.js?v=3";
 import LevelSelectScene from "./scenes/LevelSelectScene.js";
 import BooksScene from "./scenes/BooksScene.js";
+import BookDetailScene from "./scenes/BookDetailScene.js";
 import GameScene from "./scenes/GameScene.js";
 import LevelCompleteScene from "./scenes/LevelCompleteScene.js";
 import ErrorScene from "./scenes/ErrorScene.js";
@@ -28,7 +29,7 @@ const config = {
     createContainer: true,
   },
   input: { activePointers: 2 },
-  scene: [BootScene, MenuScene, LevelSelectScene, BooksScene, GameScene, LevelCompleteScene, ErrorScene],
+  scene: [BootScene, MenuScene, LevelSelectScene, BooksScene, BookDetailScene, GameScene, LevelCompleteScene, ErrorScene],
 };
 
 const game = new Phaser.Game(config);

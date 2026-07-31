@@ -38,6 +38,13 @@ function matchesTag(book, tag) {
   return TAG_GENRES[tag] && String(book.genre).toLowerCase() === TAG_GENRES[tag].toLowerCase();
 }
 
+const PAGER_BTN_H = 34;
+const PAGER_CENTER_FROM_BOTTOM = 48;
+const PAGER_BOTTOM_PAD = 14;
+const ROWS_PER_PAGE = 8;
+const ROW_H_MAX = 42;
+const ROW_H_MIN = 38;
+
 export default class BooksScene extends Phaser.Scene {
   constructor() {
     super("BooksScene");
@@ -49,10 +56,12 @@ export default class BooksScene extends Phaser.Scene {
     this.selectedTag = this.tags[0];
     this.searchQuery = "";
     this.currentPage = 0;
-    this.tagButtons = [];
     this.rows = [];
+    this.filterToolbarDom = null;
     this.searchDom = null;
+    this.tagSelectDom = null;
     this.statusText = null;
+    this.syncToolbarLayout = this.syncToolbarLayout.bind(this);
   }
 
   async create() {
@@ -95,84 +104,172 @@ export default class BooksScene extends Phaser.Scene {
 
     this.statusText.destroy();
     this.statusText = null;
+    this.toolbarDomHeightGame = 60;
 
-    this.buildTagButtons();
-    this.buildSearchInput();
+    this.buildFilterToolbar();
+    this.bindLayoutSync();
     this.renderBookList();
+    this.events.once("shutdown", () => this.cleanupDomControls());
   }
 
-  buildSearchInput() {
+  getPanelLayout() {
+    const { width, height } = this.scale;
+    const w = Math.min(820, width - 90);
+    const x = width / 2 - w / 2;
+    const top = 92;
+    const pagerY = height - PAGER_CENTER_FROM_BOTTOM;
+    const panelBottom = pagerY + PAGER_BTN_H / 2 + PAGER_BOTTOM_PAD;
+    const h = panelBottom - top;
+    const headerTopPad = 14;
+    const titleLine = 20;
+    const hintGap = 8;
+    const hintLine = 14;
+    const afterHintGap = 14;
+    const toolbarH = this.toolbarDomHeightGame ?? 60;
+    const afterToolbarGap = 16;
+    const titleY = top + headerTopPad;
+    const hintY = titleY + titleLine + hintGap;
+    const toolbarGameY = hintY + hintLine + afterHintGap;
+    const listTop = toolbarGameY + toolbarH + afterToolbarGap;
+    const headerH = listTop - top;
+
+    return {
+      x,
+      top,
+      w,
+      h,
+      headerH,
+      listTop,
+      titleY,
+      hintY,
+      toolbarPadding: 14,
+      toolbarGameY,
+      pagerY,
+      panelBottom,
+    };
+  }
+
+  bindLayoutSync() {
+    this.onLayoutChange = () => {
+      this.syncToolbarLayout();
+      if (this.filterToolbarDom && !this.statusText) {
+        this.renderBookList();
+      }
+    };
+    this.scale.on("resize", this.onLayoutChange);
+    window.addEventListener("resize", this.onLayoutChange);
+    window.visualViewport?.addEventListener("resize", this.onLayoutChange);
+  }
+
+  cleanupDomControls() {
+    this.scale.off("resize", this.onLayoutChange);
+    window.removeEventListener("resize", this.onLayoutChange);
+    window.visualViewport?.removeEventListener("resize", this.onLayoutChange);
+    this.filterToolbarDom?.remove();
+    this.filterToolbarDom = null;
+    this.searchDom = null;
+    this.tagSelectDom = null;
+  }
+
+  syncToolbarLayout() {
+    if (!this.filterToolbarDom) return;
+
+    const canvas = this.game.canvas;
+    const container = document.getElementById("game-container");
+    if (!canvas || !container) return;
+
+    const canvasRect = canvas.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    const scaleX = canvasRect.width / this.scale.width;
+    const scaleY = canvasRect.height / this.scale.height;
+    const domRect = this.filterToolbarDom.getBoundingClientRect();
+    if (domRect.height > 0) {
+      this.toolbarDomHeightGame = domRect.height / scaleY;
+    }
+
+    const panel = this.getPanelLayout();
+
+    Object.assign(this.filterToolbarDom.style, {
+      left: `${canvasRect.left - containerRect.left + (panel.x + panel.toolbarPadding) * scaleX}px`,
+      top: `${canvasRect.top - containerRect.top + panel.toolbarGameY * scaleY}px`,
+      width: `${(panel.w - panel.toolbarPadding * 2) * scaleX}px`,
+      transform: "none",
+      padding: "0",
+    });
+  }
+
+  buildFilterToolbar() {
+    const host = document.getElementById("game-container");
+    if (!host) return;
+
+    const toolbar = document.createElement("div");
+    toolbar.className = "books-toolbar";
+
+    const categoryField = document.createElement("label");
+    categoryField.className = "books-toolbar-field books-toolbar-field--category";
+    const categoryLabel = document.createElement("span");
+    categoryLabel.className = "books-toolbar-label";
+    categoryLabel.textContent = I18n.t("booksCategory");
+    const select = document.createElement("select");
+    select.className = "books-field";
+    select.setAttribute("aria-label", I18n.t("booksCategory"));
+    this.tags.forEach((tag) => {
+      const option = document.createElement("option");
+      option.value = tag;
+      option.textContent = tag;
+      option.selected = tag === this.selectedTag;
+      select.appendChild(option);
+    });
+    select.addEventListener("change", () => {
+      this.selectedTag = select.value;
+      this.currentPage = 0;
+      this.renderBookList();
+    });
+    categoryField.append(categoryLabel, select);
+
+    const searchField = document.createElement("label");
+    searchField.className = "books-toolbar-field books-toolbar-field--search";
+    const searchLabel = document.createElement("span");
+    searchLabel.className = "books-toolbar-label";
+    searchLabel.textContent = I18n.t("booksSearch");
     const input = document.createElement("input");
     input.type = "search";
+    input.className = "books-field";
     input.value = this.searchQuery;
     input.placeholder = I18n.t("booksSearchPlaceholder");
     input.setAttribute("aria-label", I18n.t("booksSearch"));
-    input.style.position = "absolute";
-    input.style.top = "30px";
-    input.style.right = "24px";
-    input.style.zIndex = "20";
-    input.style.width = "270px";
-    input.style.height = "34px";
-    input.style.border = "2px solid #d9a441";
-    input.style.borderRadius = "10px";
-    input.style.background = "#2c1d14";
-    input.style.color = "#f3e3c3";
-    input.style.font = "bold 15px Trebuchet MS, Segoe UI, sans-serif";
-    input.style.outline = "none";
-    input.style.padding = "0 14px";
-    input.style.boxShadow = "0 4px 10px rgba(0, 0, 0, 0.28)";
-
     input.addEventListener("input", () => {
       this.searchQuery = input.value;
       this.currentPage = 0;
       this.renderBookList();
     });
+    searchField.append(searchLabel, input);
 
-    document.getElementById("game-container")?.appendChild(input);
+    toolbar.append(categoryField, searchField);
+    host.appendChild(toolbar);
+
+    this.filterToolbarDom = toolbar;
+    this.tagSelectDom = select;
     this.searchDom = input;
-    this.events.once("shutdown", () => input.remove());
+    this.syncToolbarLayout();
+    requestAnimationFrame(() => {
+      if (!this.scene.isActive()) return;
+      this.syncToolbarLayout();
+      this.renderBookList();
+    });
   }
 
-  buildTagButtons() {
-    const { width } = this.scale;
-    this.tagButtons.forEach((btn) => btn.destroy());
-    this.tagButtons = [];
+  drawTablePanel(panel) {
+    const g = this.add.graphics();
+    g.fillStyle(COLORS.ink, 0.94);
+    g.fillRoundedRect(panel.x, panel.top, panel.w, panel.h, 12);
+    g.lineStyle(2, COLORS.accent, 1);
+    g.strokeRoundedRect(panel.x, panel.top, panel.w, panel.h, 12);
 
-    const cols = 5;
-    const btnW = 132;
-    const btnH = 36;
-    const gapX = 12;
-    const gapY = 10;
-    const startX = width / 2 - ((cols - 1) * (btnW + gapX)) / 2;
-    const startY = 92;
+    g.fillStyle(0x3a2618, 0.92);
+    g.fillRect(panel.x + 2, panel.top + 2, panel.w - 4, panel.headerH - 2);
 
-    this.tags.forEach((tag, i) => {
-      const col = i % cols;
-      const row = Math.floor(i / cols);
-      const x = startX + col * (btnW + gapX);
-      const y = startY + row * (btnH + gapY);
-      const selected = tag === this.selectedTag;
-      const btn = makeButton(
-        this,
-        x,
-        y,
-        tag,
-        () => {
-          this.selectedTag = tag;
-          this.currentPage = 0;
-          this.buildTagButtons();
-          this.renderBookList();
-        },
-        {
-          width: btnW,
-          height: btnH,
-          fontSize: 14,
-          fill: selected ? COLORS.accent : COLORS.woodLight,
-          textColor: selected ? "#2c1d14" : "#f3e3c3",
-        }
-      );
-      this.tagButtons.push(btn);
-    });
+    return g;
   }
 
   renderBookList() {
@@ -180,25 +277,42 @@ export default class BooksScene extends Phaser.Scene {
     this.rows.forEach((row) => row.destroy());
     this.rows = [];
 
+    if (this.tagSelectDom && this.tagSelectDom.value !== this.selectedTag) {
+      this.tagSelectDom.value = this.selectedTag;
+    }
+
+    this.syncToolbarLayout();
+    const panel = this.getPanelLayout();
+    this.rows.push(this.drawTablePanel(panel));
+
     const books = this.books
       .filter((book) => matchesTag(book, this.selectedTag))
       .filter((book) => this.matchesSearch(book))
       .sort((a, b) => String(a.title).localeCompare(String(b.title)));
 
-    const titleY = 224;
+    const titleY = panel.titleY;
     const title = this.add
       .text(width / 2, titleY, I18n.t("booksForTag", { tag: this.selectedTag, count: books.length }), {
         fontFamily: FONTS.body,
-        fontSize: "20px",
+        fontSize: "17px",
         color: "#d9a441",
         fontStyle: "bold",
       })
-      .setOrigin(0.5);
+      .setOrigin(0.5, 0);
     this.rows.push(title);
+
+    const hint = this.add
+      .text(width / 2, panel.hintY, I18n.t("booksOpenDetailHint"), {
+        fontFamily: FONTS.body,
+        fontSize: "12px",
+        color: "#8a7358",
+      })
+      .setOrigin(0.5, 0);
+    this.rows.push(hint);
 
     if (books.length === 0) {
       const empty = this.add
-        .text(width / 2, height / 2, I18n.t("booksEmpty"), {
+        .text(width / 2, panel.listTop + 80, I18n.t("booksEmpty"), {
           fontFamily: FONTS.body,
           fontSize: "18px",
           color: "#c9b08a",
@@ -208,50 +322,79 @@ export default class BooksScene extends Phaser.Scene {
       return;
     }
 
-    const listTop = 264;
-    const rowH = 42;
-    const pagerBottom = 48;
-    const maxRows = Math.max(1, Math.min(7, Math.floor((height - listTop - 96) / rowH)));
+    const listTop = panel.listTop + 6;
+    const pagerTop = panel.pagerY - PAGER_BTN_H / 2;
+    const listGap = 6;
+    const available = pagerTop - listTop - listGap;
+    const rowH = Phaser.Math.Clamp(Math.floor(available / ROWS_PER_PAGE), ROW_H_MIN, ROW_H_MAX);
+    const maxRows = Math.min(ROWS_PER_PAGE, Math.max(1, Math.floor(available / rowH)));
     const pageCount = Math.max(1, Math.ceil(books.length / maxRows));
     this.currentPage = Phaser.Math.Clamp(this.currentPage, 0, pageCount - 1);
     const start = this.currentPage * maxRows;
     const visible = books.slice(start, start + maxRows);
-    const panelW = Math.min(820, width - 90);
-    const panelX = width / 2 - panelW / 2;
+    const panelX = panel.x + 10;
+    const panelW = panel.w - 20;
+    const eyeBtnW = 34;
+    const metaMaxW = panelW * 0.42;
 
     visible.forEach((book, i) => {
       const y = listTop + i * rowH;
+      const rowHInner = rowH - 6;
       const bg = this.add.graphics();
       bg.fillStyle(i % 2 === 0 ? 0x3a2618 : 0x2c1d14, 0.92);
-      bg.fillRoundedRect(panelX, y, panelW, rowH - 6, 8);
+      bg.fillRoundedRect(panelX, y, panelW, rowHInner, 8);
       bg.lineStyle(1, 0xffffff, 0.08);
-      bg.strokeRoundedRect(panelX, y, panelW, rowH - 6, 8);
+      bg.strokeRoundedRect(panelX, y, panelW, rowHInner, 8);
       this.rows.push(bg);
 
+      const spine = this.add.graphics();
+      const spineColor = Phaser.Display.Color.HexStringToColor(book.color || "#8a7358").color;
+      spine.fillStyle(spineColor, 1);
+      spine.fillRoundedRect(panelX + 8, y + 6, 10, rowHInner - 12, 3);
+      this.rows.push(spine);
+
       const titleText = this.add
-        .text(panelX + 18, y + 10, book.title, {
+        .text(panelX + 26, y + 10, book.title, {
           fontFamily: FONTS.body,
           fontSize: "16px",
           color: "#f3e3c3",
           fontStyle: "bold",
         })
         .setOrigin(0, 0);
-      titleText.setCrop(0, 0, panelW * 0.42, 22);
+      titleText.setCrop(0, 0, panelW * 0.38, 22);
       this.rows.push(titleText);
 
       const meta = `${book.author} · ${book.year} · ${I18n.t("pagesCount", { n: book.pages })}`;
       const metaText = this.add
-        .text(panelX + panelW * 0.48, y + 11, meta, {
+        .text(panelX + panelW * 0.42, y + 11, meta, {
           fontFamily: FONTS.body,
           fontSize: "14px",
           color: "#c9b08a",
         })
         .setOrigin(0, 0);
-      metaText.setCrop(0, 0, panelW * 0.48, 20);
+      metaText.setCrop(0, 0, metaMaxW, 20);
       this.rows.push(metaText);
+
+      const viewBtn = makeButton(
+        this,
+        panelX + panelW - eyeBtnW / 2 - 10,
+        y + rowHInner / 2,
+        "👁",
+        () => goToScene(this, "BookDetailScene", { book }),
+        {
+          width: eyeBtnW,
+          height: rowHInner - 10,
+          fontSize: 18,
+          fill: COLORS.woodLight,
+          fillHover: COLORS.accent,
+          textColor: "#f3e3c3",
+        }
+      );
+      viewBtn.setDepth(2);
+      this.rows.push(viewBtn);
     });
 
-    if (pageCount > 1) this.renderPager(pageCount, pagerBottom);
+    if (pageCount > 1) this.renderPager(pageCount, panel.pagerY);
   }
 
   matchesSearch(book) {
@@ -270,13 +413,13 @@ export default class BooksScene extends Phaser.Scene {
       .some((value) => String(value).toLowerCase().includes(q));
   }
 
-  renderPager(pageCount, y) {
+  renderPager(pageCount, pagerY) {
     const { width } = this.scale;
 
     const prev = makeButton(
       this,
       width / 2 - 150,
-      this.scale.height - y,
+      pagerY,
       I18n.t("prevPage"),
       () => {
         this.currentPage = Math.max(0, this.currentPage - 1);
@@ -284,7 +427,7 @@ export default class BooksScene extends Phaser.Scene {
       },
       {
         width: 120,
-        height: 34,
+        height: PAGER_BTN_H,
         fontSize: 14,
         fill: COLORS.woodLight,
         textColor: "#f3e3c3",
@@ -296,7 +439,7 @@ export default class BooksScene extends Phaser.Scene {
     const label = this.add
       .text(
         width / 2,
-        this.scale.height - y,
+        pagerY,
         I18n.t("pageIndicator", { page: this.currentPage + 1, total: pageCount }),
         {
           fontFamily: FONTS.body,
@@ -311,7 +454,7 @@ export default class BooksScene extends Phaser.Scene {
     const next = makeButton(
       this,
       width / 2 + 150,
-      this.scale.height - y,
+      pagerY,
       I18n.t("nextPage"),
       () => {
         this.currentPage = Math.min(pageCount - 1, this.currentPage + 1);
@@ -319,7 +462,7 @@ export default class BooksScene extends Phaser.Scene {
       },
       {
         width: 120,
-        height: 34,
+        height: PAGER_BTN_H,
         fontSize: 14,
         fill: COLORS.woodLight,
         textColor: "#f3e3c3",
