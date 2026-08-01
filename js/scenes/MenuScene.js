@@ -127,10 +127,40 @@ export default class MenuScene extends Phaser.Scene {
   openTutorial() {
     const { width, height } = this.scale;
     const pw = 520;
-    const ph = 420;
+    const bodyTop = 88;
+    const bottomPad = 24;
+    const gapBeforeButton = 20;
+    const buttonH = 46;
+    const maxPh = height - 40;
+
+    const measureBody = (fontSize) => {
+      const probe = this.add
+        .text(0, 0, I18n.t("tutorialBody"), {
+          fontFamily: FONTS.body,
+          fontSize: `${fontSize}px`,
+          color: "#c9b08a",
+          align: "left",
+          lineSpacing: 6,
+          wordWrap: { width: pw - 60 },
+        })
+        .setVisible(false);
+      const measured = probe.height;
+      probe.destroy();
+      return measured;
+    };
+
+    let fontSize = 15;
+    let bodyHeight = measureBody(fontSize);
+    let ph = bodyTop + bodyHeight + gapBeforeButton + buttonH + bottomPad;
+    while (ph > maxPh && fontSize > 12) {
+      fontSize -= 1;
+      bodyHeight = measureBody(fontSize);
+      ph = bodyTop + bodyHeight + gapBeforeButton + buttonH + bottomPad;
+    }
+    ph = Math.min(maxPh, Math.max(420, ph));
+
     const { items, close } = this.openModal(pw, ph);
     const panelTop = height / 2 - ph / 2;
-    const panelBottom = height / 2 + ph / 2;
     const cx = width / 2;
 
     items.push(
@@ -145,24 +175,28 @@ export default class MenuScene extends Phaser.Scene {
         .setDepth(102)
     );
 
-    items.push(
-      this.add
-        .text(cx, panelTop + 88, I18n.t("tutorialBody"), {
-          fontFamily: FONTS.body,
-          fontSize: "15px",
-          color: "#c9b08a",
-          align: "left",
-          lineSpacing: 6,
-          wordWrap: { width: pw - 60 },
-        })
-        .setOrigin(0.5, 0)
-        .setDepth(102)
-    );
+    const bodyText = this.add
+      .text(cx, panelTop + bodyTop, I18n.t("tutorialBody"), {
+        fontFamily: FONTS.body,
+        fontSize: `${fontSize}px`,
+        color: "#c9b08a",
+        align: "left",
+        lineSpacing: 6,
+        wordWrap: { width: pw - 60 },
+      })
+      .setOrigin(0.5, 0)
+      .setDepth(102);
+    items.push(bodyText);
 
+    const panelBottom = panelTop + ph;
+    const buttonY = Math.min(
+      panelTop + bodyTop + bodyText.height + gapBeforeButton + buttonH / 2,
+      panelBottom - bottomPad - buttonH / 2
+    );
     items.push(
-      makeButton(this, cx, panelBottom - 44, I18n.t("done"), () => close(), {
+      makeButton(this, cx, buttonY, I18n.t("done"), () => close(), {
         width: 160,
-        height: 46,
+        height: buttonH,
         fontSize: 18,
         fill: COLORS.woodLight,
         textColor: "#f3e3c3",
