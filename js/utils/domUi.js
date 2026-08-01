@@ -40,13 +40,16 @@ export function placeGameBox(el, game, { x, y, width, height = null, anchor = "c
   if (h != null) el.style.height = `${h}px`;
 }
 
-export function mountSceneUi(scene, className, layout) {
+export function mountSceneUi(scene, className, layoutOrFn) {
   const host = document.getElementById("game-container");
   const el = document.createElement("div");
   el.className = `lc-scene-ui ${className}`.trim();
   host.appendChild(el);
 
-  const sync = () => placeGameBox(el, scene.game, layout);
+  const resolveLayout = () =>
+    typeof layoutOrFn === "function" ? layoutOrFn(scene) : layoutOrFn;
+
+  const sync = () => placeGameBox(el, scene.game, resolveLayout());
   sync();
 
   const onResize = () => sync();

@@ -2,17 +2,7 @@ import { Storage } from "../utils/storage.js";
 import { loadLevels } from "../utils/dataLoader.js";
 import { I18n } from "../utils/i18n.js?v=2";
 import { makeButton, goToScene, COLORS, FONTS, formatTime } from "../utils/ui.js";
-import { LEVEL_SELECT_LAYOUT } from "../config/layout.js";
-
-const COLS = LEVEL_SELECT_LAYOUT.cols;
-const ROWS_PAGE = LEVEL_SELECT_LAYOUT.rowsPerPage;
-const PER_PAGE = LEVEL_SELECT_LAYOUT.perPage;
-const CELL_W = LEVEL_SELECT_LAYOUT.cellW;
-const CELL_H = LEVEL_SELECT_LAYOUT.cellH;
-const CARD_W = LEVEL_SELECT_LAYOUT.cardW;
-const CARD_H = LEVEL_SELECT_LAYOUT.cardH;
-const GRID_TOP = LEVEL_SELECT_LAYOUT.gridTop;
-const GRID_BOTTOM = LEVEL_SELECT_LAYOUT.gridBottom;
+import { getLevelSelectLayout } from "../config/layout.js";
 
 const RULE_BADGE = {
   title_az:         { en: "Title A–Z",       es: "Título A–Z" },
@@ -121,6 +111,17 @@ export default class LevelSelectScene extends Phaser.Scene {
       return;
     }
     loading.destroy();
+
+    const layout = getLevelSelectLayout(width, height);
+    const COLS = layout.cols;
+    const ROWS_PAGE = layout.rowsPerPage;
+    const PER_PAGE = layout.perPage;
+    const CELL_W = layout.cellW;
+    const CELL_H = layout.cellH;
+    const CARD_W = layout.cardW;
+    const CARD_H = layout.cardH;
+    const GRID_TOP = layout.gridTop;
+    const GRID_BOTTOM = layout.gridBottom;
 
     this.pageCount = Math.ceil(levels.length / PER_PAGE);
     const maxUnlocked = Storage.getMaxLevelUnlocked();

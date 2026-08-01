@@ -4,22 +4,39 @@ import { Storage } from "../utils/storage.js";
 import { I18n } from "../utils/i18n.js?v=2";
 import { makeButton, goToScene, COLORS, FONTS, formatTime } from "../utils/ui.js";
 import { openDomOverlay, closeDomOverlay, escapeHtml } from "../utils/domOverlay.js";
-import { GAME_LAYOUT } from "../config/layout.js";
+import { GAME_LAYOUT, getGameLayout } from "../config/layout.js";
 import { BoardController } from "../game/BoardController.js";
-
-const HINT_SCORE_PENALTY = 120;
-const BOOK_W_MAX = GAME_LAYOUT.bookWMax;
-const BOOK_H_MAX = GAME_LAYOUT.bookHMax;
-const GAP_X = GAME_LAYOUT.gapX;
-const GAP_Y = GAME_LAYOUT.gapY;
+let BOOK_W_MAX = GAME_LAYOUT.bookWMax;
+let BOOK_H_MAX = GAME_LAYOUT.bookHMax;
+let GAP_X = GAME_LAYOUT.gapX;
+let GAP_Y = GAME_LAYOUT.gapY;
 const BOARD_H = GAME_LAYOUT.boardH;
-const MAX_PER_ROW = GAME_LAYOUT.maxPerRow;
-const MAX_ROWS_PER_PAGE = GAME_LAYOUT.maxRowsPerPage;
+let MAX_PER_ROW = GAME_LAYOUT.maxPerRow;
+let MAX_ROWS_PER_PAGE = GAME_LAYOUT.maxRowsPerPage;
 let AREA_TOP = GAME_LAYOUT.areaTopBase;
-const AREA_BOTTOM = GAME_LAYOUT.areaBottom;
-const LEFT_RESERVED = GAME_LAYOUT.leftReserved;
-const RIGHT_MARGIN = GAME_LAYOUT.rightMargin;
-const RIGHT_GUTTER = GAME_LAYOUT.rightGutter;
+let AREA_BOTTOM = GAME_LAYOUT.areaBottom;
+let LEFT_RESERVED = GAME_LAYOUT.leftReserved;
+let RIGHT_MARGIN = GAME_LAYOUT.rightMargin;
+let RIGHT_GUTTER = GAME_LAYOUT.rightGutter;
+let CONTROLS_DOCK = "right";
+let CONTROL_BAR_HEIGHT = 0;
+
+function syncGameLayout(width, height) {
+  const layout = getGameLayout(width, height);
+  BOOK_W_MAX = layout.bookWMax;
+  BOOK_H_MAX = layout.bookHMax;
+  GAP_X = layout.gapX;
+  GAP_Y = layout.gapY;
+  MAX_PER_ROW = layout.maxPerRow;
+  MAX_ROWS_PER_PAGE = layout.maxRowsPerPage;
+  AREA_TOP = layout.areaTopBase;
+  AREA_BOTTOM = layout.areaBottom;
+  LEFT_RESERVED = layout.leftReserved;
+  RIGHT_MARGIN = layout.rightMargin;
+  RIGHT_GUTTER = layout.rightGutter;
+  CONTROLS_DOCK = layout.controlsDock;
+  CONTROL_BAR_HEIGHT = layout.controlBarHeight;
+}
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
@@ -59,6 +76,9 @@ export default class GameScene extends Phaser.Scene {
 
   async create() {
     const { width, height } = this.scale;
+    syncGameLayout(width, height);
+    this.bookW = BOOK_W_MAX;
+    this.bookH = BOOK_H_MAX;
     this.cameras.main.fadeIn(200, 0, 0, 0);
     this.drawBackground();
     this.buildTopBar();
@@ -200,13 +220,16 @@ export default class GameScene extends Phaser.Scene {
   }
 
   buildTopBar() {
-    const { width } = this.scale;
+    const { width, height } = this.scale;
+    const portrait = height > width;
     const compact = width < 920;
+    const ultraCompact = width < 680 || portrait;
     const rightPad = 12;
-    const menuW = compact ? 98 : 116;
-    const menuH = 40;
-    const menuFont = compact ? 14 : 16;
-    const pauseW = compact ? 40 : 44;
+    const menuW = portrait ? 88 : compact ? 98 : 116;
+    const menuH = portrait ? 38 : 40;
+    const menuFont = portrait ? 13 : compact ? 14 : 16;
+    const menuLabel = portrait ? "\u22ef" : I18n.t("menu");
+    const pauseW = portrait ? 38 : compact ? 40 : 44;
     const pauseGap = 8;
 
     const bar = this.add.graphics();
@@ -217,12 +240,13 @@ export default class GameScene extends Phaser.Scene {
     this.titleText = this.add
       .text(16, 28, I18n.t("appTitle"), {
         fontFamily: FONTS.title,
-        fontSize: compact ? "18px" : "22px",
+        fontSize: ultraCompact ? "16px" : compact ? "18px" : "22px",
         color: "#f3e3c3",
         fontStyle: "bold",
       })
       .setOrigin(0, 0.5)
-      .setDepth(51);
+      .setDepth(51)
+      .setVisible(!ultraCompact);
 
     this.levelText = this.add
       .text(0, 28, "", {
@@ -283,7 +307,7 @@ export default class GameScene extends Phaser.Scene {
       this,
       menuX,
       28,
-      I18n.t("menu"),
+      menuLabel,
       () => this.toggleActionMenu(),
       {
         width: menuW,
@@ -380,36 +404,43 @@ export default class GameScene extends Phaser.Scene {
   updateTopBarLayout() {
     if (!this.titleText || !this.levelText || !this.movesText || !this.timeText) return;
 
-    const { width } = this.scale;
+    const { width, height } = this.scale;
+    const portrait = height > width;
     const compact = width < 920;
-    const titleBase = compact ? 18 : 22;
-    const infoBase = compact ? 15 : 18;
+    const ultraCompact = width < 680 || portrait;
+    const titleBase = ultraCompact ? 16 : compact ? 18 : 22;
+    const infoBase = portrait ? 13 : compact ? 14 : 18;
 
-    const leftPad = 16;
-    const titleMaxW = compact ? 220 : 300;
+    const leftPad = ultraCompact ? 10 : 16;
+    const titleMaxW = ultraCompact ? 0 : compact ? 220 : 300;
+    this.titleText.setVisible(!ultraCompact);
     this.titleText.setPosition(leftPad, 28);
-    this.fitTextToWidth(this.titleText, titleMaxW, titleBase, compact ? 12 : 14);
-
-    const titleRight = leftPad + this.titleText.width;
-    const rightBound = this.pauseBtn
-      ? this.pauseBtn.x - this.headerPauseW / 2 - 12
-      : width - 180;
-    const centerEnd = rightBound;
-    let centerStart = Math.max(titleRight + 18, width * (compact ? 0.35 : 0.32));
-    if (centerEnd - centerStart < 150) {
-      centerStart = Math.max(titleRight + 10, centerEnd - 150);
+    if (!ultraCompact) {
+      this.fitTextToWidth(this.titleText, titleMaxW, titleBase, compact ? 12 : 14);
     }
 
-    const span = Math.max(180, centerEnd - centerStart);
+    const titleRight = ultraCompact ? leftPad : leftPad + this.titleText.width;
+    const rightBound = this.pauseBtn
+      ? this.pauseBtn.x - this.headerPauseW / 2 - (portrait ? 8 : 12)
+      : width - 180;
+    const centerEnd = rightBound;
+    let centerStart = portrait
+      ? leftPad
+      : Math.max(titleRight + 18, width * (compact ? 0.35 : 0.32));
+    if (centerEnd - centerStart < (portrait ? 120 : 150)) {
+      centerStart = Math.max(titleRight + 10, centerEnd - (portrait ? 120 : 150));
+    }
+
+    const span = Math.max(portrait ? 150 : 180, centerEnd - centerStart);
     const step = span / 3;
-    const cellW = step - 8;
+    const cellW = step - (portrait ? 4 : 8);
     const x1 = centerStart + step * 0.5;
     const x2 = centerStart + step * 1.5;
     const x3 = centerStart + step * 2.5;
 
-    this.fitTextToWidth(this.levelText, cellW, infoBase, 11);
-    this.fitTextToWidth(this.movesText, cellW, infoBase, 11);
-    this.fitTextToWidth(this.timeText, cellW, infoBase, 11);
+    this.fitTextToWidth(this.levelText, cellW, infoBase, 10);
+    this.fitTextToWidth(this.movesText, cellW, infoBase, 10);
+    this.fitTextToWidth(this.timeText, cellW, infoBase, 10);
 
     this.levelText.setPosition(x1, 28);
     this.movesText.setPosition(x2, 28);
@@ -1141,7 +1172,8 @@ export default class GameScene extends Phaser.Scene {
   }
 
   buildLevelInstruction() {
-    const { width } = this.scale;
+    const { width, height } = this.scale;
+    const portrait = height > width;
     this.levelText.setText(
       I18n.t("levelProgress", { level: this.levelNumber, total: this.totalLevels })
     );
@@ -1149,11 +1181,11 @@ export default class GameScene extends Phaser.Scene {
 
     const zones = this.levelDef.zones;
     const bx = width / 2;
-    const by = 74;
+    const by = portrait ? 62 : 74;
+    const wrapW = width - (portrait ? 32 : 200);
     let bottomOfInstruction;
 
     if (zones.length === 1) {
-      // Single-zone: show "Rule: <label>" + optional hint
       const ruleName = this.ruleDisplayName(zones[0].rule);
       const ruleLine = I18n.t("ruleColon", { label: ruleName });
       const detail =
@@ -1162,70 +1194,73 @@ export default class GameScene extends Phaser.Scene {
       const ruleObj = this.add
         .text(bx, by, ruleLine, {
           fontFamily: FONTS.body,
-          fontSize: "18px",
+          fontSize: portrait ? "16px" : "18px",
           color: "#d9a441",
           fontStyle: "bold",
           align: "center",
         })
         .setOrigin(0.5, 0);
 
-      bottomOfInstruction = by + ruleObj.height + 6;
+      bottomOfInstruction = by + ruleObj.height + (portrait ? 4 : 6);
 
       if (detail) {
         const detailObj = this.add
           .text(bx, bottomOfInstruction, detail, {
             fontFamily: FONTS.body,
-            fontSize: "14px",
+            fontSize: portrait ? "13px" : "14px",
             color: "#f3e3c3",
             align: "center",
-            wordWrap: { width: width - 200 },
+            wordWrap: { width: wrapW },
           })
           .setOrigin(0.5, 0);
-        bottomOfInstruction += detailObj.height + 6;
+        bottomOfInstruction += detailObj.height + (portrait ? 4 : 6);
       }
     } else {
-      // Multi-zone: show level-wide hint (or generic multi-zone hint)
       const detail =
         I18n.pick(this.levelDef, "hint") || I18n.pick(this.levelDef, "description");
       const hintText = detail || I18n.t("multiZoneHint");
       const hintObj = this.add
         .text(bx, by, hintText, {
           fontFamily: FONTS.body,
-          fontSize: "15px",
+          fontSize: portrait ? "14px" : "15px",
           color: "#f3e3c3",
           align: "center",
-          wordWrap: { width: width - 200 },
+          wordWrap: { width: wrapW },
         })
         .setOrigin(0.5, 0);
-      bottomOfInstruction = by + hintObj.height + 6;
+      bottomOfInstruction = by + hintObj.height + (portrait ? 4 : 6);
     }
 
     if (this.challenge) {
-      const challengeY = bottomOfInstruction + 8;
+      const challengeY = bottomOfInstruction + (portrait ? 4 : 8);
       this.challengeBadgeBg = this.add.graphics().setDepth(51);
       this.challengeText = this.add
         .text(bx, challengeY, this.buildChallengeDisplayText(), {
           fontFamily: FONTS.body,
-          fontSize: "16px",
+          fontSize: portrait ? "14px" : "16px",
           color: "#ffdede",
           align: "center",
           fontStyle: "bold",
-          wordWrap: { width: width - 180 },
+          wordWrap: { width: wrapW },
         })
         .setOrigin(0.5, 0)
         .setDepth(52);
       this.refreshChallengeBadge();
-      bottomOfInstruction = challengeY + this.challengeText.height + 16;
+      bottomOfInstruction = challengeY + this.challengeText.height + (portrait ? 10 : 16);
     } else {
       this.challengeText = null;
       this.challengeBadgeBg = null;
     }
 
-    // Adjust AREA_TOP dynamically so the grid never overlaps the instructions
-    AREA_TOP = Math.max(140, bottomOfInstruction + 10);
+    AREA_TOP = Math.max(portrait ? 112 : 140, bottomOfInstruction + (portrait ? 6 : 10));
   }
 
   buildLibrarian() {
+    if (CONTROLS_DOCK === "bottom") {
+      this.librarian = null;
+      return;
+    }
+
     const { height } = this.scale;
     this.librarian = this.add
       .sprite(44, height - 28, "librarian", "thinking")
@@ -1245,56 +1280,117 @@ export default class GameScene extends Phaser.Scene {
   }
 
   buildControls() {
-    const { width } = this.scale;
-    // Primary action — compact icon button, pinned top-right below Menu
-    const bx = this.headerMenuX ?? (width - 70);
-    const by = 96;
-    this.checkBtn = makeButton(
-      this,
-      bx,
-      by,
-      "\u2713",
-      () => this.checkSolved(true),
-      { width: 64, height: 44, fontSize: 26, fill: COLORS.good, textColor: "#ffffff" }
-    ).setDepth(51);
-    this.checkBtn.on("pointerover", () =>
-      this.showActionTooltip(bx, by + 40, I18n.t("checkOrder"))
-    );
-    this.checkBtn.on("pointerout", () => this.hideActionTooltip());
+    const { width, height } = this.scale;
+    const bottomDock = CONTROLS_DOCK === "bottom";
 
-    // Undo — compact icon button below Check, disabled until a move is made
-    const uy = by + 56;
-    this.undoBtn = makeButton(
-      this,
-      bx,
-      uy,
-      "\u21B6",
-      () => this.undoMove(),
-      { width: 64, height: 44, fontSize: 24, fill: COLORS.woodLight, textColor: "#f3e3c3", enabled: false }
-    ).setDepth(51);
-    this.undoBtn.on("pointerover", () =>
-      this.showActionTooltip(bx, uy + 40, I18n.t("undo"))
-    );
-    this.undoBtn.on("pointerout", () => this.hideActionTooltip());
+    if (bottomDock) {
+      const barTop = height - CONTROL_BAR_HEIGHT;
+      const barY = barTop + CONTROL_BAR_HEIGHT / 2;
 
-    // Hint — below Undo, highlights one wrong book with score penalty
-    const hy = uy + 56;
-    this.hintBtn = makeButton(
-      this,
-      bx,
-      hy,
-      "?",
-      () => this.giveHint(),
-      { width: 64, height: 44, fontSize: 24, fill: COLORS.accent, textColor: "#2c1d14" }
-    ).setDepth(51);
-    this.hintBtn.on("pointerover", () =>
-      this.showActionTooltip(
+      this.controlBarBg = this.add.graphics().setDepth(49);
+      this.controlBarBg.fillStyle(COLORS.ink, 0.94);
+      this.controlBarBg.fillRect(0, barTop, width, CONTROL_BAR_HEIGHT);
+      this.controlBarBg.lineStyle(1, COLORS.accent, 0.35);
+      this.controlBarBg.lineBetween(0, barTop, width, barTop);
+
+      const btnW = 64;
+      const btnH = 44;
+      const gap = Math.max(12, Math.floor((width - btnW * 3 - 32) / 2));
+      const totalSpan = btnW * 3 + gap * 2;
+      const startX = width / 2 - totalSpan / 2 + btnW / 2;
+
+      const specs = [
+        {
+          icon: "\u2713",
+          action: () => this.checkSolved(true),
+          fill: COLORS.good,
+          textColor: "#ffffff",
+          fontSize: 26,
+          tip: I18n.t("checkOrder"),
+        },
+        {
+          icon: "\u21B6",
+          action: () => this.undoMove(),
+          fill: COLORS.woodLight,
+          textColor: "#f3e3c3",
+          fontSize: 24,
+          enabled: false,
+          tip: I18n.t("undo"),
+        },
+        {
+          icon: "?",
+          action: () => this.giveHint(),
+          fill: COLORS.accent,
+          textColor: "#2c1d14",
+          fontSize: 24,
+          tip: I18n.t("hintTooltip", { points: HINT_SCORE_PENALTY }),
+        },
+      ];
+
+      specs.forEach((spec, i) => {
+        const bx = startX + i * (btnW + gap);
+        const btn = makeButton(this, bx, barY, spec.icon, spec.action, {
+          width: btnW,
+          height: btnH,
+          fontSize: spec.fontSize,
+          fill: spec.fill,
+          textColor: spec.textColor,
+          enabled: spec.enabled !== false,
+        }).setDepth(51);
+        btn.on("pointerover", () => this.showActionTooltip(bx, barY - 34, spec.tip));
+        btn.on("pointerout", () => this.hideActionTooltip());
+        if (i === 0) this.checkBtn = btn;
+        else if (i === 1) this.undoBtn = btn;
+        else this.hintBtn = btn;
+      });
+    } else {
+      const bx = this.headerMenuX ?? (width - 70);
+      const by = 96;
+      this.checkBtn = makeButton(
+        this,
         bx,
-        hy + 40,
-        I18n.t("hintTooltip", { points: HINT_SCORE_PENALTY })
-      )
-    );
-    this.hintBtn.on("pointerout", () => this.hideActionTooltip());
+        by,
+        "\u2713",
+        () => this.checkSolved(true),
+        { width: 64, height: 44, fontSize: 26, fill: COLORS.good, textColor: "#ffffff" }
+      ).setDepth(51);
+      this.checkBtn.on("pointerover", () =>
+        this.showActionTooltip(bx, by + 40, I18n.t("checkOrder"))
+      );
+      this.checkBtn.on("pointerout", () => this.hideActionTooltip());
+
+      const uy = by + 56;
+      this.undoBtn = makeButton(
+        this,
+        bx,
+        uy,
+        "\u21B6",
+        () => this.undoMove(),
+        { width: 64, height: 44, fontSize: 24, fill: COLORS.woodLight, textColor: "#f3e3c3", enabled: false }
+      ).setDepth(51);
+      this.undoBtn.on("pointerover", () =>
+        this.showActionTooltip(bx, uy + 40, I18n.t("undo"))
+      );
+      this.undoBtn.on("pointerout", () => this.hideActionTooltip());
+
+      const hy = uy + 56;
+      this.hintBtn = makeButton(
+        this,
+        bx,
+        hy,
+        "?",
+        () => this.giveHint(),
+        { width: 64, height: 44, fontSize: 24, fill: COLORS.accent, textColor: "#2c1d14" }
+      ).setDepth(51);
+      this.hintBtn.on("pointerover", () =>
+        this.showActionTooltip(
+          bx,
+          hy + 40,
+          I18n.t("hintTooltip", { points: HINT_SCORE_PENALTY })
+        )
+      );
+      this.hintBtn.on("pointerout", () => this.hideActionTooltip());
+    }
 
     this.actionMenuItems = [];
     this.actionMenuOpen = false;
@@ -1548,34 +1644,37 @@ export default class GameScene extends Phaser.Scene {
   }
 
   buildPager() {
-    const { width } = this.scale;
+    const { width, height } = this.scale;
+    const portrait = height > width;
     const midY = (AREA_TOP + AREA_BOTTOM) / 2;
+    const arrowW = portrait ? 36 : 44;
+    const arrowH = portrait ? 72 : 96;
+    const arrowFont = portrait ? 34 : 40;
+    const arrowX = portrait ? 16 : 28;
 
-    // Left side arrow
     this.sidePrev = makeButton(
       this,
-      28,
+      arrowX,
       midY,
       "\u2039",
       () => this.goToPage(this.currentPage - 1),
-      { width: 44, height: 96, fontSize: 40, fill: COLORS.woodLight, textColor: "#f3e3c3" }
+      { width: arrowW, height: arrowH, fontSize: arrowFont, fill: COLORS.woodLight, textColor: "#f3e3c3" }
     ).setDepth(40);
 
-    // Right side arrow
     this.sideNext = makeButton(
       this,
-      width - 28,
+      width - arrowX,
       midY,
       "\u203a",
       () => this.goToPage(this.currentPage + 1),
-      { width: 44, height: 96, fontSize: 40, fill: COLORS.woodLight, textColor: "#f3e3c3" }
+      { width: arrowW, height: arrowH, fontSize: arrowFont, fill: COLORS.woodLight, textColor: "#f3e3c3" }
     ).setDepth(40);
 
-    // Minimal page indicator — small pill at bottom center
+    const pagerY = portrait ? AREA_BOTTOM + 8 : AREA_BOTTOM + 18;
     this.pagerLabel = this.add
-      .text(width / 2, AREA_BOTTOM + 18, "", {
+      .text(width / 2, pagerY, "", {
         fontFamily: FONTS.body,
-        fontSize: "13px",
+        fontSize: portrait ? "12px" : "13px",
         color: "#c9b08a",
         align: "center",
       })
@@ -1862,14 +1961,16 @@ export default class GameScene extends Phaser.Scene {
       );
     });
 
-    this.tweens.add({
-      targets: this.librarian,
-      y: this.librarian.y - 40,
-      duration: 220,
-      yoyo: true,
-      repeat: 2,
-      ease: "Quad.out",
-    });
+    if (this.librarian) {
+      this.tweens.add({
+        targets: this.librarian,
+        y: this.librarian.y - 40,
+        duration: 220,
+        yoyo: true,
+        repeat: 2,
+        ease: "Quad.out",
+      });
+    }
 
     this.celebrate();
 

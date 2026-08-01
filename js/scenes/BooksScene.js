@@ -135,7 +135,7 @@ export default class BooksScene extends Phaser.Scene {
 
   getPanelLayout() {
     const { width, height } = this.scale;
-    const w = Math.min(820, width - 90);
+    const w = Math.min(820, width - (height > width ? 32 : 90));
     const x = width / 2 - w / 2;
     const top = 92;
     const pagerY = height - PAGER_CENTER_FROM_BOTTOM;

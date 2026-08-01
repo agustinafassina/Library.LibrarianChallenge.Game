@@ -3,6 +3,7 @@ import { I18n } from "../utils/i18n.js?v=2";
 import { openFeedbackForm, closeFeedbackForm } from "../utils/feedbackForm.js";
 import { openDomOverlay, closeDomOverlay, paragraphsFromText, escapeHtml } from "../utils/domOverlay.js";
 import { mountSceneUi, domButton } from "../utils/domUi.js";
+import { isPortraitGame } from "../config/viewport.js";
 import { appVersion } from "../utils/appInfo.js";
 import { goToScene, COLORS, FONTS } from "../utils/ui.js";
 
@@ -13,32 +14,39 @@ export default class MenuScene extends Phaser.Scene {
 
   create() {
     const { width, height } = this.scale;
+    const portrait = isPortraitGame(this.game);
     Storage.touchSession();
     this.cameras.main.fadeIn(200, 0, 0, 0);
 
     this.drawBackground();
 
-    this.add
-      .sprite(width * 0.8, height * 0.62, "librarian", "idle")
-      .setScale(1.6)
-      .setOrigin(0.5)
-      .play("librarian-idle");
+    if (!portrait) {
+      this.add
+        .sprite(width * 0.8, height * 0.62, "librarian", "idle")
+        .setScale(1.6)
+        .setOrigin(0.5)
+        .play("librarian-idle");
+    }
 
     this.add
-      .text(width / 2, height * 0.2, I18n.t("appTitle"), {
+      .text(width / 2, height * (portrait ? 0.14 : 0.2), I18n.t("appTitle"), {
         fontFamily: FONTS.title,
-        fontSize: "52px",
+        fontSize: portrait ? "38px" : "52px",
         color: "#f3e3c3",
         fontStyle: "bold",
+        align: "center",
+        wordWrap: { width: width - 40 },
       })
       .setOrigin(0.5)
       .setShadow(0, 4, "#00000088", 6);
 
     this.add
-      .text(width / 2, height * 0.28, I18n.t("subtitle"), {
+      .text(width / 2, height * (portrait ? 0.21 : 0.28), I18n.t("subtitle"), {
         fontFamily: FONTS.body,
-        fontSize: "20px",
+        fontSize: portrait ? "16px" : "20px",
         color: "#d9a441",
+        align: "center",
+        wordWrap: { width: width - 48 },
       })
       .setOrigin(0.5);
 
@@ -62,16 +70,20 @@ export default class MenuScene extends Phaser.Scene {
   }
 
   buildMenuUi() {
-    const { width, height } = this.scale;
     const hasProgress = Storage.hasProgress();
-    const cx = width * 0.34;
 
-    this.menuUi = mountSceneUi(this, "lc-menu-ui", {
-      x: cx,
-      y: height * 0.38,
-      width: 240,
-      anchor: "top-center",
-    });
+    const menuLayout = (scene) => {
+      const { width, height } = scene.scale;
+      const portrait = height > width;
+      return {
+        x: portrait ? width / 2 : width * 0.34,
+        y: height * (portrait ? 0.3 : 0.38),
+        width: portrait ? Math.min(300, width - 32) : 240,
+        anchor: "top-center",
+      };
+    };
+
+    this.menuUi = mountSceneUi(this, "lc-menu-ui", menuLayout);
 
     const ui = this.menuUi.el;
     ui.appendChild(
@@ -109,11 +121,15 @@ export default class MenuScene extends Phaser.Scene {
     );
     ui.appendChild(grid);
 
-    this.resetUi = mountSceneUi(this, "lc-scene-ui", {
-      x: cx,
-      y: height - 52,
-      width: 200,
-      anchor: "center",
+    this.resetUi = mountSceneUi(this, "lc-scene-ui", (scene) => {
+      const { width, height } = scene.scale;
+      const portrait = height > width;
+      return {
+        x: portrait ? width / 2 : width * 0.34,
+        y: height - (portrait ? 44 : 52),
+        width: portrait ? Math.min(220, width - 32) : 200,
+        anchor: "center",
+      };
     });
     this.resetUi.el.appendChild(
       domButton(I18n.t("resetProgress"), "lc-btn lc-btn--danger lc-btn--reset", () => this.confirmReset(), {
