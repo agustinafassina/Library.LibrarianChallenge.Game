@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vitest";
 import {
   fetchBooksFromApi,
+  fetchBooksFromApiByTag,
   mapApiBookToGameBook,
   mergeApiBooksIntoLocalCatalog,
+  resetBooksTagCache,
   stripHtml,
 } from "../js/utils/apiBooks.js";
 
@@ -144,6 +146,7 @@ describe("apiBooks.js", () => {
   it("loads books from the Google by-tag endpoint response shape", async () => {
     const originalFetch = globalThis.fetch;
     const originalConfig = globalThis.LIBRARIAN_CHALLENGE_CONFIG;
+    resetBooksTagCache();
     globalThis.LIBRARIAN_CHALLENGE_CONFIG = {
       apiBaseUrl: "http://localhost:5142",
       apiKey: "test-key",
@@ -154,7 +157,9 @@ describe("apiBooks.js", () => {
     };
     let requestedUrl = "";
     let requestedHeaders = {};
+    let fetchCount = 0;
     globalThis.fetch = async (url, options) => {
+      fetchCount += 1;
       requestedUrl = String(url);
       requestedHeaders = options?.headers ?? {};
       return {
@@ -166,7 +171,7 @@ describe("apiBooks.js", () => {
       };
     };
 
-    const books = await fetchBooksFromApi();
+    const books = await fetchBooksFromApiByTag("Bisexual");
 
     expect(requestedUrl).toBe(
       "http://localhost:5142/api/v1/Book/google/by-tag/Bisexual?maxResults=20&autoTag=true"
@@ -175,7 +180,46 @@ describe("apiBooks.js", () => {
     expect(books).toHaveLength(1);
     expect(books[0]).toMatchObject({ title: "Real API Book", tags: ["Bisexual"] });
 
+    await fetchBooksFromApiByTag("Bisexual");
+    expect(fetchCount).toBe(1);
+
     globalThis.fetch = originalFetch;
     globalThis.LIBRARIAN_CHALLENGE_CONFIG = originalConfig;
+    resetBooksTagCache();
+  });
+
+  it("loads all configured tags when fetchBooksFromApi is called", async () => {
+    const originalFetch = globalThis.fetch;
+    const originalConfig = globalThis.LIBRARIAN_CHALLENGE_CONFIG;
+    resetBooksTagCache();
+    globalThis.LIBRARIAN_CHALLENGE_CONFIG = {
+      apiBaseUrl: "http://localhost:5142",
+      apiKey: "test-key",
+      useApiBooks: true,
+      bookTags: ["Bisexual", "Queer"],
+      maxResultsPerTag: 20,
+      autoTag: true,
+    };
+    const requestedTags = [];
+    globalThis.fetch = async (url) => {
+      const match = String(url).match(/by-tag\/([^/?]+)/);
+      if (match) requestedTags.push(decodeURIComponent(match[1]));
+      return {
+        ok: true,
+        json: async () => ({
+          count: 1,
+          books: [{ title: `Book for ${requestedTags.at(-1)}`, authors: ["Author"], source: "GoogleBooks" }],
+        }),
+      };
+    };
+
+    const books = await fetchBooksFromApi();
+
+    expect(requestedTags).toEqual(["Bisexual", "Queer"]);
+    expect(books).toHaveLength(2);
+
+    globalThis.fetch = originalFetch;
+    globalThis.LIBRARIAN_CHALLENGE_CONFIG = originalConfig;
+    resetBooksTagCache();
   });
 });

@@ -1,10 +1,12 @@
 import { loadBooks } from "../utils/dataLoader.js";
 import { I18n } from "../utils/i18n.js";
-import { bookDetailRows } from "../utils/bookDetail.js";
+import { bookDetailRows, isLongBookTitle, truncateWrappedText } from "../utils/bookDetail.js";
+import { shouldOfferTranslation, translateText } from "../utils/translate.js";
 import { makeButton, goToScene, COLORS, FONTS } from "../utils/ui.js";
 
 const LABEL_W = 118;
 const META_ROW_GAP = 10;
+const HERO_TITLE_MAX_H = 64;
 
 export default class BookDetailScene extends Phaser.Scene {
   constructor() {
@@ -20,6 +22,18 @@ export default class BookDetailScene extends Phaser.Scene {
     this.statusText = null;
     this.wheelHandler = null;
     this.scrollHint = null;
+    this.originalDescription = "";
+    this.translatedDescription = null;
+    this.showingTranslated = false;
+    this.descText = null;
+    this.translateBtn = null;
+    this.translateBtnLabel = null;
+    this.contentEndY = 0;
+    this.visibleH = 0;
+    this.panelRef = null;
+    this.panelGraphics = null;
+    this.panelMask = null;
+    this.isTranslating = false;
   }
 
   create() {
@@ -75,10 +89,24 @@ export default class BookDetailScene extends Phaser.Scene {
       this.renderBook(book);
     } catch (err) {
       console.error(err);
+      this.clearBookContent();
       this.statusText?.destroy();
       this.statusText = null;
       this.renderMessage(I18n.t("booksError"));
     }
+  }
+
+  clearBookContent() {
+    this.unbindScroll();
+    this.contentContainer?.destroy(true);
+    this.contentContainer = null;
+    this.panelGraphics?.destroy();
+    this.panelGraphics = null;
+    this.panelMask?.destroy();
+    this.panelMask = null;
+    this.descText = null;
+    this.translateBtn = null;
+    this.translateBtnLabel = null;
   }
 
   renderMessage(title, subtitle = "") {
@@ -110,39 +138,57 @@ export default class BookDetailScene extends Phaser.Scene {
     }
   }
 
-  panelLayout() {
+  panelLayout(contentHeight = null) {
     const { width, height } = this.scale;
     const w = Math.min(820, width - 90);
     const top = 88;
-    return { x: width / 2 - w / 2, y: top, w, h: height - top - 24, pad: 24 };
+    const bottom = 24;
+    const pad = 24;
+    const maxH = height - top - bottom;
+
+    if (contentHeight == null) {
+      return { x: width / 2 - w / 2, y: top, w, h: maxH, pad, maxH };
+    }
+
+    const innerBottomPad = 10;
+    const desiredH = contentHeight + pad * 2 + innerBottomPad;
+    const h = Math.min(desiredH, maxH);
+
+    return { x: width / 2 - w / 2, y: top, w, h, pad, maxH };
   }
 
   renderBook(book) {
-    const panel = this.panelLayout();
-    const contentW = panel.w - panel.pad * 2;
+    const basePanel = this.panelLayout();
+    const contentW = basePanel.w - basePanel.pad * 2;
     const coverW = 54;
     const coverGap = 16;
     const bodyX = coverW + coverGap;
     const bodyW = contentW - bodyX;
 
-    this.drawPanel(panel.x, panel.y, panel.w, panel.h);
-    this.contentContainer = this.add.container(panel.x + panel.pad, panel.y + panel.pad);
+    this.contentContainer = this.add.container(basePanel.x + basePanel.pad, basePanel.y + basePanel.pad);
     let y = 0;
 
     const coverColor = Phaser.Display.Color.HexStringToColor(book.color || "#8a7358").color;
+    const titleStyle = {
+      fontFamily: FONTS.title,
+      fontSize: "26px",
+      color: "#f3e3c3",
+      fontStyle: "bold",
+      wordWrap: { width: bodyW },
+    };
+    const titleIsLong = isLongBookTitle(book.title);
+    const heroTitle = titleIsLong
+      ? truncateWrappedText(this, book.title, titleStyle, bodyW, HERO_TITLE_MAX_H)
+      : null;
     const title = this.add
-      .text(bodyX, y, book.title, {
-        fontFamily: FONTS.title,
-        fontSize: "26px",
-        color: "#f3e3c3",
-        fontStyle: "bold",
-        wordWrap: { width: bodyW },
-      })
+      .text(bodyX, y, heroTitle?.text ?? book.title, titleStyle)
       .setOrigin(0, 0);
     this.contentContainer.add(title);
 
+    const titleBlockH = heroTitle?.height ?? title.height;
+
     const byline = this.add
-      .text(bodyX, title.y + title.height + 8, `${book.author || "—"} · ${book.year ?? "—"}`, {
+      .text(bodyX, title.y + titleBlockH + 8, `${book.author || "—"} · ${book.year ?? "—"}`, {
         fontFamily: FONTS.body,
         fontSize: "15px",
         color: "#c9b08a",
@@ -166,10 +212,10 @@ export default class BookDetailScene extends Phaser.Scene {
         label !== I18n.t("bookDetailGenre") &&
         label !== I18n.t("bookDetailYear")
     );
-    const metaPanelH = this.estimateMetaPanelHeight(metaRows, bodyW - LABEL_W - 12);
-    this.contentContainer.add(this.drawInsetPanel(0, y, contentW, metaPanelH));
+    const metaStartY = y;
+    const firstMetaIndex = this.contentContainer.length;
+    let rowY = metaStartY + 14;
 
-    let rowY = y + 14;
     metaRows.forEach(([label, value], index) => {
       if (index > 0) {
         this.contentContainer.add(this.drawRowDivider(12, rowY - 6, contentW - 24));
@@ -195,10 +241,29 @@ export default class BookDetailScene extends Phaser.Scene {
       rowY += Math.max(labelText.height, valueText.height) + META_ROW_GAP + 8;
     });
 
-    y += metaPanelH + 18;
+    const metaPanelH = rowY - metaStartY + 8;
+    this.contentContainer.addAt(this.drawInsetPanel(0, metaStartY, contentW, metaPanelH), firstMetaIndex);
+
+    y = metaStartY + metaPanelH + 14;
     this.contentContainer.add(this.drawSectionDivider(contentW, y));
     y += 14;
 
+    if (titleIsLong) {
+      const fullTitle = this.add
+        .text(0, y, book.title, {
+          fontFamily: FONTS.title,
+          fontSize: "20px",
+          color: "#f3e3c3",
+          fontStyle: "bold",
+          wordWrap: { width: contentW },
+          lineSpacing: 4,
+        })
+        .setOrigin(0, 0);
+      this.contentContainer.add(fullTitle);
+      y += fullTitle.height + 12;
+    }
+
+    const description = book.description?.trim();
     const descTitle = this.add
       .text(0, y, I18n.t("bookDetailDescription"), {
         fontFamily: FONTS.body,
@@ -208,10 +273,37 @@ export default class BookDetailScene extends Phaser.Scene {
       })
       .setOrigin(0, 0);
     this.contentContainer.add(descTitle);
+
+    this.originalDescription = description || "";
+    this.translatedDescription = null;
+    this.showingTranslated = false;
+
+    if (shouldOfferTranslation(I18n.lang, Boolean(description))) {
+      const btnW = 118;
+      const btnH = 28;
+      this.translateBtn = makeButton(
+        this,
+        contentW - btnW / 2,
+        y + descTitle.height / 2,
+        I18n.t("bookDetailTranslate"),
+        () => this.toggleDescriptionTranslation(),
+        {
+          width: btnW,
+          height: btnH,
+          fontSize: 12,
+          fill: COLORS.woodLight,
+          fillHover: COLORS.accent,
+          textColor: "#f3e3c3",
+        }
+      );
+      this.translateBtnLabel = this.translateBtn.list[1];
+      this.translateBtn.setDepth(3);
+      this.contentContainer.add(this.translateBtn);
+    }
+
     y += descTitle.height + 10;
 
-    const description = book.description?.trim();
-    const descText = this.add
+    this.descText = this.add
       .text(0, y, description || I18n.t("bookDetailNoDescription"), {
         fontFamily: FONTS.body,
         fontSize: "14px",
@@ -221,30 +313,85 @@ export default class BookDetailScene extends Phaser.Scene {
         lineSpacing: 6,
       })
       .setOrigin(0, 0);
-    this.contentContainer.add(descText);
-    y += descText.height + 16;
+    this.contentContainer.add(this.descText);
+    this.contentEndY = y + this.descText.height + 10;
 
-    const maskShape = this.make.graphics({ x: panel.x + 8, y: panel.y + 8 });
-    maskShape.fillStyle(0xffffff);
-    maskShape.fillRoundedRect(0, 0, panel.w - 16, panel.h - 16, 12);
-    this.contentContainer.setMask(maskShape.createGeometryMask());
-
-    const visibleH = panel.h - panel.pad * 2;
-    this.scrollOffset = 0;
-    this.maxScroll = Math.max(0, y - visibleH);
-    this.baseContainerY = panel.y + panel.pad;
-    this.bindScroll();
-    this.updateScrollHint(panel);
+    this.reflowPanel();
   }
 
-  estimateMetaPanelHeight(rows, valueW) {
-    let h = 28;
-    rows.forEach(([label, value]) => {
-      const labelLines = Math.ceil(label.length / 14);
-      const valueLines = Math.ceil(String(value).length / Math.max(1, Math.floor(valueW / 8)));
-      h += Math.max(labelLines, valueLines) * 18 + META_ROW_GAP + 8;
-    });
-    return h;
+  reflowPanel() {
+    if (!this.contentContainer) return;
+
+    const fitted = this.panelLayout(this.contentEndY);
+    this.panelRef = fitted;
+
+    this.panelGraphics?.destroy();
+    this.panelGraphics = this.drawPanel(fitted.x, fitted.y, fitted.w, fitted.h);
+    this.panelGraphics.setDepth(0);
+    this.contentContainer.setDepth(1);
+
+    this.panelMask?.destroy();
+    this.panelMask = this.make.graphics({ x: fitted.x + 8, y: fitted.y + 8 });
+    this.panelMask.fillStyle(0xffffff);
+    this.panelMask.fillRoundedRect(0, 0, fitted.w - 16, fitted.h - 16, 12);
+    this.contentContainer.setMask(this.panelMask.createGeometryMask());
+    this.contentContainer.setPosition(fitted.x + fitted.pad, fitted.y + fitted.pad);
+
+    this.visibleH = fitted.h - fitted.pad * 2;
+    this.baseContainerY = fitted.y + fitted.pad;
+    this.scrollOffset = Phaser.Math.Clamp(this.scrollOffset ?? 0, 0, Math.max(0, this.contentEndY - this.visibleH));
+    this.contentContainer.y = this.baseContainerY - this.scrollOffset;
+    this.maxScroll = Math.max(0, this.contentEndY - this.visibleH);
+    this.bindScroll();
+    this.updateScrollHint(fitted);
+  }
+
+  async toggleDescriptionTranslation() {
+    if (!this.descText || !this.originalDescription || this.isTranslating) return;
+
+    if (this.showingTranslated) {
+      this.setDescriptionText(this.originalDescription);
+      this.showingTranslated = false;
+      this.translateBtnLabel?.setText(I18n.t("bookDetailTranslate"));
+      return;
+    }
+
+    if (this.translatedDescription) {
+      this.setDescriptionText(this.translatedDescription);
+      this.showingTranslated = true;
+      this.translateBtnLabel?.setText(I18n.t("bookDetailShowOriginal"));
+      return;
+    }
+
+    this.isTranslating = true;
+    this.translateBtn?.setEnabled(false);
+    this.translateBtnLabel?.setText(I18n.t("bookDetailTranslating"));
+
+    try {
+      this.translatedDescription = await translateText(this.originalDescription, I18n.lang);
+      this.setDescriptionText(this.translatedDescription);
+      this.showingTranslated = true;
+      this.translateBtnLabel?.setText(I18n.t("bookDetailShowOriginal"));
+    } catch (err) {
+      console.error(err);
+      this.translateBtnLabel?.setText(I18n.t("bookDetailTranslateError"));
+    } finally {
+      this.isTranslating = false;
+      this.translateBtn?.setEnabled(true);
+    }
+  }
+
+  setDescriptionText(text) {
+    if (!this.descText) return;
+
+    const oldHeight = this.descText.height;
+    this.descText.setText(text);
+    this.descText.setColor("#c9b08a");
+    this.descText.setFontStyle("normal");
+
+    const delta = this.descText.height - oldHeight;
+    this.contentEndY += delta;
+    this.reflowPanel();
   }
 
   drawBookCover(x, y, w, h, color) {
@@ -353,6 +500,7 @@ export default class BookDetailScene extends Phaser.Scene {
     panel.strokeRoundedRect(x, y, w, h, 16);
     panel.fillStyle(0xffffff, 0.03);
     panel.fillRoundedRect(x + 3, y + 3, w - 6, 28, 12);
+    return panel;
   }
 
   drawBackground() {
