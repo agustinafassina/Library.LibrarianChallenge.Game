@@ -5,6 +5,54 @@ import {
   renderBookDetailMarkup,
   renderBookDetailNotFoundMarkup,
 } from "./utils/bookDetail.js";
+import { shouldOfferTranslation, translateText } from "./utils/translate.js";
+
+function bindDescriptionTranslate(book) {
+  const root = document.getElementById("book-detail-root");
+  const btn = root?.querySelector('[data-action="translate"]');
+  const para = root?.querySelector("#book-description-text");
+  const description = book.description?.trim();
+  if (!btn || !para || !description || !shouldOfferTranslation(I18n.lang, true)) return;
+
+  let translated = null;
+  let showingOriginal = true;
+  let busy = false;
+
+  btn.addEventListener("click", async () => {
+    if (busy) return;
+
+    if (!showingOriginal) {
+      para.textContent = description;
+      showingOriginal = true;
+      btn.textContent = I18n.t("bookDetailTranslate");
+      return;
+    }
+
+    if (translated) {
+      para.textContent = translated;
+      showingOriginal = false;
+      btn.textContent = I18n.t("bookDetailShowOriginal");
+      return;
+    }
+
+    busy = true;
+    btn.disabled = true;
+    btn.textContent = I18n.t("bookDetailTranslating");
+
+    try {
+      translated = await translateText(description, I18n.lang);
+      para.textContent = translated;
+      showingOriginal = false;
+      btn.textContent = I18n.t("bookDetailShowOriginal");
+    } catch (err) {
+      console.error(err);
+      btn.textContent = I18n.t("bookDetailTranslateError");
+    } finally {
+      busy = false;
+      btn.disabled = false;
+    }
+  });
+}
 
 function readParams() {
   const params = new URLSearchParams(window.location.search);
@@ -36,6 +84,7 @@ async function main() {
       return;
     }
     root.innerHTML = renderBookDetailMarkup(book);
+    bindDescriptionTranslate(book);
     document.title = `${book.title} — ${I18n.t("booksTitle")}`;
   } catch (err) {
     console.error(err);

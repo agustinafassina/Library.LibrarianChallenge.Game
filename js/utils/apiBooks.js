@@ -198,35 +198,90 @@ export function mergeApiBooksIntoLocalCatalog(localBooks, apiBooks) {
   return merged;
 }
 
+const tagBooksCache = new Map();
+const tagBooksInflight = new Map();
+
+export function resetBooksTagCache() {
+  tagBooksCache.clear();
+  tagBooksInflight.clear();
+}
+
+function mapApiPayloadToGameBooks(apiBooks, tag) {
+  return uniqueBySourceId(apiBooks)
+    .filter((book) => book && book.title)
+    .map((book, index) =>
+      mapApiBookToGameBook(
+        {
+          ...book,
+          tags: Array.isArray(book.tags) && book.tags.length ? book.tags : [tag],
+        },
+        index + 1
+      )
+    );
+}
+
+export async function fetchBooksFromApiByTag(tag) {
+  const normalizedTag = String(tag ?? "").trim();
+  if (!normalizedTag) return [];
+
+  if (tagBooksCache.has(normalizedTag)) {
+    return tagBooksCache.get(normalizedTag);
+  }
+
+  if (tagBooksInflight.has(normalizedTag)) {
+    return tagBooksInflight.get(normalizedTag);
+  }
+
+  const request = (async () => {
+    const config = readRuntimeConfig();
+    if (!config.enabled) return [];
+
+    const params = new URLSearchParams({
+      maxResults: String(config.maxResults),
+      autoTag: String(config.autoTag),
+    });
+    const payload = await fetchJson(
+      `${config.apiBaseUrl}/api/v1/Book/google/by-tag/${encodeURIComponent(normalizedTag)}?${params}`,
+      config.apiKey
+    );
+    const books = mapApiPayloadToGameBooks(readBooksPayload(payload), normalizedTag);
+    tagBooksCache.set(normalizedTag, books);
+    if (books.length > 0) {
+      console.info(`[books-api] loaded ${books.length} books for tag ${normalizedTag}`);
+    }
+    return books;
+  })();
+
+  tagBooksInflight.set(normalizedTag, request);
+
+  try {
+    return await request;
+  } catch (err) {
+    console.warn(`[books-api] failed to load tag ${normalizedTag}:`, err);
+    throw err;
+  } finally {
+    tagBooksInflight.delete(normalizedTag);
+  }
+}
+
 export async function fetchBooksFromApi() {
   const config = readRuntimeConfig();
   if (!config.enabled) return [];
 
-  const responses = await Promise.allSettled(
-    config.tags.map(async (tag) => {
-      const params = new URLSearchParams({
-        maxResults: String(config.maxResults),
-        autoTag: String(config.autoTag),
-      });
-      const payload = await fetchJson(
-        `${config.apiBaseUrl}/api/v1/Book/google/by-tag/${encodeURIComponent(tag)}?${params}`,
-        config.apiKey
-      );
-      return readBooksPayload(payload).map((book) => ({
-        ...book,
-        tags: Array.isArray(book.tags) && book.tags.length ? book.tags : [tag],
-      }));
-    })
-  );
-
   const books = [];
-  responses.forEach((result, index) => {
-    if (result.status === "fulfilled") {
-      books.push(...result.value);
-    } else if (result.status === "rejected") {
-      console.warn(`[books-api] failed to load tag ${config.tags[index]}:`, result.reason);
-    }
-  });
-
-  return uniqueBySourceId(books);
+  for (const tag of config.tags) {
+    books.push(...(await fetchBooksFromApiByTag(tag)));
+  }
+  return uniqueBySourceId(
+    books.map((book) => ({
+      title: book.title,
+      authors: [book.author],
+      publishedDate: String(book.year),
+      description: book.description,
+      tags: book.tags,
+      source: book.source,
+      externalId: book.externalId,
+      pages: book.pages,
+    }))
+  );
 }

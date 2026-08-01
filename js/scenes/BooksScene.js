@@ -1,4 +1,6 @@
 import { loadBooks } from "../utils/dataLoader.js";
+import { fetchBooksFromApiByTag } from "../utils/apiBooks.js";
+import { truncateSingleLineText } from "../utils/bookDetail.js";
 import { I18n } from "../utils/i18n.js?v=2";
 import { makeButton, goToScene, COLORS, FONTS } from "../utils/ui.js";
 
@@ -61,7 +63,26 @@ export default class BooksScene extends Phaser.Scene {
     this.searchDom = null;
     this.tagSelectDom = null;
     this.statusText = null;
+    this.titleTooltip = null;
+    this.localBooks = null;
+    this.listLoading = false;
     this.syncToolbarLayout = this.syncToolbarLayout.bind(this);
+  }
+
+  usesApiBooks() {
+    return globalThis.LIBRARIAN_CHALLENGE_CONFIG?.useApiBooks === true;
+  }
+
+  async loadBooksForSelectedTag() {
+    if (this.usesApiBooks()) {
+      this.books = await fetchBooksFromApiByTag(this.selectedTag);
+      return;
+    }
+
+    if (!this.localBooks) {
+      this.localBooks = await loadBooks();
+    }
+    this.books = this.localBooks;
   }
 
   async create() {
@@ -95,7 +116,7 @@ export default class BooksScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     try {
-      this.books = await loadBooks();
+      await this.loadBooksForSelectedTag();
     } catch (err) {
       console.error(err);
       this.statusText.setText(I18n.t("booksError"));
@@ -104,7 +125,7 @@ export default class BooksScene extends Phaser.Scene {
 
     this.statusText.destroy();
     this.statusText = null;
-    this.toolbarDomHeightGame = 60;
+    this.toolbarDomHeightGame = 36;
 
     this.buildFilterToolbar();
     this.bindLayoutSync();
@@ -125,7 +146,7 @@ export default class BooksScene extends Phaser.Scene {
     const hintGap = 8;
     const hintLine = 14;
     const afterHintGap = 14;
-    const toolbarH = this.toolbarDomHeightGame ?? 60;
+    const toolbarH = this.toolbarDomHeightGame ?? 36;
     const afterToolbarGap = 16;
     const titleY = top + headerTopPad;
     const hintY = titleY + titleLine + hintGap;
@@ -165,6 +186,7 @@ export default class BooksScene extends Phaser.Scene {
     this.scale.off("resize", this.onLayoutChange);
     window.removeEventListener("resize", this.onLayoutChange);
     window.visualViewport?.removeEventListener("resize", this.onLayoutChange);
+    this.hideTitleTooltip();
     this.filterToolbarDom?.remove();
     this.filterToolbarDom = null;
     this.searchDom = null;
@@ -205,11 +227,8 @@ export default class BooksScene extends Phaser.Scene {
     const toolbar = document.createElement("div");
     toolbar.className = "books-toolbar";
 
-    const categoryField = document.createElement("label");
+    const categoryField = document.createElement("div");
     categoryField.className = "books-toolbar-field books-toolbar-field--category";
-    const categoryLabel = document.createElement("span");
-    categoryLabel.className = "books-toolbar-label";
-    categoryLabel.textContent = I18n.t("booksCategory");
     const select = document.createElement("select");
     select.className = "books-field";
     select.setAttribute("aria-label", I18n.t("booksCategory"));
@@ -223,15 +242,13 @@ export default class BooksScene extends Phaser.Scene {
     select.addEventListener("change", () => {
       this.selectedTag = select.value;
       this.currentPage = 0;
-      this.renderBookList();
+      this.searchQuery = this.searchDom?.value ?? this.searchQuery;
+      this.reloadBooksForTag();
     });
-    categoryField.append(categoryLabel, select);
+    categoryField.append(select);
 
-    const searchField = document.createElement("label");
+    const searchField = document.createElement("div");
     searchField.className = "books-toolbar-field books-toolbar-field--search";
-    const searchLabel = document.createElement("span");
-    searchLabel.className = "books-toolbar-label";
-    searchLabel.textContent = I18n.t("booksSearch");
     const input = document.createElement("input");
     input.type = "search";
     input.className = "books-field";
@@ -243,7 +260,7 @@ export default class BooksScene extends Phaser.Scene {
       this.currentPage = 0;
       this.renderBookList();
     });
-    searchField.append(searchLabel, input);
+    searchField.append(input);
 
     toolbar.append(categoryField, searchField);
     host.appendChild(toolbar);
@@ -257,6 +274,62 @@ export default class BooksScene extends Phaser.Scene {
       this.syncToolbarLayout();
       this.renderBookList();
     });
+  }
+
+  async reloadBooksForTag() {
+    if (!this.scene.isActive() || this.listLoading) return;
+
+    if (!this.usesApiBooks()) {
+      this.renderBookList();
+      return;
+    }
+
+    this.listLoading = true;
+    if (this.tagSelectDom) this.tagSelectDom.disabled = true;
+    this.showListLoading();
+
+    try {
+      await this.loadBooksForSelectedTag();
+      this.renderBookList();
+    } catch (err) {
+      console.error(err);
+      this.renderListError();
+    } finally {
+      this.listLoading = false;
+      if (this.tagSelectDom) this.tagSelectDom.disabled = false;
+    }
+  }
+
+  showListLoading() {
+    this.hideTitleTooltip();
+    this.rows.forEach((row) => row.destroy());
+    this.rows = [];
+
+    const { width, height } = this.scale;
+    const loading = this.add
+      .text(width / 2, height / 2, I18n.t("loadingBooks"), {
+        fontFamily: FONTS.body,
+        fontSize: "22px",
+        color: "#d9a441",
+      })
+      .setOrigin(0.5);
+    this.rows.push(loading);
+  }
+
+  renderListError() {
+    this.hideTitleTooltip();
+    this.rows.forEach((row) => row.destroy());
+    this.rows = [];
+
+    const { width, height } = this.scale;
+    const error = this.add
+      .text(width / 2, height / 2, I18n.t("booksError"), {
+        fontFamily: FONTS.body,
+        fontSize: "22px",
+        color: "#d9a441",
+      })
+      .setOrigin(0.5);
+    this.rows.push(error);
   }
 
   drawTablePanel(panel) {
@@ -274,6 +347,7 @@ export default class BooksScene extends Phaser.Scene {
 
   renderBookList() {
     const { width, height } = this.scale;
+    this.hideTitleTooltip();
     this.rows.forEach((row) => row.destroy());
     this.rows = [];
 
@@ -353,15 +427,27 @@ export default class BooksScene extends Phaser.Scene {
       spine.fillRoundedRect(panelX + 8, y + 6, 10, rowHInner - 12, 3);
       this.rows.push(spine);
 
+      const titleMaxW = panelW * 0.38;
+      const titleStyle = {
+        fontFamily: FONTS.body,
+        fontSize: "16px",
+        color: "#f3e3c3",
+        fontStyle: "bold",
+      };
+      const titleDisplay = truncateSingleLineText(this, book.title, titleStyle, titleMaxW);
       const titleText = this.add
-        .text(panelX + 26, y + 10, book.title, {
-          fontFamily: FONTS.body,
-          fontSize: "16px",
-          color: "#f3e3c3",
-          fontStyle: "bold",
-        })
+        .text(panelX + 26, y + 10, titleDisplay, titleStyle)
         .setOrigin(0, 0);
-      titleText.setCrop(0, 0, panelW * 0.38, 22);
+      if (titleDisplay !== String(book.title)) {
+        titleText.setInteractive({ useHandCursor: true });
+        titleText.on("pointerover", () =>
+          this.showTitleTooltip(
+            { x: panelX + 26, y: y + 10, w: titleMaxW, h: 22 },
+            book.title
+          )
+        );
+        titleText.on("pointerout", () => this.hideTitleTooltip());
+      }
       this.rows.push(titleText);
 
       const meta = `${book.author} · ${book.year} · ${I18n.t("pagesCount", { n: book.pages })}`;
@@ -411,6 +497,43 @@ export default class BooksScene extends Phaser.Scene {
     ]
       .filter((value) => value !== null && value !== undefined)
       .some((value) => String(value).toLowerCase().includes(q));
+  }
+
+  showTitleTooltip(anchor, fullTitle) {
+    this.hideTitleTooltip();
+
+    const { width } = this.scale;
+    const pad = 14;
+    const maxW = Math.min(460, width - 48);
+    const txt = this.add.text(0, 0, fullTitle, {
+      fontFamily: FONTS.body,
+      fontSize: "14px",
+      color: "#f3e3c3",
+      wordWrap: { width: maxW - pad * 2 },
+      lineSpacing: 4,
+    });
+
+    const tw = Math.min(maxW, txt.width + pad * 2);
+    const th = txt.height + pad * 2;
+    const cx = Phaser.Math.Clamp(anchor.x + anchor.w / 2, tw / 2 + 12, width - tw / 2 - 12);
+    const cy = Math.max(th + 12, anchor.y - 4);
+
+    const bg = this.add.graphics().setDepth(98);
+    bg.fillStyle(COLORS.ink, 0.98);
+    bg.fillRoundedRect(cx - tw / 2, cy - th, tw, th, 10);
+    bg.lineStyle(2, COLORS.accent, 1);
+    bg.strokeRoundedRect(cx - tw / 2, cy - th, tw, th, 10);
+
+    txt.setOrigin(0.5, 1).setPosition(cx, cy - pad).setDepth(99);
+
+    this.titleTooltip = { txt, bg };
+  }
+
+  hideTitleTooltip() {
+    if (!this.titleTooltip) return;
+    this.titleTooltip.txt.destroy();
+    this.titleTooltip.bg.destroy();
+    this.titleTooltip = null;
   }
 
   renderPager(pageCount, pagerY) {

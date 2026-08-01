@@ -210,14 +210,12 @@ body.lc-recaptcha-active .grecaptcha-badge {
   z-index: 20;
   display: flex;
   gap: 12px;
-  align-items: flex-end;
+  align-items: center;
   box-sizing: border-box;
 }
 
 .books-toolbar-field {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  display: block;
   min-width: 0;
   margin: 0;
 }
@@ -228,15 +226,6 @@ body.lc-recaptcha-active .grecaptcha-badge {
 
 .books-toolbar-field--search {
   flex: 1 1 auto;
-}
-
-.books-toolbar-label {
-  font: bold 11px "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
-  color: #d9a441;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  line-height: 1;
-  margin: 0;
 }
 
 .books-field {
@@ -329,6 +318,14 @@ body.book-detail-page {
   margin-bottom: 24px;
 }
 
+.book-detail-full-title {
+  margin: 0 0 20px;
+  font-size: clamp(1.15rem, 3vw, 1.35rem);
+  line-height: 1.35;
+  color: #f3e3c3;
+  font-weight: 700;
+}
+
 .book-detail-row {
   display: grid;
   grid-template-columns: 120px 1fr;
@@ -347,9 +344,38 @@ body.book-detail-page {
 }
 
 .book-detail-description h2 {
-  margin-bottom: 10px;
+  margin: 0;
   font-size: 1rem;
   color: #d9a441;
+}
+
+.book-detail-description-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.book-detail-translate-btn {
+  flex: 0 0 auto;
+  padding: 6px 12px;
+  border: 2px solid #d9a441;
+  border-radius: 10px;
+  background: #8a5a2b;
+  color: #f3e3c3;
+  font: bold 13px "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  cursor: pointer;
+}
+
+.book-detail-translate-btn:hover:not(:disabled) {
+  background: #d9a441;
+  color: #2c1d14;
+}
+
+.book-detail-translate-btn:disabled {
+  opacity: 0.65;
+  cursor: wait;
 }
 
 .book-detail-description p {

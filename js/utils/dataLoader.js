@@ -1,5 +1,4 @@
 import { isKnownRuleName, resolveRule, VALID_SORT_KEYS } from "./rules.js";
-import { fetchBooksFromApi, mergeApiBooksIntoLocalCatalog } from "./apiBooks.js";
 
 const DATA_SOURCE = {
   booksUrl: "data/books.json",
@@ -19,18 +18,7 @@ async function fetchJSON(url) {
 }
 
 async function fetchBooks() {
-  const localBooks = await fetchJSON(DATA_SOURCE.booksUrl);
-  try {
-    const apiBooks = await fetchBooksFromApi();
-    const merged = mergeApiBooksIntoLocalCatalog(localBooks, apiBooks);
-    if (apiBooks.length > 0) {
-      console.info(`[books-api] loaded ${apiBooks.length} real books from the API`);
-    }
-    return merged;
-  } catch (err) {
-    console.warn("[books-api] falling back to local books.json:", err);
-    return localBooks;
-  }
+  return fetchJSON(DATA_SOURCE.booksUrl);
 }
 
 async function fetchLevels() {
