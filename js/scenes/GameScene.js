@@ -3,6 +3,7 @@ import { getRuleLabel, resolveRule } from "../utils/rules.js";
 import { Storage } from "../utils/storage.js";
 import { I18n } from "../utils/i18n.js?v=2";
 import { makeButton, goToScene, COLORS, FONTS, formatTime } from "../utils/ui.js";
+import { openDomOverlay, closeDomOverlay, escapeHtml } from "../utils/domOverlay.js";
 import { GAME_LAYOUT } from "../config/layout.js";
 import { BoardController } from "../game/BoardController.js";
 
@@ -1001,6 +1002,7 @@ export default class GameScene extends Phaser.Scene {
     this.input.keyboard.off("keydown-Z", this.handlers.onKeyZ);
 
     this.handlers = {};
+    closeDomOverlay();
   }
 
   maybeFlipPage(dragX) {
@@ -1405,63 +1407,41 @@ export default class GameScene extends Phaser.Scene {
   }
 
   showLanguageModal() {
-    const { width, height } = this.scale;
-    const pw = 380, ph = 200;
-    const px = (width - pw) / 2, py = (height - ph) / 2;
+    openDomOverlay({
+      scene: this,
+      panelWidth: 380,
+      buildPanel: (panel, close) => {
+        const langButtons = I18n.available
+          .map(
+            (lang) =>
+              `<button type="button" class="lc-btn ${lang.code === I18n.lang ? "is-active" : "lc-btn--wood"}" data-lang="${escapeHtml(lang.code)}">${escapeHtml(lang.label)}</button>`
+          )
+          .join("");
 
-    const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.55)
-      .setOrigin(0).setDepth(60).setInteractive();
+        panel.innerHTML = `
+          <h2 class="lc-title">${escapeHtml(I18n.t("language"))}</h2>
+          <div class="lc-actions lc-actions--wrap">${langButtons}</div>
+          <div class="lc-actions">
+            <button type="button" class="lc-btn lc-btn--wood">${escapeHtml(I18n.t("done"))}</button>
+          </div>
+        `;
 
-    const panel = this.add.graphics().setDepth(61);
-    panel.fillStyle(COLORS.ink, 0.97);
-    panel.fillRoundedRect(px, py, pw, ph, 14);
-    panel.lineStyle(2, COLORS.accent, 1);
-    panel.strokeRoundedRect(px, py, pw, ph, 14);
+        panel.querySelectorAll("[data-lang]").forEach((btn) => {
+          btn.addEventListener("click", () => {
+            const code = btn.dataset.lang;
+            if (code !== I18n.lang) {
+              I18n.set(code);
+              close();
+              this.scene.restart({ level: this.levelNumber });
+            } else {
+              close();
+            }
+          });
+        });
 
-    const title = this.add.text(width / 2, py + 30, I18n.t("language"), {
-      fontFamily: FONTS.title, fontSize: "22px", color: "#f3e3c3", fontStyle: "bold",
-    }).setOrigin(0.5).setDepth(62);
-
-    const modalItems = [overlay, panel, title];
-
-    const close = () => modalItems.forEach((o) => o.destroy());
-
-    const langs = I18n.available;
-    const totalW = langs.length * 150 + (langs.length - 1) * 16;
-    const startX = width / 2 - totalW / 2 + 75;
-
-    langs.forEach((lang, i) => {
-      const isCurrent = lang.code === I18n.lang;
-      const btn = makeButton(
-        this,
-        startX + i * 166,
-        py + 98,
-        lang.label,
-        () => {
-          if (lang.code !== I18n.lang) {
-            I18n.set(lang.code);
-            close();
-            this.scene.restart({ level: this.levelNumber });
-          } else {
-            close();
-          }
-        },
-        {
-          width: 150, height: 46, fontSize: 17,
-          fill: isCurrent ? COLORS.accent : COLORS.woodLight,
-          textColor: isCurrent ? "#2c1d14" : "#f3e3c3",
-        }
-      ).setDepth(62);
-      modalItems.push(btn);
+        panel.querySelector(".lc-actions:last-of-type button").addEventListener("click", close);
+      },
     });
-
-    const doneBtn = makeButton(this, width / 2, py + ph - 28, I18n.t("done"), close, {
-      width: 130, height: 38, fontSize: 15,
-      fill: COLORS.woodLight, textColor: "#f3e3c3",
-    }).setDepth(62);
-    modalItems.push(doneBtn);
-
-    overlay.on("pointerdown", close);
   }
 
   togglePause() {
@@ -1479,49 +1459,36 @@ export default class GameScene extends Phaser.Scene {
     this.hideActionTooltip();
     this.closeActionMenu?.();
 
-    const { width, height } = this.scale;
-    const pw = 360, ph = 300;
-    const px = (width - pw) / 2, py = (height - ph) / 2;
-
-    const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.6)
-      .setOrigin(0).setDepth(80).setInteractive();
-
-    const panel = this.add.graphics().setDepth(81);
-    panel.fillStyle(COLORS.ink, 0.98);
-    panel.fillRoundedRect(px, py, pw, ph, 16);
-    panel.lineStyle(2, COLORS.accent, 1);
-    panel.strokeRoundedRect(px, py, pw, ph, 16);
-
-    const title = this.add.text(width / 2, py + 44, I18n.t("paused"), {
-      fontFamily: FONTS.title, fontSize: "28px", color: "#f3e3c3", fontStyle: "bold",
-    }).setOrigin(0.5).setDepth(82);
-
     const elapsed = this.pauseStart - this.startTime;
-    const sub = this.add.text(width / 2, py + 84,
-      `${I18n.t("timeLabel", { time: formatTime(elapsed) })}  \u00b7  ${I18n.t("movesLabel", { moves: this.moves })}`,
-      { fontFamily: FONTS.body, fontSize: "15px", color: "#c9b08a" }
-    ).setOrigin(0.5).setDepth(82);
+    const sub = `${I18n.t("timeLabel", { time: formatTime(elapsed) })} · ${I18n.t("movesLabel", { moves: this.moves })}`;
 
-    this.pauseItems = [overlay, panel, title, sub];
+    openDomOverlay({
+      scene: this,
+      panelWidth: 360,
+      closeOnBackdrop: true,
+      onBackdropClick: () => this.resumeGame(),
+      buildPanel: (panel, close) => {
+        panel.innerHTML = `
+          <h2 class="lc-title">${escapeHtml(I18n.t("paused"))}</h2>
+          <p class="lc-body lc-body--center">${escapeHtml(sub)}</p>
+          <div class="lc-actions" style="flex-direction: column; align-items: center; gap: 10px;">
+            <button type="button" class="lc-btn lc-btn--good lc-btn--wide" data-action="resume">${escapeHtml(I18n.t("resume"))}</button>
+            <button type="button" class="lc-btn lc-btn--wood lc-btn--wide" data-action="restart">${escapeHtml(I18n.t("restartLevel"))}</button>
+            <button type="button" class="lc-btn lc-btn--wood lc-btn--wide" data-action="menu">${escapeHtml(I18n.t("menu"))}</button>
+          </div>
+        `;
 
-    const resumeBtn = makeButton(this, width / 2, py + 140, I18n.t("resume"),
-      () => this.resumeGame(),
-      { width: 220, height: 52, fontSize: 20, fill: COLORS.good, textColor: "#ffffff" }
-    ).setDepth(82);
-
-    const restartBtn = makeButton(this, width / 2, py + 200, I18n.t("restartLevel"),
-      () => { this.clearPauseUI(); this.scene.restart({ level: this.levelNumber }); },
-      { width: 200, height: 44, fontSize: 16, fill: COLORS.woodLight, textColor: "#f3e3c3" }
-    ).setDepth(82);
-
-    const menuBtn = makeButton(this, width / 2, py + 252, I18n.t("menu"),
-      () => { this.clearPauseUI(); goToScene(this, "MenuScene"); },
-      { width: 200, height: 44, fontSize: 16, fill: COLORS.woodLight, textColor: "#f3e3c3" }
-    ).setDepth(82);
-
-    this.pauseItems.push(resumeBtn, restartBtn, menuBtn);
-
-    overlay.on("pointerdown", () => this.resumeGame());
+        panel.querySelector('[data-action="resume"]').addEventListener("click", () => this.resumeGame());
+        panel.querySelector('[data-action="restart"]').addEventListener("click", () => {
+          this.clearPauseUI();
+          this.scene.restart({ level: this.levelNumber });
+        });
+        panel.querySelector('[data-action="menu"]').addEventListener("click", () => {
+          this.clearPauseUI();
+          goToScene(this, "MenuScene");
+        });
+      },
+    });
   }
 
   resumeGame() {
@@ -1534,8 +1501,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   clearPauseUI() {
-    if (!this.pauseItems) return;
-    this.pauseItems.forEach((o) => o.destroy());
+    closeDomOverlay();
     this.pauseItems = null;
   }
 
@@ -1556,66 +1522,29 @@ export default class GameScene extends Phaser.Scene {
   }
 
   showChallengeFailModal(reason) {
-    const { width, height } = this.scale;
-    const pw = 390;
-    const ph = 230;
-    const px = (width - pw) / 2;
-    const py = (height - ph) / 2;
+    const reasonText =
+      reason === "time" ? I18n.t("challengeFailTime") : I18n.t("challengeFailMoves");
 
-    const overlay = this.add
-      .rectangle(0, 0, width, height, 0x000000, 0.62)
-      .setOrigin(0)
-      .setDepth(90)
-      .setInteractive();
+    openDomOverlay({
+      scene: this,
+      panelClass: "lc-panel--fail",
+      panelWidth: 390,
+      closeOnBackdrop: false,
+      buildPanel: (panel) => {
+        panel.innerHTML = `
+          <h2 class="lc-title lc-title--danger">${escapeHtml(I18n.t("challengeFailed"))}</h2>
+          <p class="lc-body lc-body--center">${escapeHtml(reasonText)}</p>
+          <div class="lc-actions" style="flex-direction: column; align-items: center; gap: 10px;">
+            <button type="button" class="lc-btn lc-btn--good lc-btn--wide">${escapeHtml(I18n.t("retryLevel"))}</button>
+            <button type="button" class="lc-btn lc-btn--wood lc-btn--wide">${escapeHtml(I18n.t("menu"))}</button>
+          </div>
+        `;
 
-    const panel = this.add.graphics().setDepth(91);
-    panel.fillStyle(COLORS.ink, 0.98);
-    panel.fillRoundedRect(px, py, pw, ph, 14);
-    panel.lineStyle(2, COLORS.bad, 1);
-    panel.strokeRoundedRect(px, py, pw, ph, 14);
-
-    const title = this.add
-      .text(width / 2, py + 38, I18n.t("challengeFailed"), {
-        fontFamily: FONTS.title,
-        fontSize: "28px",
-        color: "#ffd5d5",
-        fontStyle: "bold",
-      })
-      .setOrigin(0.5)
-      .setDepth(92);
-
-    const reasonText = reason === "time"
-      ? I18n.t("challengeFailTime")
-      : I18n.t("challengeFailMoves");
-    const body = this.add
-      .text(width / 2, py + 86, reasonText, {
-        fontFamily: FONTS.body,
-        fontSize: "15px",
-        color: "#f3e3c3",
-        align: "center",
-      })
-      .setOrigin(0.5)
-      .setDepth(92);
-
-    const retryBtn = makeButton(
-      this,
-      width / 2,
-      py + 146,
-      I18n.t("retryLevel"),
-      () => this.scene.restart({ level: this.levelNumber }),
-      { width: 220, height: 50, fontSize: 20, fill: COLORS.good, textColor: "#ffffff" }
-    ).setDepth(92);
-
-    const menuBtn = makeButton(
-      this,
-      width / 2,
-      py + 198,
-      I18n.t("menu"),
-      () => goToScene(this, "MenuScene"),
-      { width: 180, height: 40, fontSize: 16, fill: COLORS.woodLight, textColor: "#f3e3c3" }
-    ).setDepth(92);
-
-    this.failItems = [overlay, panel, title, body, retryBtn, menuBtn];
+        const [retryBtn, menuBtn] = panel.querySelectorAll("button");
+        retryBtn.addEventListener("click", () => this.scene.restart({ level: this.levelNumber }));
+        menuBtn.addEventListener("click", () => goToScene(this, "MenuScene"));
+      },
+    });
   }
 
   buildPager() {
@@ -2015,57 +1944,29 @@ export default class GameScene extends Phaser.Scene {
   }
 
   showAutoConfirm() {
-    const { width, height } = this.scale;
-    const pw = 400, ph = 210;
-    const px = (width - pw) / 2, py = (height - ph) / 2;
+    openDomOverlay({
+      scene: this,
+      panelClass: "lc-panel--auto",
+      panelWidth: 400,
+      closeOnBackdrop: false,
+      buildPanel: (panel, close) => {
+        panel.innerHTML = `
+          <h2 class="lc-title">${escapeHtml(I18n.t("autoConfirmTitle"))}</h2>
+          <p class="lc-body lc-body--center">${escapeHtml(I18n.t("autoConfirmBody"))}</p>
+          <div class="lc-actions">
+            <button type="button" class="lc-btn lc-btn--wood">${escapeHtml(I18n.t("cancel"))}</button>
+            <button type="button" class="lc-btn lc-btn--danger">${escapeHtml(I18n.t("autoConfirmYes"))}</button>
+          </div>
+        `;
 
-    const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.55)
-      .setOrigin(0)
-      .setDepth(50)
-      .setInteractive();
-
-    const panel = this.add.graphics().setDepth(51);
-    panel.fillStyle(0x3b2a1a, 1);
-    panel.fillRoundedRect(px, py, pw, ph, 14);
-    panel.lineStyle(2, 0xd9a441, 1);
-    panel.strokeRoundedRect(px, py, pw, ph, 14);
-
-    const title = this.add.text(width / 2, py + 28, I18n.t("autoConfirmTitle"), {
-      fontFamily: "Georgia, serif",
-      fontSize: "20px",
-      color: "#f3e3c3",
-      fontStyle: "bold",
-    }).setOrigin(0.5, 0.5).setDepth(52);
-
-    const body = this.add.text(width / 2, py + 80, I18n.t("autoConfirmBody"), {
-      fontFamily: "Georgia, serif",
-      fontSize: "14px",
-      color: "#c8b89a",
-      align: "center",
-    }).setOrigin(0.5, 0.5).setDepth(52);
-
-    const closeAll = () => {
-      overlay.destroy();
-      panel.destroy();
-      title.destroy();
-      body.destroy();
-      cancelBtn.destroy();
-      confirmBtn.destroy();
-    };
-
-    const cancelBtn = this.makeDialogButton(
-      px + 90, py + ph - 42, 140, 38,
-      I18n.t("cancel") ?? "Cancel",
-      0x5a3e28, "#f3e3c3", 52,
-      closeAll
-    );
-
-    const confirmBtn = this.makeDialogButton(
-      px + pw - 90, py + ph - 42, 160, 38,
-      I18n.t("autoConfirmYes"),
-      0x8b2020, "#ffffff", 52,
-      () => { closeAll(); this.runAutoArrange(); }
-    );
+        const [cancelBtn, confirmBtn] = panel.querySelectorAll("button");
+        cancelBtn.addEventListener("click", close);
+        confirmBtn.addEventListener("click", () => {
+          close();
+          this.runAutoArrange();
+        });
+      },
+    });
   }
 
   makeDialogButton(cx, cy, w, h, label, fillColor, textColor, depth, onTap) {

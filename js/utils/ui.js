@@ -25,6 +25,7 @@ export function makeButton(scene, x, y, label, onClick, opts = {}) {
     textColor = "#2c1d14",
     fontSize = 22,
     enabled = true,
+    strokeColor = null,
   } = opts;
 
   const radius = 12;
@@ -33,6 +34,11 @@ export function makeButton(scene, x, y, label, onClick, opts = {}) {
     bg.clear();
     bg.fillStyle(color, 1);
     bg.fillRoundedRect(-width / 2, -height / 2, width, height, radius);
+    const border =
+      strokeColor ??
+      (fill === COLORS.accent ? COLORS.accentDark : fill === COLORS.bad ? 0xa53f3e : COLORS.woodDark);
+    bg.lineStyle(2, border, 1);
+    bg.strokeRoundedRect(-width / 2, -height / 2, width, height, radius);
   };
   drawBg(fill);
 

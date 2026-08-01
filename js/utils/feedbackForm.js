@@ -1,6 +1,7 @@
 import { I18n } from "./i18n.js?v=2";
 import { Storage } from "./storage.js";
 import { appVersion } from "./appInfo.js";
+import { openDomOverlay, closeDomOverlay } from "./domOverlay.js";
 
 const DEFAULT_FORMSPREE_URL = "https://formspree.io/f/xbdvbarg";
 const RECAPTCHA_SCRIPT_ID = "lc-recaptcha-script";
@@ -132,25 +133,55 @@ function buildMetadata() {
   };
 }
 
-let activeOverlay = null;
-let activeRestore = null;
-
-function blockGameInput(scene) {
-  const canvas = document.querySelector("#game-container canvas");
-  const container = document.getElementById("game-container");
-  if (scene?.input) scene.input.enabled = false;
-  if (canvas) canvas.style.pointerEvents = "none";
-  container?.classList.add("lc-feedback-open");
-
-  return () => {
-    if (scene?.input) scene.input.enabled = true;
-    if (canvas) canvas.style.pointerEvents = "";
-    container?.classList.remove("lc-feedback-open");
-  };
+export function closeFeedbackForm() {
+  closeDomOverlay();
+  setRecaptchaActive(false);
 }
 
-function stopPointerPropagation(event) {
-  event.stopPropagation();
+export function openFeedbackForm({ scene } = {}) {
+  closeFeedbackForm();
+
+  openDomOverlay({
+    scene,
+    panelWidth: 460,
+    buildPanel: (panel, closeOverlay) => {
+      panel.innerHTML = `
+        <form novalidate>
+          <h2 class="lc-title"></h2>
+          <p class="lc-subtitle"></p>
+          <p class="lc-muted"></p>
+
+          <label class="lc-label lc-feedback-type-label"></label>
+          <select name="type" class="lc-field"></select>
+
+          <label class="lc-label lc-feedback-message-label"></label>
+          <textarea
+            name="message"
+            class="lc-field"
+            rows="5"
+            required
+          ></textarea>
+
+          <label class="lc-label lc-feedback-email-label"></label>
+          <input type="email" name="email" class="lc-field" autocomplete="email" required />
+
+          <input type="text" name="_gotcha" class="lc-feedback-honeypot" tabindex="-1" autocomplete="off" />
+
+          <p class="lc-status" aria-live="polite"></p>
+
+          <p class="lc-captcha" hidden></p>
+
+          <div class="lc-actions">
+            <button type="button" class="lc-btn lc-btn--wood lc-feedback-cancel"></button>
+            <button type="submit" class="lc-btn lc-btn--accent lc-feedback-submit"></button>
+          </div>
+        </form>
+      `;
+
+      const form = panel.querySelector("form");
+      wireFeedbackForm(panel, form, closeOverlay);
+    },
+  });
 }
 
 function renderCaptchaNotice(container) {
@@ -181,67 +212,20 @@ function setRecaptchaActive(active) {
   document.body.classList.toggle("lc-recaptcha-active", active);
 }
 
-export function closeFeedbackForm() {
-  activeRestore?.();
-  activeRestore = null;
-  activeOverlay?.remove();
-  activeOverlay = null;
-  setRecaptchaActive(false);
-}
-
-export function openFeedbackForm({ scene } = {}) {
-  closeFeedbackForm();
-  activeRestore = blockGameInput(scene);
-
-  const overlay = document.createElement("div");
-  overlay.id = "lc-feedback-overlay";
-  overlay.innerHTML = `
-    <form class="lc-feedback-panel" novalidate>
-      <h2 class="lc-feedback-title"></h2>
-      <p class="lc-feedback-subtitle"></p>
-      <p class="lc-feedback-privacy"></p>
-
-      <label class="lc-feedback-label lc-feedback-type-label"></label>
-      <select name="type" class="lc-feedback-select"></select>
-
-      <label class="lc-feedback-label lc-feedback-message-label"></label>
-      <textarea
-        name="message"
-        class="lc-feedback-textarea"
-        rows="5"
-        required
-      ></textarea>
-
-      <label class="lc-feedback-label lc-feedback-email-label"></label>
-      <input type="email" name="email" class="lc-feedback-input" autocomplete="email" required />
-
-      <input type="text" name="_gotcha" class="lc-feedback-honeypot" tabindex="-1" autocomplete="off" />
-
-      <p class="lc-feedback-status" aria-live="polite"></p>
-
-      <p class="lc-feedback-captcha" hidden></p>
-
-      <div class="lc-feedback-actions">
-        <button type="button" class="lc-feedback-btn lc-feedback-cancel"></button>
-        <button type="submit" class="lc-feedback-btn lc-feedback-submit"></button>
-      </div>
-    </form>
-  `;
-
-  const form = overlay.querySelector("form");
-  const title = overlay.querySelector(".lc-feedback-title");
-  const subtitle = overlay.querySelector(".lc-feedback-subtitle");
-  const privacy = overlay.querySelector(".lc-feedback-privacy");
-  const typeLabel = overlay.querySelector(".lc-feedback-type-label");
-  const messageLabel = overlay.querySelector(".lc-feedback-message-label");
-  const emailLabel = overlay.querySelector(".lc-feedback-email-label");
-  const typeSelect = overlay.querySelector('select[name="type"]');
-  const messageInput = overlay.querySelector('textarea[name="message"]');
-  const emailInput = overlay.querySelector('input[name="email"]');
-  const statusEl = overlay.querySelector(".lc-feedback-status");
-  const captchaNoticeEl = overlay.querySelector(".lc-feedback-captcha");
-  const cancelBtn = overlay.querySelector(".lc-feedback-cancel");
-  const submitBtn = overlay.querySelector(".lc-feedback-submit");
+function wireFeedbackForm(_panel, form, closeOverlay) {
+  const title = form.querySelector(".lc-title");
+  const subtitle = form.querySelector(".lc-subtitle");
+  const privacy = form.querySelector(".lc-muted");
+  const typeLabel = form.querySelector(".lc-feedback-type-label");
+  const messageLabel = form.querySelector(".lc-feedback-message-label");
+  const emailLabel = form.querySelector(".lc-feedback-email-label");
+  const typeSelect = form.querySelector('select[name="type"]');
+  const messageInput = form.querySelector('textarea[name="message"]');
+  const emailInput = form.querySelector('input[name="email"]');
+  const statusEl = form.querySelector(".lc-status");
+  const captchaNoticeEl = form.querySelector(".lc-captcha");
+  const cancelBtn = form.querySelector(".lc-feedback-cancel");
+  const submitBtn = form.querySelector(".lc-feedback-submit");
 
   title.textContent = I18n.t("feedbackTitle");
   subtitle.textContent = I18n.t("feedbackSubtitle");
@@ -288,17 +272,6 @@ export function openFeedbackForm({ scene } = {}) {
   };
 
   cancelBtn.addEventListener("click", () => closeFeedbackForm());
-
-  for (const el of [form, typeSelect, messageInput, emailInput]) {
-    el.addEventListener("pointerdown", stopPointerPropagation);
-    el.addEventListener("mousedown", stopPointerPropagation);
-    el.addEventListener("click", stopPointerPropagation);
-    el.addEventListener("touchstart", stopPointerPropagation, { passive: true });
-  }
-
-  overlay.addEventListener("mousedown", (event) => {
-    if (event.target === overlay) closeFeedbackForm();
-  });
 
   form.addEventListener("submit", async (event) => {
     event.preventDefault();
@@ -378,7 +351,5 @@ export function openFeedbackForm({ scene } = {}) {
     }
   });
 
-  document.getElementById("game-container")?.appendChild(overlay);
-  activeOverlay = overlay;
   messageInput.focus();
 }
