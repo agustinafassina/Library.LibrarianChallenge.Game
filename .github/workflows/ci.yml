@@ -1,0 +1,101 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  NODE_VERSION: "22"
+
+jobs:
+  ci:
+    name: Lint, test and build
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Detect package manager
+        id: pkg
+        run: |
+          set -euo pipefail
+          if [ -f pnpm-lock.yaml ]; then
+            echo "manager=pnpm" >> "$GITHUB_OUTPUT"
+          elif [ -f yarn.lock ]; then
+            echo "manager=yarn" >> "$GITHUB_OUTPUT"
+          else
+            echo "manager=npm" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: ${{ steps.pkg.outputs.manager }}
+
+      - name: Install dependencies
+        run: |
+          set -euo pipefail
+          case "${{ steps.pkg.outputs.manager }}" in
+            pnpm) corepack enable && pnpm install --frozen-lockfile ;;
+            yarn) corepack enable && yarn install --frozen-lockfile ;;
+            *)
+              if [ -f package-lock.json ]; then
+                npm ci
+              else
+                npm install
+              fi
+              ;;
+          esac
+
+      - name: Detect npm scripts
+        id: scripts
+        run: |
+          set -euo pipefail
+          node <<'EOF'
+          import { readFileSync } from "node:fs";
+          import { appendFileSync } from "node:fs";
+          const scripts = JSON.parse(readFileSync("package.json", "utf8")).scripts || {};
+          const names = ["lint", "test:unit", "test", "build"];
+          const lines = names.map((name) => `${name.replace(":", "_")}=${scripts[name] ? "true" : "false"}`);
+          appendFileSync(process.env.GITHUB_OUTPUT, `${lines.join("\n")}\n`);
+          EOF
+
+      - name: Lint
+        if: steps.scripts.outputs.lint == 'true'
+        run: npm run lint
+
+      - name: Unit tests
+        if: steps.scripts.outputs.test_unit == 'true'
+        run: npm run test:unit
+
+      - name: Build
+        if: steps.scripts.outputs.build == 'true'
+        env:
+          LC_API_BASE_URL: ""
+          LC_API_KEY: ""
+          LC_USE_API_BOOKS: "false"
+          LC_RECAPTCHA_SITE_KEY: ""
+        run: npm run build
+
+      - name: Cache Playwright browsers
+        if: steps.scripts.outputs.test == 'true'
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+
+      - name: End-to-end tests
+        if: steps.scripts.outputs.test == 'true'
+        run: npm test

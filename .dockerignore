@@ -4,7 +4,8 @@ node_modules
 tests
 tools
 *.md
-package.json
+.env
+.env.*
 package-lock.json
 eslint.config.js
 .prettierrc.json
@@ -12,3 +13,4 @@ eslint.config.js
 .gitignore
 Dockerfile
 .dockerignore
+
