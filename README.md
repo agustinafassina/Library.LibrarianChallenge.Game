@@ -52,13 +52,13 @@ port 80; put a reverse proxy or CDN with **HTTPS** in front for public internet
 (Cloudflare, Caddy, Traefik, etc.). Do not expose the container port raw to the
 public internet without TLS.
 
-### Deploy on Vercel
-Vercel runs `npm run build` before deploy. That script reads **environment
-variables** and writes `js/runtime-config.js` (the browser cannot read
+### Production config (GitHub Actions + Docker)
+`npm run build` / the Docker image build read **environment
+variables** and write `js/runtime-config.js` (the browser cannot read
 `process.env` directly).
 
-1. Import the repo in [Vercel](https://vercel.com).
-2. **Project Settings → Environment Variables** — add:
+On the VPS these come from GitHub Actions secrets/variables (not a committed
+`.env`). Set:
 
 | Variable | Example | Notes |
 |----------|---------|-------|
@@ -70,9 +70,7 @@ variables** and writes `js/runtime-config.js` (the browser cannot read
 | `LC_MAX_RESULTS_PER_TAG` | `20` | Optional. |
 | `LC_AUTO_TAG` | `true` | Optional. |
 
-3. Deploy. Vercel uses `vercel.json` for the build command and security headers.
-
-**Local build with env vars** (same as Vercel):
+**Local build with env vars:**
 
 ```bash
 # copy .env.example → .env, edit values, then:

@@ -67,7 +67,7 @@ const STRINGS = {
     feedbackCaptchaHint:
       'Add "{hostname}" to reCAPTCHA v3 at google.com/recaptcha/admin (not v2). Paste the matching secret key in Formspree.',
     feedbackCaptchaInvalidKey:
-      'reCAPTCHA key is invalid or v2. Create a new v3 key, add "{hostname}" as domain, and update LC_RECAPTCHA_SITE_KEY in Vercel.',
+      'reCAPTCHA key is invalid or v2. Create a new v3 key, add "{hostname}" as domain, and update LC_RECAPTCHA_SITE_KEY in GitHub Actions secrets.',
     feedbackCaptchaTimeout: "Security check timed out. Please try again.",
     feedbackCaptchaNoticeBefore: "This form is protected by reCAPTCHA. Google",
     feedbackCaptchaPrivacy: "Privacy Policy",
@@ -225,7 +225,7 @@ const STRINGS = {
     feedbackCaptchaHint:
       'Agreg\u00e1 "{hostname}" en reCAPTCHA v3 en google.com/recaptcha/admin (no v2). Peg\u00e1 la secret key correspondiente en Formspree.',
     feedbackCaptchaInvalidKey:
-      'Clave reCAPTCHA inv\u00e1lida o v2. Cre\u00e1 una clave v3 nueva, agreg\u00e1 "{hostname}" como dominio y actualiz\u00e1 LC_RECAPTCHA_SITE_KEY en Vercel.',
+      'Clave reCAPTCHA inv\u00e1lida o v2. Cre\u00e1 una clave v3 nueva, agreg\u00e1 "{hostname}" como dominio y actualiz\u00e1 LC_RECAPTCHA_SITE_KEY en los secretos de GitHub Actions.',
     feedbackCaptchaTimeout: "La verificaci\u00f3n tard\u00f3 demasiado. Prob\u00e1 de nuevo.",
     feedbackCaptchaNoticeBefore: "Este formulario est\u00e1 protegido por reCAPTCHA. Aplican la",
     feedbackCaptchaPrivacy: "Pol\u00edtica de Privacidad",

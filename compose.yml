@@ -1,0 +1,16 @@
+services:
+  game:
+    build:
+      context: .
+      args:
+        LC_API_BASE_URL: ${LC_API_BASE_URL:-}
+        LC_API_KEY: ${LC_API_KEY:-}
+        LC_USE_API_BOOKS: ${LC_USE_API_BOOKS:-false}
+        LC_FORMSPREE_URL: ${LC_FORMSPREE_URL:-}
+        LC_RECAPTCHA_SITE_KEY: ${LC_RECAPTCHA_SITE_KEY:-}
+        LC_MAX_RESULTS_PER_TAG: ${LC_MAX_RESULTS_PER_TAG:-20}
+        LC_AUTO_TAG: ${LC_AUTO_TAG:-true}
+    image: librarians-challenge:local
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:8080:80"

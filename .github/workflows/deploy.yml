@@ -1,0 +1,140 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to Hetzner
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    if: github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success'
+
+    env:
+      SERVER_HOST: ${{ secrets.SERVER_HOST }}
+      SERVER_USER: ${{ secrets.SERVER_USER }}
+      SERVER_PORT: ${{ secrets.SERVER_PORT }}
+      DEPLOY_PATH: ${{ vars.DEPLOY_PATH }}
+      HEALTHCHECK_URL: ${{ vars.HEALTHCHECK_URL }}
+      LC_API_BASE_URL: ${{ vars.LC_API_BASE_URL }}
+      LC_API_KEY: ${{ secrets.LC_API_KEY }}
+      LC_USE_API_BOOKS: ${{ vars.LC_USE_API_BOOKS }}
+      LC_FORMSPREE_URL: ${{ vars.LC_FORMSPREE_URL }}
+      LC_RECAPTCHA_SITE_KEY: ${{ secrets.LC_RECAPTCHA_SITE_KEY }}
+      LC_MAX_RESULTS_PER_TAG: ${{ vars.LC_MAX_RESULTS_PER_TAG }}
+      LC_AUTO_TAG: ${{ vars.LC_AUTO_TAG }}
+
+    steps:
+      - name: Check required secrets
+        run: |
+          set -euo pipefail
+          missing=0
+          for name in SERVER_HOST SERVER_USER SERVER_SSH_KEY; do
+            # Do not print secret values; only check whether they are empty.
+            case "$name" in
+              SERVER_HOST) value="${{ secrets.SERVER_HOST }}" ;;
+              SERVER_USER) value="${{ secrets.SERVER_USER }}" ;;
+              SERVER_SSH_KEY) value="${{ secrets.SERVER_SSH_KEY }}" ;;
+            esac
+            if [ -z "$value" ]; then
+              echo "Falta el secreto $name"
+              missing=1
+            fi
+          done
+          if [ "$missing" -ne 0 ]; then
+            echo "Creá los secretos en GitHub → Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+
+      - name: Start SSH agent
+        uses: webfactory/ssh-agent@v0.9.2
+        with:
+          ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
+
+      - name: Configure known_hosts
+        env:
+          SERVER_SSH_KNOWN_HOSTS: ${{ secrets.SERVER_SSH_KNOWN_HOSTS }}
+        run: |
+          set -euo pipefail
+          mkdir -p ~/.ssh
+          chmod 700 ~/.ssh
+          port="${SERVER_PORT:-22}"
+
+          if [ -n "${SERVER_SSH_KNOWN_HOSTS:-}" ]; then
+            printf '%s\n' "$SERVER_SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+          else
+            ssh-keyscan -p "$port" -T 10 -H "$SERVER_HOST" >> ~/.ssh/known_hosts
+          fi
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Deploy over SSH
+        run: |
+          set -euo pipefail
+          port="${SERVER_PORT:-22}"
+          deploy_path="${DEPLOY_PATH:-/opt/mi-proyecto}"
+          health_url="${HEALTHCHECK_URL:-}"
+
+          # Quote values on the runner, then export them on the server.
+          # Compose reads these env vars as build args. No .env file is written.
+          remote_env="$(
+            printf 'export DEPLOY_PATH=%q\n' "$deploy_path"
+            printf 'export HEALTHCHECK_URL=%q\n' "$health_url"
+            printf 'export LC_API_BASE_URL=%q\n' "${LC_API_BASE_URL:-}"
+            printf 'export LC_API_KEY=%q\n' "${LC_API_KEY:-}"
+            printf 'export LC_USE_API_BOOKS=%q\n' "${LC_USE_API_BOOKS:-false}"
+            printf 'export LC_FORMSPREE_URL=%q\n' "${LC_FORMSPREE_URL:-}"
+            printf 'export LC_RECAPTCHA_SITE_KEY=%q\n' "${LC_RECAPTCHA_SITE_KEY:-}"
+            printf 'export LC_MAX_RESULTS_PER_TAG=%q\n' "${LC_MAX_RESULTS_PER_TAG:-20}"
+            printf 'export LC_AUTO_TAG=%q\n' "${LC_AUTO_TAG:-true}"
+          )"
+
+          ssh -p "$port" \
+            -o IdentitiesOnly=yes \
+            -o StrictHostKeyChecking=yes \
+            -o ServerAliveInterval=15 \
+            -o ServerAliveCountMax=4 \
+            "${SERVER_USER}@${SERVER_HOST}" \
+            "bash -s" <<REMOTE
+          set -euo pipefail
+          ${remote_env}
+
+          cd "\$DEPLOY_PATH"
+
+          echo "==> Actualizando código (origin/main)"
+          git fetch origin
+          git reset --hard origin/main
+
+          echo "==> Reconstruyendo y levantando contenedores"
+          docker compose pull
+          docker compose build
+          docker compose up -d --remove-orphans
+          docker image prune -f
+
+          echo "==> Estado de los servicios"
+          docker compose ps
+
+          echo "==> Health check interno (contenedor publicado en loopback)"
+          curl --fail --silent --show-error --max-time 15 http://127.0.0.1:8080/health
+
+          if [ -n "\${HEALTHCHECK_URL:-}" ]; then
+            echo "==> Health check público"
+            curl --fail --silent --show-error --max-time 20 "\$HEALTHCHECK_URL"
+          else
+            echo "HEALTHCHECK_URL no está configurada; se omitió el check público."
+            echo "Creá la variable de repositorio HEALTHCHECK_URL, por ejemplo:"
+            echo "  https://REEMPLAZAR_ESTO/health"
+          fi
+
+          echo "==> Despliegue listo"
+          REMOTE
