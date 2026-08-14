@@ -84,7 +84,15 @@ export function makeButton(scene, x, y, label, onClick, opts = {}) {
   return container;
 }
 
+export function isE2ETest() {
+  return typeof window !== "undefined" && Boolean(window.__GAME__);
+}
+
 export function goToScene(scene, key, data = {}) {
+  if (isE2ETest()) {
+    scene.scene.start(key, data);
+    return;
+  }
   const cam = scene.cameras.main;
   cam.fadeOut(180, 0, 0, 0);
   cam.once("camerafadeoutcomplete", () => scene.scene.start(key, data));

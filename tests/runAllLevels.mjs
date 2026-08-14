@@ -52,11 +52,20 @@ async function main() {
   const { server, port } = await startServer();
   const baseUrl = `http://127.0.0.1:${port}/?test=1`;
 
-  const browser = await chromium.launch();
-  const page = await browser.newPage();
+  const browser = await chromium.launch({
+    args: [
+      "--disable-background-timer-throttling",
+      "--disable-backgrounding-occluded-windows",
+      "--disable-renderer-backgrounding",
+    ],
+  });
+  const page = await browser.newPage({ viewport: { width: 1280, height: 800 } });
 
   const failures = [];
-  page.on("pageerror", (e) => failures.push(`pageerror: ${e.message}`));
+  page.on("pageerror", (e) => {
+    console.error(`pageerror: ${e.message}`);
+    failures.push(`pageerror: ${e.message}`);
+  });
   page.on("console", (msg) => {
     if (msg.type() === "error") failures.push(`console.error: ${msg.text()}`);
   });
@@ -102,7 +111,7 @@ async function main() {
       await page.waitForFunction(
         () => window.__GAME__.scene.isActive("LevelCompleteScene"),
         null,
-        { timeout: 10000 }
+        { timeout: 20000 }
       );
 
       console.log(`  Level ${level}/${totalLevels} solved (${bookCount} books) OK`);

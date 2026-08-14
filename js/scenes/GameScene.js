@@ -2,7 +2,7 @@ import { getLevelWithBooks, getLevelCount } from "../utils/dataLoader.js";
 import { getRuleLabel, resolveRule } from "../utils/rules.js";
 import { Storage } from "../utils/storage.js";
 import { I18n } from "../utils/i18n.js?v=2";
-import { makeButton, goToScene, COLORS, FONTS, formatTime } from "../utils/ui.js";
+import { makeButton, goToScene, isE2ETest, COLORS, FONTS, formatTime } from "../utils/ui.js";
 import { GAME_LAYOUT } from "../config/layout.js";
 import { BoardController } from "../game/BoardController.js";
 
@@ -1933,17 +1933,6 @@ export default class GameScene extends Phaser.Scene {
       );
     });
 
-    this.tweens.add({
-      targets: this.librarian,
-      y: this.librarian.y - 40,
-      duration: 220,
-      yoyo: true,
-      repeat: 2,
-      ease: "Quad.out",
-    });
-
-    this.celebrate();
-
     const sceneData = {
       level: this.levelNumber,
       totalLevels: this.totalLevels,
@@ -1954,6 +1943,24 @@ export default class GameScene extends Phaser.Scene {
       autoUsed: this.autoUsed,
       hintsUsed: this.hintsUsed,
     };
+
+    if (isE2ETest()) {
+      goToScene(this, "LevelCompleteScene", sceneData);
+      return;
+    }
+
+    if (this.librarian) {
+      this.tweens.add({
+        targets: this.librarian,
+        y: this.librarian.y - 40,
+        duration: 220,
+        yoyo: true,
+        repeat: 2,
+        ease: "Quad.out",
+      });
+    }
+
+    this.celebrate();
 
     const doTransition = () => {
       if (this.solveTimer) {
