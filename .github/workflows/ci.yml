@@ -44,6 +44,10 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           cache: ${{ steps.pkg.outputs.manager }}
 
+      - name: Pin npm
+        if: steps.pkg.outputs.manager == 'npm'
+        run: npm install -g npm@11.6.2
+
       - name: Install dependencies
         run: |
           set -euo pipefail
@@ -52,7 +56,7 @@ jobs:
             yarn) corepack enable && yarn install --frozen-lockfile ;;
             *)
               if [ -f package-lock.json ]; then
-                npm ci
+                npm ci || npm install
               else
                 npm install
               fi
