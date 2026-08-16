@@ -47,30 +47,17 @@ docker build -t librarians-challenge .
 docker run --rm -p 8080:80 librarians-challenge
 ```
 
-Then open <http://localhost:8080>. The image serves static files over HTTP on
-port 80; put a reverse proxy or CDN with **HTTPS** in front for public internet
-(Cloudflare, Caddy, Traefik, etc.). Do not expose the container port raw to the
-public internet without TLS.
+Then open <http://localhost:8080>. For production on the VPS, the image is
+built and reverse-proxied from **Hetzner.Server.Infrastructure** (Caddy + Compose),
+not from this repo.
 
-### Production config (GitHub Actions + Docker)
+### Production config
 `npm run build` / the Docker image build read **environment
 variables** and write `js/runtime-config.js` (the browser cannot read
 `process.env` directly).
 
-On the VPS these come from GitHub Actions secrets/variables (not a committed
-`.env`). Set:
-
-| Variable | Example | Notes |
-|----------|---------|-------|
-| `LC_API_BASE_URL` | `https://api.tudominio.com` | HTTPS API URL. Leave empty if static-only. |
-| `LC_API_KEY` | `your-game-api-key` | Client-visible; protect API with CORS + rate limits. |
-| `LC_USE_API_BOOKS` | `false` | `true` only if using the live API. |
-| `LC_RECAPTCHA_SITE_KEY` | `6Lc...` | reCAPTCHA v3 **site** key for feedback spam protection. |
-| `LC_FORMSPREE_URL` | `https://formspree.io/f/...` | Optional; defaults to the project form. |
-| `LC_MAX_RESULTS_PER_TAG` | `20` | Optional. |
-| `LC_AUTO_TAG` | `true` | Optional. |
-
-**Local build with env vars:**
+On the VPS these come from the infra repo / GitHub Actions secrets. See
+`Hetzner.Server.Infrastructure`. For local builds:
 
 ```bash
 # copy .env.example → .env, edit values, then:
