@@ -25,8 +25,10 @@ FROM nginx:1.27-alpine
 
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY index.html /usr/share/nginx/html/
+COPY update.html /usr/share/nginx/html/
 COPY manifest.json /usr/share/nginx/html/
 COPY sw.js /usr/share/nginx/html/
+COPY sw-reset.js /usr/share/nginx/html/
 COPY --from=config /app/sw-version.js /usr/share/nginx/html/sw-version.js
 COPY vendor/ /usr/share/nginx/html/vendor/
 COPY css/ /usr/share/nginx/html/css/
