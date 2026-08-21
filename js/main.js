@@ -1,3 +1,4 @@
+import { Sfx } from "./utils/sfx.js";
 import BootScene from "./scenes/BootScene.js";
 import MenuScene from "./scenes/MenuScene.js?v=3";
 import LevelSelectScene from "./scenes/LevelSelectScene.js";
@@ -7,8 +8,14 @@ import GameScene from "./scenes/GameScene.js";
 import LevelCompleteScene from "./scenes/LevelCompleteScene.js";
 import ErrorScene from "./scenes/ErrorScene.js";
 
+function viewportCssHeight() {
+  const vv = window.visualViewport;
+  if (vv?.height) return Math.round(vv.height);
+  return window.innerHeight;
+}
+
 function syncViewportHeight() {
-  document.documentElement.style.setProperty("--app-height", `${window.innerHeight}px`);
+  document.documentElement.style.setProperty("--app-height", `${viewportCssHeight()}px`);
 }
 
 syncViewportHeight();
@@ -18,12 +25,18 @@ const config = {
   parent: "game-container",
   backgroundColor: "#1e1410",
   antialias: true,
-  resolution: window.devicePixelRatio || 1,
+  roundPixels: true,
+  resolution: Math.min(window.devicePixelRatio || 1, 2),
+  render: {
+    antialias: true,
+    roundPixels: true,
+  },
   scale: {
-    mode: Phaser.Scale.FIT,
+    mode: Phaser.Scale.RESIZE,
     autoCenter: Phaser.Scale.CENTER_BOTH,
-    width: 960,
-    height: 640,
+    autoRound: true,
+    width: window.innerWidth,
+    height: viewportCssHeight(),
   },
   dom: {
     createContainer: true,
@@ -44,7 +57,17 @@ function refreshGameScale() {
 window.addEventListener("resize", refreshGameScale);
 window.addEventListener("orientationchange", refreshGameScale);
 window.visualViewport?.addEventListener("resize", refreshGameScale);
+window.visualViewport?.addEventListener("scroll", refreshGameScale);
 
-if (new URLSearchParams(window.location.search).has("test")) {
+Sfx.init();
+
+const isE2E = new URLSearchParams(window.location.search).has("test");
+if (isE2E) {
   window.__GAME__ = game;
+} else if ("serviceWorker" in navigator && window.location.protocol.startsWith("http")) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js").catch((err) => {
+      console.warn("[pwa] service worker failed", err);
+    });
+  });
 }

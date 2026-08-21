@@ -1,18 +1,9 @@
 import { Storage } from "../utils/storage.js";
 import { loadLevels } from "../utils/dataLoader.js";
 import { I18n } from "../utils/i18n.js?v=2";
-import { makeButton, goToScene, COLORS, FONTS, formatTime } from "../utils/ui.js";
-import { LEVEL_SELECT_LAYOUT } from "../config/layout.js";
-
-const COLS = LEVEL_SELECT_LAYOUT.cols;
-const ROWS_PAGE = LEVEL_SELECT_LAYOUT.rowsPerPage;
-const PER_PAGE = LEVEL_SELECT_LAYOUT.perPage;
-const CELL_W = LEVEL_SELECT_LAYOUT.cellW;
-const CELL_H = LEVEL_SELECT_LAYOUT.cellH;
-const CARD_W = LEVEL_SELECT_LAYOUT.cardW;
-const CARD_H = LEVEL_SELECT_LAYOUT.cardH;
-const GRID_TOP = LEVEL_SELECT_LAYOUT.gridTop;
-const GRID_BOTTOM = LEVEL_SELECT_LAYOUT.gridBottom;
+import { makeButton, goToScene, COLORS, FONTS, formatTime, bindResizeRestart } from "../utils/ui.js";
+import { getUiLayout } from "../config/layout.js";
+import { fillLibraryRoom } from "../utils/libraryArt.js";
 
 const RULE_BADGE = {
   title_az:         { en: "Title A–Z",       es: "Título A–Z" },
@@ -64,8 +55,8 @@ export default class LevelSelectScene extends Phaser.Scene {
     super("LevelSelectScene");
   }
 
-  init() {
-    this.currentPage = 0;
+  init(data) {
+    this.currentPage = data?.page ?? 0;
     this.pageCount   = 1;
     this.cardGroups  = []; // [{page, objects:[]}]
     this.lockedFeedback = null;
@@ -75,23 +66,22 @@ export default class LevelSelectScene extends Phaser.Scene {
     const { width, height } = this.scale;
     this.cameras.main.fadeIn(200, 0, 0, 0);
 
-    // Background
-    const bg = this.add.graphics();
-    bg.fillStyle(COLORS.woodDark, 1);
-    bg.fillRect(0, 0, width, height);
+    fillLibraryRoom(this);
 
     // Header
     this.add
       .text(width / 2, 52, I18n.t("levelSelect"), {
         fontFamily: FONTS.title,
-        fontSize: "36px",
+        fontSize: width < 720 ? "28px" : "36px",
         color: "#f3e3c3",
         fontStyle: "bold",
+        wordWrap: { width: width - 180 },
+        align: "center",
       })
       .setOrigin(0.5);
 
-    makeButton(this, 80, 40, I18n.t("back"), () => goToScene(this, "MenuScene"), {
-      width: 120,
+    makeButton(this, Math.min(80, width * 0.18), 40, I18n.t("back"), () => goToScene(this, "MenuScene"), {
+      width: width < 420 ? 96 : 120,
       height: 40,
       fontSize: 16,
       fill: COLORS.woodLight,
@@ -122,7 +112,19 @@ export default class LevelSelectScene extends Phaser.Scene {
     }
     loading.destroy();
 
+    const ui = getUiLayout(width, height).levelSelect;
+    const COLS = ui.cols;
+    const ROWS_PAGE = ui.rowsPerPage;
+    const PER_PAGE = ui.perPage;
+    const CELL_W = ui.cellW;
+    const CELL_H = ui.cellH;
+    const CARD_W = ui.cardW;
+    const CARD_H = ui.cardH;
+    const GRID_TOP = ui.gridTop;
+    const GRID_BOTTOM = ui.gridBottom;
+
     this.pageCount = Math.ceil(levels.length / PER_PAGE);
+    this.currentPage = Phaser.Math.Clamp(this.currentPage, 0, Math.max(0, this.pageCount - 1));
     const maxUnlocked = Storage.getMaxLevelUnlocked();
 
     // Grid layout
@@ -306,7 +308,8 @@ export default class LevelSelectScene extends Phaser.Scene {
     });
 
     this.buildPager(width, height);
-    this.showPage(0);
+    this.showPage(this.currentPage);
+    bindResizeRestart(this, () => ({ page: this.currentPage }));
   }
 
   showLockedFeedback(requiredLevel) {

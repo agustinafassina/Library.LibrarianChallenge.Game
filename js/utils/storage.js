@@ -3,6 +3,7 @@ const KEY_MAX_LEVEL = PREFIX + "maxLevelUnlocked";
 const KEY_BEST = PREFIX + "bestScores";
 const KEY_PROFILE = PREFIX + "guestProfile";
 const KEY_STATS = PREFIX + "globalStats";
+const KEY_COACH = PREFIX + "seenCoach";
 
 function readJSON(key, fallback) {
   try {
@@ -124,5 +125,14 @@ export const Storage = {
     localStorage.removeItem(KEY_BEST);
     localStorage.removeItem(KEY_PROFILE);
     localStorage.removeItem(KEY_STATS);
+    localStorage.removeItem(KEY_COACH);
+  },
+
+  hasSeenCoach() {
+    return readJSON(KEY_COACH, false) === true;
+  },
+
+  markCoachSeen() {
+    writeJSON(KEY_COACH, true);
   },
 };

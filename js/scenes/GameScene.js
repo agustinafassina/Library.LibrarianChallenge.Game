@@ -2,35 +2,32 @@ import { getLevelWithBooks, getLevelCount } from "../utils/dataLoader.js";
 import { getRuleLabel, resolveRule } from "../utils/rules.js";
 import { Storage } from "../utils/storage.js";
 import { I18n } from "../utils/i18n.js?v=2";
-import { makeButton, goToScene, isE2ETest, COLORS, FONTS, formatTime } from "../utils/ui.js";
-import { GAME_LAYOUT } from "../config/layout.js";
+import { makeButton, goToScene, isE2ETest, COLORS, FONTS, formatTime, panelBox, isCoarsePointer } from "../utils/ui.js";
+import { getUiLayout } from "../config/layout.js";
 import { BoardController } from "../game/BoardController.js";
+import { Sfx } from "../utils/sfx.js";
+import { fillLibraryRoom, drawShelfPlank, ensureBookSpineTexture, bookFaceSize } from "../utils/libraryArt.js";
 
 const HINT_SCORE_PENALTY = 120;
-const BOOK_W_MAX = GAME_LAYOUT.bookWMax;
-const BOOK_H_MAX = GAME_LAYOUT.bookHMax;
-const GAP_X = GAME_LAYOUT.gapX;
-const GAP_Y = GAME_LAYOUT.gapY;
-const BOARD_H = GAME_LAYOUT.boardH;
-const MAX_PER_ROW = GAME_LAYOUT.maxPerRow;
-const MAX_ROWS_PER_PAGE = GAME_LAYOUT.maxRowsPerPage;
-let AREA_TOP = GAME_LAYOUT.areaTopBase;
-const AREA_BOTTOM = GAME_LAYOUT.areaBottom;
-const LEFT_RESERVED = GAME_LAYOUT.leftReserved;
-const RIGHT_MARGIN = GAME_LAYOUT.rightMargin;
-const RIGHT_GUTTER = GAME_LAYOUT.rightGutter;
 
 export default class GameScene extends Phaser.Scene {
   constructor() {
     super("GameScene");
   }
 
+  applyLayout() {
+    this.ui = getUiLayout(this.scale.width, this.scale.height);
+    this.areaTop = this.ui.areaTopBase;
+    this.bookW = this.ui.bookWMax;
+    this.bookH = this.ui.bookHMax;
+  }
+
   init(data) {
     this.levelNumber = data.level ?? 1;
+    this.resume = data.resume ?? null;
     this.order = [];
     this.slots = [];
-    this.bookW = BOOK_W_MAX;
-    this.bookH = BOOK_H_MAX;
+    this.applyLayout();
     this.moves = 0;
     this.startTime = 0;
     this.solved = false;
@@ -58,7 +55,8 @@ export default class GameScene extends Phaser.Scene {
 
   async create() {
     const { width, height } = this.scale;
-    this.cameras.main.fadeIn(200, 0, 0, 0);
+    this.applyLayout();
+    if (!this.resume) this.cameras.main.fadeIn(200, 0, 0, 0);
     this.drawBackground();
     this.buildTopBar();
 
@@ -104,7 +102,10 @@ export default class GameScene extends Phaser.Scene {
     this.buildControls();
     this.buildPager();
     this.buildFlipEdgeHints();
-    this.showPage(0);
+    this.showPage(this.resume?.page ?? 0);
+    this.applyResumeState();
+    this.bindResumeResize();
+    this.maybeStartCoach();
 
     this.handlers.onKeyR = () => this.resetLevel();
     this.handlers.onKeyP = () => this.togglePause();
@@ -117,22 +118,66 @@ export default class GameScene extends Phaser.Scene {
     this.input.keyboard.on("keydown-ESC", this.handlers.onKeyEsc);
     this.input.keyboard.on("keydown-Z", this.handlers.onKeyZ);
 
-    this.startTime = this.time.now;
+    this.startTime = this.resume
+      ? this.time.now - (this.resume.elapsed ?? 0)
+      : this.time.now;
     this.timerStarted = true;
     this.updateChallengeDisplay();
 
     this.events.once("shutdown", () => this.cleanupSceneListeners());
   }
 
-  drawBackground() {
-    const { width, height } = this.scale;
-    const g = this.add.graphics();
-    g.fillStyle(COLORS.woodDark, 1);
-    g.fillRect(0, 0, width, height);
-    g.fillStyle(COLORS.wood, 0.25);
-    for (let yy = 90; yy < height - 60; yy += 70) {
-      g.fillRect(20, yy, width - 40, 40);
+  captureResume() {
+    if (!this.levelDef || !this.order?.length) return null;
+    return {
+      bookIds: this.order.map((c) => c.getData("book")?.id),
+      moves: this.moves,
+      elapsed: Math.max(0, this.time.now - this.startTime),
+      page: this.currentPage,
+      hintsUsed: this.hintsUsed,
+      autoUsed: this.autoUsed,
+      paused: this.paused,
+    };
+  }
+
+  applyResumeState() {
+    const r = this.resume;
+    if (!r) return;
+    this.moves = r.moves ?? 0;
+    this.hintsUsed = r.hintsUsed ?? 0;
+    this.autoUsed = !!r.autoUsed;
+    this.movesText?.setText(I18n.t("movesLabel", { moves: this.moves }));
+    this.updateTopBarLayout();
+    this.refreshUndoButton();
+    if (r.paused) {
+      this.time.delayedCall(0, () => this.pauseGame());
     }
+  }
+
+  bindResumeResize() {
+    let lastW = Math.round(this.scale.width);
+    let lastH = Math.round(this.scale.height);
+    this.handlers.onResize = (gameSize) => {
+      const w = Math.round(gameSize.width);
+      const h = Math.round(gameSize.height);
+      if (Math.abs(w - lastW) < 2 && Math.abs(h - lastH) < 2) return;
+      window.clearTimeout(this.handlers.resizeTimer);
+      this.handlers.resizeTimer = window.setTimeout(() => {
+        if (!this.scene.isActive() || this.solved || this.failed || !this.order?.length) return;
+        lastW = w;
+        lastH = h;
+        const resume = this.captureResume();
+        this.scene.restart({
+          level: this.levelNumber,
+          resume,
+        });
+      }, 160);
+    };
+    this.scale.on("resize", this.handlers.onResize);
+  }
+
+  drawBackground() {
+    fillLibraryRoom(this);
   }
 
   initChallenge() {
@@ -200,23 +245,26 @@ export default class GameScene extends Phaser.Scene {
 
   buildTopBar() {
     const { width } = this.scale;
-    const compact = width < 920;
-    const rightPad = 12;
-    const menuW = compact ? 98 : 116;
+    const ui = this.ui;
+    const compact = ui.compact;
+    const stacked = ui.stackedHud;
+    const rightPad = 12 + ui.safe.right;
+    const menuW = stacked ? 72 : compact ? 98 : 116;
     const menuH = 40;
-    const menuFont = compact ? 14 : 16;
-    const pauseW = compact ? 40 : 44;
+    const menuFont = stacked ? 13 : compact ? 14 : 16;
+    const pauseW = compact || stacked ? 40 : 44;
     const pauseGap = 8;
+    const titleY = Math.round(ui.safe.top + (stacked ? 22 : 28));
 
     const bar = this.add.graphics();
     bar.fillStyle(COLORS.ink, 0.92);
-    bar.fillRect(0, 0, width, 56);
+    bar.fillRect(0, 0, width, ui.topBarH);
     bar.setDepth(50);
 
     this.titleText = this.add
-      .text(16, 28, I18n.t("appTitle"), {
+      .text(16, titleY, I18n.t("appTitle"), {
         fontFamily: FONTS.title,
-        fontSize: compact ? "18px" : "22px",
+        fontSize: stacked ? "16px" : compact ? "18px" : "22px",
         color: "#f3e3c3",
         fontStyle: "bold",
       })
@@ -224,9 +272,9 @@ export default class GameScene extends Phaser.Scene {
       .setDepth(51);
 
     this.levelText = this.add
-      .text(0, 28, "", {
+      .text(0, titleY, "", {
         fontFamily: FONTS.body,
-        fontSize: compact ? "15px" : "18px",
+        fontSize: stacked ? "13px" : compact ? "15px" : "18px",
         color: "#d9a441",
         fontStyle: "bold",
       })
@@ -234,18 +282,18 @@ export default class GameScene extends Phaser.Scene {
       .setDepth(51);
 
     this.movesText = this.add
-      .text(0, 28, I18n.t("movesLabel", { moves: 0 }), {
+      .text(0, titleY, I18n.t("movesLabel", { moves: 0 }), {
         fontFamily: FONTS.body,
-        fontSize: compact ? "15px" : "18px",
+        fontSize: stacked ? "13px" : compact ? "15px" : "18px",
         color: "#f3e3c3",
       })
       .setOrigin(0.5)
       .setDepth(51);
 
     this.timeText = this.add
-      .text(0, 28, I18n.t("timeLabel", { time: "0:00" }), {
+      .text(0, titleY, I18n.t("timeLabel", { time: "0:00" }), {
         fontFamily: FONTS.body,
-        fontSize: compact ? "15px" : "18px",
+        fontSize: stacked ? "13px" : compact ? "15px" : "18px",
         color: "#f3e3c3",
         fontStyle: "bold",
       })
@@ -256,32 +304,36 @@ export default class GameScene extends Phaser.Scene {
     const pbx = menuX - menuW / 2 - pauseGap - pauseW / 2;
     this.headerMenuX = menuX;
     this.headerPauseW = pauseW;
+    this.headerMenuW = menuW;
 
-    // Pause button — compact icon, left of Menu
     this.pauseBtn = makeButton(
       this,
       pbx,
-      28,
+      titleY,
       "\u2016",
       () => this.togglePause(),
       {
         width: pauseW,
         height: menuH,
-        fontSize: compact ? 18 : 20,
+        fontSize: stacked ? 16 : compact ? 18 : 20,
         fill: COLORS.woodLight,
         textColor: "#f3e3c3",
       }
     ).setDepth(51);
-    this.pauseBtn.on("pointerover", () =>
-      this.showActionTooltip(pbx, 62, I18n.t("pause"))
-    );
-    this.pauseBtn.on("pointerout", () => this.hideActionTooltip());
+    this.pauseBtn.on("pointerover", () => {
+      if (!isCoarsePointer()) this.showActionTooltip(pbx, titleY + 34, I18n.t("pause"));
+    });
+    this.pauseBtn.on("pointerdown", () => {
+      if (isCoarsePointer()) this.showActionTooltip(pbx, titleY + 34, I18n.t("pause"), 1400);
+    });
+    this.pauseBtn.on("pointerout", () => {
+      if (!isCoarsePointer()) this.hideActionTooltip();
+    });
 
-    // Menu button — opens the action menu, pinned to the right
     this.menuBtn = makeButton(
       this,
       menuX,
-      28,
+      titleY,
       I18n.t("menu"),
       () => this.toggleActionMenu(),
       {
@@ -376,17 +428,81 @@ export default class GameScene extends Phaser.Scene {
     }
   }
 
+  fitTextToLines(textObj, fullText, maxWidth, maxLines, baseSize, minSize = 11) {
+    if (!textObj) return;
+    const normalized = String(fullText ?? "").replace(/\s+/g, " ").trim();
+    if (!normalized) {
+      textObj.setText("");
+      return;
+    }
+
+    const ellipsis = "\u2026";
+    textObj.setAlign("center");
+    textObj.setWordWrapWidth(maxWidth, true);
+
+    const wrapped = (text, size) => {
+      textObj.setFontSize(size);
+      textObj.setText(text);
+      return textObj.getWrappedText();
+    };
+
+    let size = baseSize;
+    let lines = wrapped(normalized, size);
+    while (size > minSize && lines.length > maxLines) {
+      size -= 1;
+      lines = wrapped(normalized, size);
+    }
+    if (lines.length <= maxLines) return;
+
+    let lo = 1;
+    let hi = normalized.length;
+    let best = `${normalized.slice(0, 1)}${ellipsis}`;
+    while (lo <= hi) {
+      const mid = (lo + hi) >> 1;
+      const candidate = `${normalized.slice(0, mid).trimEnd()}${ellipsis}`;
+      const candidateLines = wrapped(candidate, size);
+      if (candidateLines.length <= maxLines) {
+        best = candidate;
+        lo = mid + 1;
+      } else {
+        hi = mid - 1;
+      }
+    }
+    wrapped(best, size);
+  }
+
   updateTopBarLayout() {
     if (!this.titleText || !this.levelText || !this.movesText || !this.timeText) return;
 
     const { width } = this.scale;
-    const compact = width < 920;
-    const titleBase = compact ? 18 : 22;
-    const infoBase = compact ? 15 : 18;
+    const ui = this.ui;
+    const compact = ui.compact;
+    const stacked = ui.stackedHud;
+    const titleBase = stacked ? 16 : compact ? 18 : 22;
+    const infoBase = stacked ? 13 : compact ? 15 : 18;
+    const leftPad = 16 + ui.safe.left;
+    const titleY = Math.round(ui.safe.top + (stacked ? 22 : 28));
 
-    const leftPad = 16;
+    if (stacked) {
+      const titleMaxW = Math.max(110, width - 24 - (this.headerMenuW ?? 72) - (this.headerPauseW ?? 40) - 20);
+      this.titleText.setPosition(leftPad, titleY);
+      this.fitTextToWidth(this.titleText, titleMaxW, titleBase, 11);
+
+      const row2Y = Math.round(ui.safe.top + 58);
+      const statsPad = 16;
+      const statsW = width - statsPad * 2;
+      const step = statsW / 3;
+      this.fitTextToWidth(this.levelText, step - 8, infoBase, 10);
+      this.fitTextToWidth(this.movesText, step - 8, infoBase, 10);
+      this.fitTextToWidth(this.timeText, step - 8, infoBase, 10);
+      this.levelText.setPosition(Math.round(statsPad + step * 0.5), row2Y);
+      this.movesText.setPosition(Math.round(statsPad + step * 1.5), row2Y);
+      this.timeText.setPosition(Math.round(statsPad + step * 2.5), row2Y);
+      return;
+    }
+
     const titleMaxW = compact ? 220 : 300;
-    this.titleText.setPosition(leftPad, 28);
+    this.titleText.setPosition(leftPad, titleY);
     this.fitTextToWidth(this.titleText, titleMaxW, titleBase, compact ? 12 : 14);
 
     const titleRight = leftPad + this.titleText.width;
@@ -410,9 +526,9 @@ export default class GameScene extends Phaser.Scene {
     this.fitTextToWidth(this.movesText, cellW, infoBase, 11);
     this.fitTextToWidth(this.timeText, cellW, infoBase, 11);
 
-    this.levelText.setPosition(x1, 28);
-    this.movesText.setPosition(x2, 28);
-    this.timeText.setPosition(x3, 28);
+    this.levelText.setPosition(x1, titleY);
+    this.movesText.setPosition(x2, titleY);
+    this.timeText.setPosition(x3, titleY);
   }
 
   computeLayout(zones) {
@@ -426,15 +542,15 @@ export default class GameScene extends Phaser.Scene {
   _layoutSingleZone(zone) {
     const { width } = this.scale;
     const count = zone.books.length;
-    const rows = Math.max(1, Math.ceil(count / MAX_PER_ROW));
-    this.pageCount = Math.max(1, Math.ceil(rows / MAX_ROWS_PER_PAGE));
-    const rowsOnScreen = Math.min(rows, MAX_ROWS_PER_PAGE);
+    const rows = Math.max(1, Math.ceil(count / this.ui.maxPerRow));
+    this.pageCount = Math.max(1, Math.ceil(rows / this.ui.maxRowsPerPage));
+    const rowsOnScreen = Math.min(rows, this.ui.maxRowsPerPage);
 
-    const regionLeft = LEFT_RESERVED;
-    const regionRight = width - (this.pageCount > 1 ? RIGHT_GUTTER : RIGHT_MARGIN);
+    const regionLeft = this.ui.leftReserved;
+    const regionRight = width - (this.pageCount > 1 ? this.ui.rightGutter : this.ui.rightMargin);
     const regionCenter = (regionLeft + regionRight) / 2;
     const availW = regionRight - regionLeft;
-    const availH = AREA_BOTTOM - AREA_TOP;
+    const availH = this.ui.areaBottom - this.areaTop;
 
     const rowCounts = [];
     let remaining = count;
@@ -446,31 +562,36 @@ export default class GameScene extends Phaser.Scene {
     const widestRow = Math.max(...rowCounts);
 
     this.bookW = Phaser.Math.Clamp(
-      (availW - (widestRow - 1) * GAP_X) / widestRow,
-      60, BOOK_W_MAX
+      (availW - (widestRow - 1) * this.ui.gapX) / widestRow,
+      60, this.ui.bookWMax
     );
-    const rawBookH = (availH - rowsOnScreen * BOARD_H - (rowsOnScreen - 1) * GAP_Y) / rowsOnScreen;
+    const rawBookH = (availH - rowsOnScreen * this.ui.boardH - (rowsOnScreen - 1) * this.ui.gapY) / rowsOnScreen;
     // Cap height so a single-row level doesn't fill the whole vertical space.
     const maxBookHForRows = rowsOnScreen === 1 ? Math.min(rawBookH, this.bookW * 1.6)
       : rowsOnScreen === 2 ? Math.min(rawBookH, this.bookW * 1.8)
       : rawBookH;
-    this.bookH = Phaser.Math.Clamp(maxBookHForRows, 78, BOOK_H_MAX);
+    this.bookH = Phaser.Math.Clamp(maxBookHForRows, this.ui.portrait ? 64 : 78, this.ui.bookHMax);
 
-    const rowStride = this.bookH + BOARD_H + GAP_Y;
-    const totalH = rowsOnScreen * this.bookH + rowsOnScreen * BOARD_H + (rowsOnScreen - 1) * GAP_Y;
-    const startY = AREA_TOP + (availH - totalH) / 2;
+    const rowStride = this.bookH + this.ui.boardH + this.ui.gapY;
+    const totalH = rowsOnScreen * this.bookH + rowsOnScreen * this.ui.boardH + (rowsOnScreen - 1) * this.ui.gapY;
+    const startY = this.areaTop + (availH - totalH) / 2;
 
     this.slots = [];
     this.rowRects = [];
     for (let r = 0; r < rows; r++) {
-      const page = Math.floor(r / MAX_ROWS_PER_PAGE);
-      const screenRow = r % MAX_ROWS_PER_PAGE;
+      const page = Math.floor(r / this.ui.maxRowsPerPage);
+      const screenRow = r % this.ui.maxRowsPerPage;
       const cnt = rowCounts[r];
-      const rowW = cnt * this.bookW + (cnt - 1) * GAP_X;
+      const rowW = cnt * this.bookW + (cnt - 1) * this.ui.gapX;
       const startX = regionCenter - rowW / 2 + this.bookW / 2;
       const centerY = startY + this.bookH / 2 + screenRow * rowStride;
       for (let c = 0; c < cnt; c++) {
-        this.slots.push({ x: startX + c * (this.bookW + GAP_X), y: centerY, page, zoneIdx: 0 });
+        this.slots.push({
+          x: Math.round(startX + c * (this.bookW + this.ui.gapX)),
+          y: Math.round(centerY),
+          page,
+          zoneIdx: 0,
+        });
       }
       this.rowRects.push({
         x: startX - this.bookW / 2 - 16,
@@ -483,7 +604,7 @@ export default class GameScene extends Phaser.Scene {
     this.zoneRanges = [{ zi: 0, rule: zone.rule, label: zone.label, label_es: zone.label_es,
       start: 0, end: count - 1 }];
     this.zoneTopYMap = null;
-    this.celebrateY = (AREA_TOP + AREA_BOTTOM) / 2;
+    this.celebrateY = (this.areaTop + this.ui.areaBottom) / 2;
   }
 
   _layoutMultiZone(zones) {
@@ -500,7 +621,7 @@ export default class GameScene extends Phaser.Scene {
     // Pre-compute per-zone row metadata
     const zoneMetas = zones.map((zone) => {
       const count = zone.books.length;
-      const rows = Math.max(1, Math.ceil(count / MAX_PER_ROW));
+      const rows = Math.max(1, Math.ceil(count / this.ui.maxPerRow));
       const rowCounts = [];
       let remaining = count;
       for (let r = 0; r < rows; r++) {
@@ -515,27 +636,27 @@ export default class GameScene extends Phaser.Scene {
     const maxWidestRow = Math.max(...zoneMetas.map((z) => z.widestRow));
     const numZones = zones.length;
 
-    const regionLeft = LEFT_RESERVED;
-    const regionRight = width - RIGHT_MARGIN;
+    const regionLeft = this.ui.leftReserved;
+    const regionRight = width - this.ui.rightMargin;
     const regionCenter = (regionLeft + regionRight) / 2;
     const availW = regionRight - regionLeft;
 
     // Height reserved for zone labels and separators
     const labelsH = numZones * ZONE_LABEL_H + (numZones - 1) * ZONE_SEP;
-    const availH = AREA_BOTTOM - AREA_TOP - labelsH;
+    const availH = this.ui.areaBottom - this.areaTop - labelsH;
 
     this.bookW = Phaser.Math.Clamp(
-      (availW - (maxWidestRow - 1) * GAP_X) / maxWidestRow,
-      60, BOOK_W_MAX
+      (availW - (maxWidestRow - 1) * this.ui.gapX) / maxWidestRow,
+      60, this.ui.bookWMax
     );
     this.bookH = Phaser.Math.Clamp(
-      (availH - totalRows * BOARD_H - (totalRows - 1) * GAP_Y) / totalRows,
-      78, BOOK_H_MAX
+      (availH - totalRows * this.ui.boardH - (totalRows - 1) * this.ui.gapY) / totalRows,
+      this.ui.portrait ? 64 : 78, this.ui.bookHMax
     );
 
-    const rowStride = this.bookH + BOARD_H + GAP_Y;
+    const rowStride = this.bookH + this.ui.boardH + this.ui.gapY;
 
-    let currentY = AREA_TOP;
+    let currentY = this.areaTop;
     let slotStart = 0;
 
     zones.forEach((zone, zi) => {
@@ -548,14 +669,14 @@ export default class GameScene extends Phaser.Scene {
       // Lay out rows for this zone
       for (let r = 0; r < meta.rows; r++) {
         const cnt = meta.rowCounts[r];
-        const rowW = cnt * this.bookW + (cnt - 1) * GAP_X;
+        const rowW = cnt * this.bookW + (cnt - 1) * this.ui.gapX;
         const startX = regionCenter - rowW / 2 + this.bookW / 2;
         const centerY = currentY + this.bookH / 2;
 
         for (let c = 0; c < cnt; c++) {
           this.slots.push({
-            x: startX + c * (this.bookW + GAP_X),
-            y: centerY,
+            x: Math.round(startX + c * (this.bookW + this.ui.gapX)),
+            y: Math.round(centerY),
             page: 0,
             zoneIdx: zi,
           });
@@ -578,7 +699,7 @@ export default class GameScene extends Phaser.Scene {
       if (zi < numZones - 1) currentY += ZONE_SEP;
     });
 
-    this.celebrateY = (AREA_TOP + AREA_BOTTOM) / 2;
+    this.celebrateY = (this.areaTop + this.ui.areaBottom) / 2;
   }
 
   buildShelf() {
@@ -588,10 +709,7 @@ export default class GameScene extends Phaser.Scene {
     this.shelfGraphics = [];
     this.rowRects.forEach((rect) => {
       const g = this.add.graphics();
-      g.fillStyle(COLORS.woodLight, 1);
-      g.fillRect(rect.x, rect.y, rect.w, BOARD_H);
-      g.fillStyle(COLORS.woodDark, 1);
-      g.fillRect(rect.x, rect.y + BOARD_H, rect.w, 9);
+      drawShelfPlank(g, rect.x, rect.y, rect.w, this.ui.boardH);
       this.shelfGraphics.push({ gfx: g, page: rect.page });
     });
 
@@ -614,12 +732,12 @@ export default class GameScene extends Phaser.Scene {
         if (range.zi > 0) {
           const sepG = this.add.graphics();
           sepG.lineStyle(1, COLORS.accent, 0.25);
-          sepG.lineBetween(LEFT_RESERVED, labelY - 8, this.scale.width - RIGHT_MARGIN, labelY - 8);
+          sepG.lineBetween(this.ui.leftReserved, labelY - 8, this.scale.width - this.ui.rightMargin, labelY - 8);
           this.zoneLabelObjects.push(sepG);
         }
 
         const lbl = this.add
-          .text(LEFT_RESERVED + 8, labelY + 13, displayText, {
+          .text(this.ui.leftReserved + 8, labelY + 13, displayText, {
             fontFamily: FONTS.body,
             fontSize: "13px",
             color: "#d9a441",
@@ -665,7 +783,10 @@ export default class GameScene extends Phaser.Scene {
     const zones = this.levelDef.zones;
     this.order = [];
 
-    const initialBooks = this.board.createInitialOrder(zones);
+    const initialBooks = this.restoreBookOrder(
+      this.board.createInitialOrder(zones),
+      this.resume?.bookIds
+    );
     initialBooks.forEach((book, i) => {
       const slot = this.slots[i];
       const zoneIdx = slot.zoneIdx ?? 0;
@@ -681,6 +802,18 @@ export default class GameScene extends Phaser.Scene {
     this.enableDragging();
   }
 
+  restoreBookOrder(books, ids) {
+    if (!Array.isArray(ids) || ids.length !== books.length) return books;
+    const remaining = [...books];
+    const out = [];
+    for (const id of ids) {
+      const idx = remaining.findIndex((b) => b.id === id);
+      if (idx < 0) return books;
+      out.push(remaining.splice(idx, 1)[0]);
+    }
+    return out.length === books.length ? out : books;
+  }
+
   /** The first sort key of a rule, used to surface the relevant attribute on cards. */
   primaryAttrFor(rule) {
     const { keys } = resolveRule(rule);
@@ -694,48 +827,8 @@ export default class GameScene extends Phaser.Scene {
     return key ? I18n.t(key) : String(size);
   }
 
-  getBookTextureKey(book, w, h) {
-    return `book-${w}x${h}-${String(book.color).replace("#", "")}`;
-  }
-
-  ensureBookTexture(book, w, h) {
-    const key = this.getBookTextureKey(book, w, h);
-    if (this.bookTextureCache.has(key) || this.textures.exists(key)) {
-      this.bookTextureCache.set(key, true);
-      return key;
-    }
-
-    const g = this.make.graphics({ x: 0, y: 0, add: false });
-    const fill = Phaser.Display.Color.HexStringToColor(book.color).color;
-
-    // Book body
-    g.fillStyle(fill, 1);
-    g.fillRoundedRect(0, 0, w, h, 7);
-
-    // Binding strip
-    const bindW = Math.max(5, Math.round(w * 0.1));
-    g.fillStyle(0x000000, 0.2);
-    g.fillRoundedRect(0, 0, bindW, h, { tl: 7, tr: 2, bl: 7, br: 2 });
-
-    // Page edges
-    const ex = w - 3;
-    g.fillStyle(0xffffff, 0.35);
-    g.fillRect(ex - 1, 5, 2, h - 10);
-    g.fillStyle(0xffffff, 0.2);
-    g.fillRect(ex - 4, 5, 2, h - 10);
-    g.fillStyle(0xffffff, 0.1);
-    g.fillRect(ex - 7, 5, 2, h - 10);
-
-    // Inner frame
-    g.lineStyle(1, 0xffffff, 0.22);
-    g.strokeRoundedRect(bindW + 2, 3, w - bindW - 8, h - 6, 4);
-
-    // Outer border
-    g.lineStyle(1.5, 0x000000, 0.35);
-    g.strokeRoundedRect(0, 0, w, h, 7);
-
-    g.generateTexture(key, w, h);
-    g.destroy();
+  ensureBookTexture(book, w, h, extras) {
+    const key = ensureBookSpineTexture(this, book, w, h, extras);
     this.bookTextureCache.set(key, true);
     return key;
   }
@@ -743,102 +836,34 @@ export default class GameScene extends Phaser.Scene {
   createBookCard(book, slot, primaryAttr = null) {
     const w = this.bookW;
     const h = this.bookH;
+    const face = bookFaceSize(book, w, h);
 
-    const showAuthor = w >= 96 && h >= 96;
-    const showGenre  = h >= 88;
-
-    // Scale font generously with card size; allow larger text on big cards.
-    const titleSize = Math.round(Phaser.Math.Clamp(Math.min(h * 0.13, w * 0.22), 13, 22));
-    const metaSize  = Math.round(Phaser.Math.Clamp(Math.min(h * 0.12, w * 0.20), 12, 20));
-
-    const coverTex = this.ensureBookTexture(book, Math.round(w), Math.round(h));
-    const spine = this.add.image(0, 0, coverTex).setOrigin(0.5);
-    const bindW = Math.max(5, Math.round(w * 0.1));
-    const textA11y = {
-      textColor: "#ffffff",
-      strokeColor: "#000000",
-      shadowColor: "#000000",
-      bandFill: 0x000000,
-      bandAlpha: 0.2,
-    };
-
-    const shadow = {
-      offsetX: 0,
-      offsetY: 1,
-      color: textA11y.shadowColor,
-      blur: 3,
-      fill: true,
-    };
-
-    // Position title in the upper third of the card (not pinned to the very top).
-    const titleY = -h * 0.28;
-    const titleTxt = this.add
-      .text(0, titleY, book.title, {
-        fontFamily: FONTS.body,
-        fontSize: `${titleSize}px`,
-        color: textA11y.textColor,
-        align: "center",
-        fontStyle: "bold",
-        stroke: textA11y.strokeColor,
-        strokeThickness: 2,
-        shadow,
-      })
-      .setOrigin(0.5, 0.5);
-
-    // When the level sorts by pages or size, surface that attribute prominently
-    // so the puzzle is solvable at a glance (colour is already the spine fill).
-    const emphasize = primaryAttr === "pages" || primaryAttr === "size";
-    const yearOnly = emphasize || (!showAuthor && !showGenre);
-    let metaStr;
+    let subtitle;
     if (primaryAttr === "pages") {
-      metaStr = I18n.t("pagesCount", { n: book.pages });
+      subtitle = I18n.t("pagesCount", { n: book.pages });
     } else if (primaryAttr === "size") {
-      metaStr = this.sizeWord(book.size);
-    } else if (showAuthor && showGenre) {
-      metaStr = `${book.author} \u00b7 ${book.genre} \u00b7 ${book.year}`;
-    } else if (showGenre) {
-      metaStr = `${book.genre} \u00b7 ${book.year}`;
+      subtitle = this.sizeWord(book.size);
+    } else if (primaryAttr === "year") {
+      subtitle = String(book.year);
+    } else if (primaryAttr === "genre") {
+      subtitle = book.genre;
     } else {
-      metaStr = `${book.year}`;
+      subtitle = book.author;
     }
 
-    const metaY = h * 0.28;
-    const metaTxt = this.add
-      .text(0, metaY, metaStr, {
-        fontFamily: FONTS.body,
-        fontSize: `${yearOnly ? metaSize + 1 : metaSize}px`,
-        fontStyle: "bold",
-        color: textA11y.textColor,
-        align: "center",
-        stroke: textA11y.strokeColor,
-        strokeThickness: 2,
-        lineSpacing: 3,
-        shadow,
-      })
-      .setOrigin(0.5, 0.5);
+    const coverTex = this.ensureBookTexture(book, face.w, face.h, {
+      title: book.title,
+      subtitle,
+    });
+    const spine = this.add
+      .image(0, Math.round(h / 2), coverTex)
+      .setOrigin(0.5, 1)
+      .setDisplaySize(face.w, face.h);
 
-    const textMaxWidth = w - bindW - 14;
-    this.truncateTextToWidth(titleTxt, book.title, textMaxWidth, titleSize, 12);
-    this.truncateTextToWidth(metaTxt, metaStr, textMaxWidth, yearOnly ? metaSize + 1 : metaSize, 11);
-
-    // Translucent bands behind each text block for contrast.
-    const bandW = w - bindW - 8;
-    const bandX = -w / 2 + bindW + 2;
-
-    const titleBand = this.add.graphics();
-    const titleBandH = titleTxt.height + 10;
-    titleBand.fillStyle(textA11y.bandFill, textA11y.bandAlpha);
-    titleBand.fillRoundedRect(bandX, titleY - titleBandH / 2, bandW, titleBandH, 4);
-
-    const metaBand = this.add.graphics();
-    const metaBandH = metaTxt.height + 10;
-    metaBand.fillStyle(textA11y.bandFill, textA11y.bandAlpha);
-    metaBand.fillRoundedRect(bandX, metaY - metaBandH / 2, bandW, metaBandH, 4);
-
-    const container = this.add.container(slot.x, slot.y, [spine, titleBand, metaBand, titleTxt, metaTxt]);
+    const container = this.add.container(slot.x, slot.y, [spine]);
     container.setSize(w, h);
     container.setData("book", book);
-    container.setData("compact", !showAuthor || !showGenre);
+    container.setData("compact", face.h < h * 0.92);
     return container;
   }
 
@@ -867,7 +892,7 @@ export default class GameScene extends Phaser.Scene {
     const tw = txt.width + 18;
     const th = txt.height + 12;
     const tx = Phaser.Math.Clamp(container.x, tw / 2 + 8, width - tw / 2 - 8);
-    const ty = Math.max(AREA_TOP + th + 4, container.y - h / 2 - 6);
+    const ty = Math.max(this.areaTop + th + 4, container.y - h / 2 - 6);
 
     txt.setPosition(tx, ty);
 
@@ -948,12 +973,29 @@ export default class GameScene extends Phaser.Scene {
 
     this.order.forEach((c) => {
       c.setInteractive({ useHandCursor: true, draggable: true });
-      c.on("pointerover", () => this.showBookTooltip(c));
-      c.on("pointerout",  () => this.hideBookTooltip());
+      c.on("pointerover", () => {
+        if (!isCoarsePointer()) this.showBookTooltip(c);
+      });
+      c.on("pointerout", () => {
+        if (!isCoarsePointer()) this.hideBookTooltip();
+      });
+      c.on("pointerdown", () => {
+        this.cancelBookTooltipHold();
+        this.bookTooltipHold = this.time.delayedCall(420, () => {
+          if (this.dragging || this.solved) return;
+          this.showBookTooltip(c);
+          this.bookTooltipHoldHide = this.time.delayedCall(2500, () => this.hideBookTooltip());
+        });
+      });
+      c.on("pointerup", () => {
+        this.bookTooltipHold?.remove(false);
+        this.bookTooltipHold = null;
+      });
     });
 
     this.handlers.onDragStart = (_p, obj) => {
       if (this.solved || this.failed || this.autoArranging || this.paused) return;
+      this.cancelBookTooltipHold();
       this.hideBookTooltip();
       this.dragging = obj;
       obj.setDepth(20);
@@ -961,6 +1003,7 @@ export default class GameScene extends Phaser.Scene {
       const fromIndex = this.order.indexOf(obj);
       this.showDropTarget(fromIndex);
       this.updateFlipEdgeHints(obj.x);
+      this.maybeFlipPage(obj.x, obj.y);
     };
     this.input.on("dragstart", this.handlers.onDragStart);
 
@@ -973,7 +1016,7 @@ export default class GameScene extends Phaser.Scene {
       const nearest = this.board.nearestSlot(dragX, dragY, multiZone ? zoneIdx : null);
       this.showDropTarget(nearest);
       this.updateFlipEdgeHints(dragX);
-      this.maybeFlipPage(dragX);
+      this.maybeFlipPage(dragX, dragY);
     };
     this.input.on("drag", this.handlers.onDrag);
 
@@ -1000,18 +1043,35 @@ export default class GameScene extends Phaser.Scene {
     this.input.keyboard.off("keydown-ESC", this.handlers.onKeyEsc);
     this.input.keyboard.off("keydown-Z", this.handlers.onKeyZ);
 
+    this.scale.off("resize", this.handlers.onResize);
+    window.clearTimeout(this.handlers.resizeTimer);
+    this.cancelBookTooltipHold();
+    this.hideBookTooltip();
+    this.hideActionTooltip();
+    this.clearCoach();
+
     this.handlers = {};
   }
 
-  maybeFlipPage(dragX) {
+  cancelBookTooltipHold() {
+    this.bookTooltipHold?.remove(false);
+    this.bookTooltipHold = null;
+    this.bookTooltipHoldHide?.remove(false);
+    this.bookTooltipHoldHide = null;
+  }
+
+  maybeFlipPage(dragX, dragY = null) {
     if (this.pageCount <= 1) return;
     const { width } = this.scale;
+    const gutter = this.ui.flipGutter ?? this.ui.rightGutter;
     if (this.time.now < this.flipCooldown) return;
-    if (dragX > width - RIGHT_GUTTER && this.currentPage < this.pageCount - 1) {
-      this.flipCooldown = this.time.now + 450;
+    if (dragY != null && (dragY < this.areaTop || dragY > this.ui.areaBottom)) return;
+    const dwell = this.ui.portrait ? 380 : 450;
+    if (dragX > width - gutter && this.currentPage < this.pageCount - 1) {
+      this.flipCooldown = this.time.now + dwell;
       this.goToPage(this.currentPage + 1);
-    } else if (dragX < RIGHT_GUTTER && this.currentPage > 0) {
-      this.flipCooldown = this.time.now + 450;
+    } else if (dragX < gutter && this.currentPage > 0) {
+      this.flipCooldown = this.time.now + dwell;
       this.goToPage(this.currentPage - 1);
     }
   }
@@ -1025,6 +1085,7 @@ export default class GameScene extends Phaser.Scene {
     let moved = false;
     if (this.board.dropAt(fromIndex, nearest)) {
       moved = true;
+      Sfx.drop();
       this.moves++;
       this.movesText.setText(I18n.t("movesLabel", { moves: this.moves }));
       this.updateTopBarLayout();
@@ -1032,6 +1093,7 @@ export default class GameScene extends Phaser.Scene {
     }
     this.layoutBooks(true);
     if (moved) {
+      this.advanceCoachFrom("drag");
       this.updateChallengeDisplay();
       if (this.checkChallengeLimits()) return;
     }
@@ -1123,6 +1185,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     this.hintsUsed++;
+    this.reactLibrarian("hint");
     this.showFeedbackToast(I18n.t("hintUsed", { points: HINT_SCORE_PENALTY }));
   }
 
@@ -1146,8 +1209,10 @@ export default class GameScene extends Phaser.Scene {
     this.updateTopBarLayout();
 
     const zones = this.levelDef.zones;
-    const bx = width / 2;
-    const by = 74;
+    const bx = Math.round(width / 2);
+    const by = Math.round(this.ui.instructionY);
+    const wrapW = Math.round(this.ui.instructionWrap);
+    const textRes = Math.min(window.devicePixelRatio || 1, 2);
     let bottomOfInstruction;
 
     if (zones.length === 1) {
@@ -1160,26 +1225,30 @@ export default class GameScene extends Phaser.Scene {
       const ruleObj = this.add
         .text(bx, by, ruleLine, {
           fontFamily: FONTS.body,
-          fontSize: "18px",
+          fontSize: this.ui.compact ? "16px" : "18px",
           color: "#d9a441",
           fontStyle: "bold",
           align: "center",
+          wordWrap: { width: wrapW },
         })
-        .setOrigin(0.5, 0);
+        .setOrigin(0.5, 0)
+        .setResolution(textRes);
 
-      bottomOfInstruction = by + ruleObj.height + 6;
+      bottomOfInstruction = Math.round(by + ruleObj.height + 6);
 
       if (detail) {
         const detailObj = this.add
           .text(bx, bottomOfInstruction, detail, {
             fontFamily: FONTS.body,
-            fontSize: "14px",
+            fontSize: "15px",
             color: "#f3e3c3",
             align: "center",
-            wordWrap: { width: width - 200 },
+            wordWrap: { width: wrapW },
+            lineSpacing: 3,
           })
-          .setOrigin(0.5, 0);
-        bottomOfInstruction += detailObj.height + 6;
+          .setOrigin(0.5, 0)
+          .setResolution(textRes);
+        bottomOfInstruction = Math.round(bottomOfInstruction + detailObj.height + 6);
       }
     } else {
       // Multi-zone: show level-wide hint (or generic multi-zone hint)
@@ -1192,10 +1261,12 @@ export default class GameScene extends Phaser.Scene {
           fontSize: "15px",
           color: "#f3e3c3",
           align: "center",
-          wordWrap: { width: width - 200 },
+          wordWrap: { width: wrapW },
+          lineSpacing: 3,
         })
-        .setOrigin(0.5, 0);
-      bottomOfInstruction = by + hintObj.height + 6;
+        .setOrigin(0.5, 0)
+        .setResolution(textRes);
+      bottomOfInstruction = Math.round(by + hintObj.height + 6);
     }
 
     if (this.challenge) {
@@ -1208,7 +1279,7 @@ export default class GameScene extends Phaser.Scene {
           color: "#ffdede",
           align: "center",
           fontStyle: "bold",
-          wordWrap: { width: width - 180 },
+          wordWrap: { width: this.ui.challengeWrap },
         })
         .setOrigin(0.5, 0)
         .setDepth(52);
@@ -1219,22 +1290,35 @@ export default class GameScene extends Phaser.Scene {
       this.challengeBadgeBg = null;
     }
 
-    // Adjust AREA_TOP dynamically so the grid never overlaps the instructions
-    AREA_TOP = Math.max(140, bottomOfInstruction + 10);
+    // Adjust this.areaTop dynamically so the grid never overlaps the instructions
+    this.areaTop = Math.max(this.ui.areaTopBase, bottomOfInstruction + 10);
   }
 
   buildLibrarian() {
     const { height } = this.scale;
+    const portrait = this.ui.portrait;
+    const scale = this.ui.librarianScale || 0.48;
+    this.librarianBaseScale = scale;
+    const displayW = 240 * scale;
+    const x = portrait
+      ? Math.round(Math.max(this.ui.safe.left, 4) + displayW * 0.32)
+      : Math.round(Math.max(this.ui.safe.left, 8) + displayW * 0.42);
+    const y = portrait
+      ? height - this.ui.bottomBarH + 8
+      : height - Math.max(this.ui.safe.bottom, 10);
     this.librarian = this.add
-      .sprite(44, height - 28, "librarian", "thinking")
-      .setScale(0.74)
+      .sprite(x, y, "librarian", "thinking")
+      .setScale(scale)
       .setOrigin(0.5, 1)
-      .setDepth(5);
+      .setDepth(portrait ? 8 : 5);
     this.librarian.play("librarian-thinking");
+    this.librarianHomeX = x;
+    this.librarianHomeY = y;
 
     this.tweens.add({
       targets: this.librarian,
-      y: this.librarian.y - 4,
+      y: y - 6,
+      angle: 1.2,
       duration: 1400,
       yoyo: true,
       repeat: -1,
@@ -1242,71 +1326,267 @@ export default class GameScene extends Phaser.Scene {
     });
   }
 
+  reactLibrarian(kind) {
+    if (!this.librarian) return;
+    if (kind === "happy") {
+      this.librarian.play("librarian-happy");
+      return;
+    }
+    this.librarian.play("librarian-thinking");
+    if (kind === "wrong") {
+      this.tweens.add({
+        targets: this.librarian,
+        x: this.librarianHomeX + 6,
+        duration: 45,
+        yoyo: true,
+        repeat: 4,
+        onComplete: () => {
+          if (this.librarian) this.librarian.x = this.librarianHomeX;
+        },
+      });
+      return;
+    }
+    if (kind === "hint") {
+      const base = this.librarianBaseScale || this.librarian.scale;
+      this.tweens.add({
+        targets: this.librarian,
+        scale: base * 1.08,
+        duration: 140,
+        yoyo: true,
+        onComplete: () => {
+          if (this.librarian) this.librarian.setScale(base);
+        },
+      });
+    }
+  }
+
+  maybeStartCoach() {
+    if (this.resume || this.levelNumber !== 1 || isE2ETest()) return;
+    if (Storage.hasSeenCoach()) return;
+    if (!this.order?.length || !this.checkBtn) return;
+    this.coachStep = 0;
+    this.showCoachStep();
+  }
+
+  showCoachStep() {
+    this.clearCoach(false);
+    const { width, height } = this.scale;
+    const steps = [
+      {
+        text: I18n.t("coachDrag"),
+        x: this.order[0]?.x ?? width / 2,
+        y: (this.order[0]?.y ?? height * 0.4) - this.bookH / 2 - 16,
+        w: this.bookW + 10,
+        h: this.bookH + 10,
+      },
+      {
+        text: I18n.t("coachCheck"),
+        x: this.checkBtn.x,
+        y: this.checkBtn.y - (this.ui.portrait ? 52 : 48),
+        w: 64,
+        h: 52,
+        ringX: this.checkBtn.x,
+        ringY: this.checkBtn.y,
+      },
+    ];
+    const step = steps[this.coachStep];
+    if (!step) {
+      this.finishCoach();
+      return;
+    }
+
+    const ringX = step.ringX ?? step.x;
+    const ringY = step.ringY ?? (this.order[0]?.y ?? step.y);
+    const ring = this.add.graphics().setDepth(78);
+    ring.lineStyle(3, COLORS.accent, 0.95);
+    ring.strokeRoundedRect(ringX - step.w / 2, ringY - step.h / 2, step.w, step.h, 10);
+    this.tweens.add({
+      targets: ring,
+      alpha: 0.25,
+      duration: 520,
+      yoyo: true,
+      repeat: -1,
+    });
+
+    const bubbleY = Phaser.Math.Clamp(step.y, 70, height - (this.ui.portrait ? this.ui.bottomBarH + 70 : 80));
+    const txt = this.add
+      .text(0, 0, step.text, {
+        fontFamily: FONTS.body,
+        fontSize: this.ui.portrait ? "15px" : "16px",
+        color: "#f3e3c3",
+        align: "center",
+        wordWrap: { width: Math.min(280, width - 48) },
+      })
+      .setOrigin(0.5)
+      .setDepth(81);
+    const padX = 16;
+    const padY = 12;
+    const skipH = 34;
+    const bw = Math.min(width - 32, Math.max(txt.width + padX * 2, 168));
+    const bh = txt.height + padY * 2 + skipH + 8;
+    const bx = Phaser.Math.Clamp(step.x, bw / 2 + 12, width - bw / 2 - 12);
+    const by = bubbleY - bh / 2;
+
+    const bg = this.add.graphics().setDepth(80);
+    bg.fillStyle(COLORS.ink, 0.94);
+    bg.fillRoundedRect(bx - bw / 2, by, bw, bh, 12);
+    bg.lineStyle(2, COLORS.accent, 0.9);
+    bg.strokeRoundedRect(bx - bw / 2, by, bw, bh, 12);
+    txt.setPosition(bx, by + padY + txt.height / 2);
+
+    const skip = makeButton(
+      this,
+      bx,
+      by + bh - skipH / 2 - 8,
+      I18n.t("coachSkip"),
+      () => this.advanceCoach(),
+      { width: Math.min(132, bw - 24), height: 32, fontSize: 14, fill: COLORS.accent, textColor: "#2c1d14" }
+    ).setDepth(82);
+
+    this.coachItems = [ring, bg, txt, skip];
+    this.coachTimer = this.time.delayedCall(5600, () => this.advanceCoach());
+  }
+
+  advanceCoachFrom(kind) {
+    if (this.coachStep == null) return;
+    if (kind === "drag" && this.coachStep === 0) this.advanceCoach();
+    if (kind === "check") this.finishCoach();
+  }
+
+  advanceCoach() {
+    if (this.coachStep == null) return;
+    this.coachStep += 1;
+    if (this.coachStep >= 2) this.finishCoach();
+    else this.showCoachStep();
+  }
+
+  finishCoach() {
+    if (this.coachStep == null && !this.coachItems) return;
+    Storage.markCoachSeen();
+    this.clearCoach(true);
+  }
+
+  clearCoach(done = false) {
+    this.coachTimer?.remove(false);
+    this.coachTimer = null;
+    this.coachItems?.forEach((item) => item?.destroy?.());
+    this.coachItems = null;
+    if (done) this.coachStep = null;
+  }
+
   buildControls() {
-    const { width } = this.scale;
-    // Primary action — compact icon button, pinned top-right below Menu
-    const bx = this.headerMenuX ?? (width - 70);
-    const by = 96;
+    const { width, height } = this.scale;
+    const portrait = this.ui.portrait;
+    let bx;
+    let by;
+    let gap = 56;
+    const btnW = portrait ? 56 : 64;
+    const btnH = portrait ? 48 : 44;
+
+    if (portrait) {
+      const bar = this.add.graphics().setDepth(50);
+      bar.fillStyle(COLORS.ink, 0.92);
+      bar.fillRect(0, height - this.ui.bottomBarH, width, this.ui.bottomBarH);
+      const span = Math.min(width - 24, 360);
+      const start = width / 2 - span / 2;
+      const step = span / 3;
+      by = Math.round(height - this.ui.bottomBarH / 2 - this.ui.safe.bottom * 0.15);
+      bx = Math.round(start + step * 0.5);
+      this.undoX = Math.round(start + step * 1.5);
+      this.hintX = Math.round(start + step * 2.5);
+      gap = 0;
+    } else {
+      bx = this.headerMenuX ?? (width - 70);
+      by = this.ui.topBarH + 40;
+      this.undoX = bx;
+      this.hintX = bx;
+    }
+
     this.checkBtn = makeButton(
       this,
       bx,
       by,
       "\u2713",
       () => this.checkSolved(true),
-      { width: 64, height: 44, fontSize: 26, fill: COLORS.good, textColor: "#ffffff" }
+      { width: btnW, height: btnH, fontSize: 26, fill: COLORS.good, textColor: "#ffffff" }
     ).setDepth(51);
-    this.checkBtn.on("pointerover", () =>
-      this.showActionTooltip(bx, by + 40, I18n.t("checkOrder"))
-    );
-    this.checkBtn.on("pointerout", () => this.hideActionTooltip());
+    this.checkBtn.on("pointerover", () => {
+      if (!isCoarsePointer()) this.showActionTooltip(bx, portrait ? by - 40 : by + 40, I18n.t("checkOrder"));
+    });
+    this.checkBtn.on("pointerdown", () => {
+      if (isCoarsePointer()) this.showActionTooltip(bx, portrait ? by - 40 : by + 40, I18n.t("checkOrder"), 1400);
+    });
+    this.checkBtn.on("pointerout", () => {
+      if (!isCoarsePointer()) this.hideActionTooltip();
+    });
 
-    // Undo — compact icon button below Check, disabled until a move is made
-    const uy = by + 56;
+    const uy = portrait ? by : by + gap;
     this.undoBtn = makeButton(
       this,
-      bx,
+      this.undoX,
       uy,
       "\u21B6",
       () => this.undoMove(),
-      { width: 64, height: 44, fontSize: 24, fill: COLORS.woodLight, textColor: "#f3e3c3", enabled: false }
+      { width: btnW, height: btnH, fontSize: 24, fill: COLORS.woodLight, textColor: "#f3e3c3", enabled: false }
     ).setDepth(51);
-    this.undoBtn.on("pointerover", () =>
-      this.showActionTooltip(bx, uy + 40, I18n.t("undo"))
-    );
-    this.undoBtn.on("pointerout", () => this.hideActionTooltip());
+    this.undoBtn.on("pointerover", () => {
+      if (!isCoarsePointer()) this.showActionTooltip(this.undoX, portrait ? uy - 40 : uy + 40, I18n.t("undo"));
+    });
+    this.undoBtn.on("pointerdown", () => {
+      if (isCoarsePointer()) this.showActionTooltip(this.undoX, portrait ? uy - 40 : uy + 40, I18n.t("undo"), 1400);
+    });
+    this.undoBtn.on("pointerout", () => {
+      if (!isCoarsePointer()) this.hideActionTooltip();
+    });
 
-    // Hint — below Undo, highlights one wrong book with score penalty
-    const hy = uy + 56;
+    const hy = portrait ? by : uy + gap;
     this.hintBtn = makeButton(
       this,
-      bx,
+      this.hintX,
       hy,
       "?",
       () => this.giveHint(),
-      { width: 64, height: 44, fontSize: 24, fill: COLORS.accent, textColor: "#2c1d14" }
+      { width: btnW, height: btnH, fontSize: 24, fill: COLORS.accent, textColor: "#2c1d14" }
     ).setDepth(51);
-    this.hintBtn.on("pointerover", () =>
-      this.showActionTooltip(
-        bx,
-        hy + 40,
-        I18n.t("hintTooltip", { points: HINT_SCORE_PENALTY })
-      )
-    );
-    this.hintBtn.on("pointerout", () => this.hideActionTooltip());
+    this.hintBtn.on("pointerover", () => {
+      if (!isCoarsePointer()) {
+        this.showActionTooltip(
+          this.hintX,
+          portrait ? hy - 40 : hy + 40,
+          I18n.t("hintTooltip", { points: HINT_SCORE_PENALTY })
+        );
+      }
+    });
+    this.hintBtn.on("pointerdown", () => {
+      if (isCoarsePointer()) {
+        this.showActionTooltip(
+          this.hintX,
+          portrait ? hy - 40 : hy + 40,
+          I18n.t("hintTooltip", { points: HINT_SCORE_PENALTY }),
+          1600
+        );
+      }
+    });
+    this.hintBtn.on("pointerout", () => {
+      if (!isCoarsePointer()) this.hideActionTooltip();
+    });
 
     this.actionMenuItems = [];
     this.actionMenuOpen = false;
     this.refreshHintButton();
   }
 
-  showActionTooltip(x, y, label) {
+  showActionTooltip(x, y, label, autoHideMs = 0) {
     this.hideActionTooltip();
+    const { width } = this.scale;
     const txt = this.add
       .text(0, 0, label, {
         fontFamily: FONTS.body,
         fontSize: "14px",
         color: "#f3e3c3",
         fontStyle: "bold",
+        align: "center",
+        wordWrap: { width: width - 24 },
       })
       .setOrigin(0.5)
       .setDepth(71);
@@ -1315,17 +1595,23 @@ export default class GameScene extends Phaser.Scene {
     const padY = 6;
     const bw = txt.width + padX * 2;
     const bh = txt.height + padY * 2;
+    const tx = Phaser.Math.Clamp(x, bw / 2 + 8, width - bw / 2 - 8);
     const bg = this.add.graphics().setDepth(70);
     bg.fillStyle(COLORS.ink, 0.95);
-    bg.fillRoundedRect(x - bw / 2, y - bh / 2, bw, bh, 6);
+    bg.fillRoundedRect(tx - bw / 2, y - bh / 2, bw, bh, 6);
     bg.lineStyle(1, COLORS.accent, 0.8);
-    bg.strokeRoundedRect(x - bw / 2, y - bh / 2, bw, bh, 6);
-    txt.setPosition(x, y);
+    bg.strokeRoundedRect(tx - bw / 2, y - bh / 2, bw, bh, 6);
+    txt.setPosition(tx, y);
 
     this.actionTooltip = { bg, txt };
+    if (autoHideMs > 0) {
+      this.actionTooltipHide = this.time.delayedCall(autoHideMs, () => this.hideActionTooltip());
+    }
   }
 
   hideActionTooltip() {
+    this.actionTooltipHide?.remove(false);
+    this.actionTooltipHide = null;
     if (!this.actionTooltip) return;
     this.actionTooltip.bg.destroy();
     this.actionTooltip.txt.destroy();
@@ -1343,8 +1629,8 @@ export default class GameScene extends Phaser.Scene {
     const itemW = 190;
     const itemH = 44;
     const vgap = 8;
-    const menuX = width - 12 - itemW / 2;
-    const baseY = 56 + 8 + itemH / 2;
+    const menuX = width - 12 - itemW / 2 - this.ui.safe.right;
+    const baseY = this.ui.topBarH + 8 + itemH / 2;
 
     this.actionOverlay = this.add
       .rectangle(0, 0, width, height, 0x000000, 0.001)
@@ -1406,8 +1692,9 @@ export default class GameScene extends Phaser.Scene {
 
   showLanguageModal() {
     const { width, height } = this.scale;
-    const pw = 380, ph = 200;
-    const px = (width - pw) / 2, py = (height - ph) / 2;
+    const stack = width < 500;
+    const langs = I18n.available;
+    const { pw, ph, px, py } = panelBox(width, height, 380, stack ? 140 + langs.length * 58 + 52 : 200);
 
     const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.55)
       .setOrigin(0).setDepth(60).setInteractive();
@@ -1426,16 +1713,17 @@ export default class GameScene extends Phaser.Scene {
 
     const close = () => modalItems.forEach((o) => o.destroy());
 
-    const langs = I18n.available;
     const totalW = langs.length * 150 + (langs.length - 1) * 16;
     const startX = width / 2 - totalW / 2 + 75;
 
     langs.forEach((lang, i) => {
       const isCurrent = lang.code === I18n.lang;
+      const btnX = stack ? width / 2 : startX + i * 166;
+      const btnY = stack ? py + 86 + i * 58 : py + 98;
       const btn = makeButton(
         this,
-        startX + i * 166,
-        py + 98,
+        btnX,
+        btnY,
         lang.label,
         () => {
           if (lang.code !== I18n.lang) {
@@ -1447,7 +1735,7 @@ export default class GameScene extends Phaser.Scene {
           }
         },
         {
-          width: 150, height: 46, fontSize: 17,
+          width: Math.min(150, pw - 48), height: 46, fontSize: 17,
           fill: isCurrent ? COLORS.accent : COLORS.woodLight,
           textColor: isCurrent ? "#2c1d14" : "#f3e3c3",
         }
@@ -1480,8 +1768,7 @@ export default class GameScene extends Phaser.Scene {
     this.closeActionMenu?.();
 
     const { width, height } = this.scale;
-    const pw = 360, ph = 300;
-    const px = (width - pw) / 2, py = (height - ph) / 2;
+    const { pw, ph, px, py } = panelBox(width, height, 360, 300);
 
     const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.6)
       .setOrigin(0).setDepth(80).setInteractive();
@@ -1506,17 +1793,17 @@ export default class GameScene extends Phaser.Scene {
 
     const resumeBtn = makeButton(this, width / 2, py + 140, I18n.t("resume"),
       () => this.resumeGame(),
-      { width: 220, height: 52, fontSize: 20, fill: COLORS.good, textColor: "#ffffff" }
+      { width: Math.min(220, pw - 48), height: 52, fontSize: 20, fill: COLORS.good, textColor: "#ffffff" }
     ).setDepth(82);
 
     const restartBtn = makeButton(this, width / 2, py + 200, I18n.t("restartLevel"),
       () => { this.clearPauseUI(); this.scene.restart({ level: this.levelNumber }); },
-      { width: 200, height: 44, fontSize: 16, fill: COLORS.woodLight, textColor: "#f3e3c3" }
+      { width: Math.min(200, pw - 48), height: 44, fontSize: 16, fill: COLORS.woodLight, textColor: "#f3e3c3" }
     ).setDepth(82);
 
     const menuBtn = makeButton(this, width / 2, py + 252, I18n.t("menu"),
       () => { this.clearPauseUI(); goToScene(this, "MenuScene"); },
-      { width: 200, height: 44, fontSize: 16, fill: COLORS.woodLight, textColor: "#f3e3c3" }
+      { width: Math.min(200, pw - 48), height: 44, fontSize: 16, fill: COLORS.woodLight, textColor: "#f3e3c3" }
     ).setDepth(82);
 
     this.pauseItems.push(resumeBtn, restartBtn, menuBtn);
@@ -1557,10 +1844,7 @@ export default class GameScene extends Phaser.Scene {
 
   showChallengeFailModal(reason) {
     const { width, height } = this.scale;
-    const pw = 390;
-    const ph = 230;
-    const px = (width - pw) / 2;
-    const py = (height - ph) / 2;
+    const { pw, ph, px, py } = panelBox(width, height, 390, 230);
 
     const overlay = this.add
       .rectangle(0, 0, width, height, 0x000000, 0.62)
@@ -1620,45 +1904,63 @@ export default class GameScene extends Phaser.Scene {
 
   buildPager() {
     const { width } = this.scale;
-    const midY = (AREA_TOP + AREA_BOTTOM) / 2;
+    const midY = (this.areaTop + this.ui.areaBottom) / 2;
+    const pagerY = this.ui.portrait ? this.ui.areaBottom - 14 : this.ui.areaBottom + 8;
 
-    // Left side arrow
-    this.sidePrev = makeButton(
-      this,
-      28,
-      midY,
-      "\u2039",
-      () => this.goToPage(this.currentPage - 1),
-      { width: 44, height: 96, fontSize: 40, fill: COLORS.woodLight, textColor: "#f3e3c3" }
-    ).setDepth(40);
+    if (this.ui.sidePager) {
+      this.sidePrev = makeButton(
+        this,
+        28,
+        midY,
+        "\u2039",
+        () => this.goToPage(this.currentPage - 1),
+        { width: 44, height: 96, fontSize: 40, fill: COLORS.woodLight, textColor: "#f3e3c3" }
+      ).setDepth(40);
 
-    // Right side arrow
-    this.sideNext = makeButton(
-      this,
-      width - 28,
-      midY,
-      "\u203a",
-      () => this.goToPage(this.currentPage + 1),
-      { width: 44, height: 96, fontSize: 40, fill: COLORS.woodLight, textColor: "#f3e3c3" }
-    ).setDepth(40);
+      this.sideNext = makeButton(
+        this,
+        width - 28,
+        midY,
+        "\u203a",
+        () => this.goToPage(this.currentPage + 1),
+        { width: 44, height: 96, fontSize: 40, fill: COLORS.woodLight, textColor: "#f3e3c3" }
+      ).setDepth(40);
+    } else {
+      this.sidePrev = makeButton(
+        this,
+        width / 2 - 88,
+        pagerY - 12,
+        "\u2039",
+        () => this.goToPage(this.currentPage - 1),
+        { width: 40, height: 36, fontSize: 22, fill: COLORS.woodLight, textColor: "#f3e3c3" }
+      ).setDepth(40);
 
-    // Minimal page indicator — small pill at bottom center
+      this.sideNext = makeButton(
+        this,
+        width / 2 + 88,
+        pagerY - 12,
+        "\u203a",
+        () => this.goToPage(this.currentPage + 1),
+        { width: 40, height: 36, fontSize: 22, fill: COLORS.woodLight, textColor: "#f3e3c3" }
+      ).setDepth(40);
+    }
+
     this.pagerLabel = this.add
-      .text(width / 2, AREA_BOTTOM + 18, "", {
+      .text(width / 2, pagerY, "", {
         fontFamily: FONTS.body,
         fontSize: "13px",
         color: "#c9b08a",
         align: "center",
       })
-      .setOrigin(0.5, 0)
+      .setOrigin(0.5, this.ui.portrait ? 1 : 0)
       .setDepth(40);
   }
 
   buildFlipEdgeHints() {
     const { width } = this.scale;
-    const midY = (AREA_TOP + AREA_BOTTOM) / 2;
-    const hintW = RIGHT_GUTTER - 8;
-    const hintH = AREA_BOTTOM - AREA_TOP + 16;
+    const midY = (this.areaTop + this.ui.areaBottom) / 2;
+    const hintW = Math.max(28, (this.ui.flipGutter ?? this.ui.rightGutter) - 8);
+    const hintH = this.ui.areaBottom - this.areaTop + 16;
 
     const leftBg = this.add
       .rectangle(0, midY, hintW, hintH, COLORS.accent, 0.18)
@@ -1704,8 +2006,9 @@ export default class GameScene extends Phaser.Scene {
     const dragging = !!this.dragging && this.pageCount > 1;
     const canLeft = dragging && this.currentPage > 0;
     const canRight = dragging && this.currentPage < this.pageCount - 1;
-    const nearLeft = dragX != null && dragX < RIGHT_GUTTER;
-    const nearRight = dragX != null && dragX > width - RIGHT_GUTTER;
+    const gutter = this.ui.flipGutter ?? this.ui.rightGutter;
+    const nearLeft = dragX != null && dragX < gutter;
+    const nearRight = dragX != null && dragX > width - gutter;
 
     const setHint = (hint, visible, active) => {
       hint.bg.setVisible(visible);
@@ -1772,6 +2075,8 @@ export default class GameScene extends Phaser.Scene {
     if (result.solved) {
       this.onSolved();
     } else if (manual) {
+      this.advanceCoachFrom("check");
+      this.reactLibrarian("wrong");
       this.flashFeedback(result.perSlot);
     }
   }
@@ -1852,7 +2157,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     const { width } = this.scale;
-    const toastY = AREA_BOTTOM - 12;
+    const toastY = this.ui.areaBottom - 12;
 
     const txt = this.add
       .text(width / 2, toastY, message, {
@@ -1906,7 +2211,9 @@ export default class GameScene extends Phaser.Scene {
     this.solved = true;
     this.refreshUndoButton();
     this.refreshHintButton();
-    this.librarian?.play("librarian-happy");
+    this.reactLibrarian("happy");
+    this.finishCoach();
+    Sfx.win();
     const timeMs = this.time.now - this.startTime;
     const score = this.computeScore(timeMs, this.moves);
     const result = {
@@ -2023,8 +2330,7 @@ export default class GameScene extends Phaser.Scene {
 
   showAutoConfirm() {
     const { width, height } = this.scale;
-    const pw = 400, ph = 210;
-    const px = (width - pw) / 2, py = (height - ph) / 2;
+    const { pw, ph, px, py } = panelBox(width, height, 400, 210);
 
     const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.55)
       .setOrigin(0)
@@ -2061,14 +2367,14 @@ export default class GameScene extends Phaser.Scene {
     };
 
     const cancelBtn = this.makeDialogButton(
-      px + 90, py + ph - 42, 140, 38,
+      px + pw * 0.28, py + ph - 42, Math.min(140, pw * 0.42), 38,
       I18n.t("cancel") ?? "Cancel",
       0x5a3e28, "#f3e3c3", 52,
       closeAll
     );
 
     const confirmBtn = this.makeDialogButton(
-      px + pw - 90, py + ph - 42, 160, 38,
+      px + pw * 0.72, py + ph - 42, Math.min(160, pw * 0.42), 38,
       I18n.t("autoConfirmYes"),
       0x8b2020, "#ffffff", 52,
       () => { closeAll(); this.runAutoArrange(); }

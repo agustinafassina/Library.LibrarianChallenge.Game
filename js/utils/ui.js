@@ -1,3 +1,5 @@
+import { Sfx } from "./sfx.js";
+
 export const COLORS = {
   wood: 0x6b4423,
   woodDark: 0x4a2f18,
@@ -45,7 +47,7 @@ export function makeButton(scene, x, y, label, onClick, opts = {}) {
     })
     .setOrigin(0.5);
 
-  const container = scene.add.container(x, y, [bg, text]);
+  const container = scene.add.container(Math.round(x), Math.round(y), [bg, text]);
   container.setSize(width, height);
 
   let isEnabled = enabled;
@@ -72,6 +74,7 @@ export function makeButton(scene, x, y, label, onClick, opts = {}) {
         yoyo: true,
       });
       onClick?.();
+      Sfx.ui();
     });
 
   container.setEnabled = (value) => {
@@ -82,6 +85,12 @@ export function makeButton(scene, x, y, label, onClick, opts = {}) {
 
   applyEnabledLook();
   return container;
+}
+
+export function isCoarsePointer() {
+  if (typeof window === "undefined") return false;
+  if (window.matchMedia?.("(pointer: coarse)").matches) return true;
+  return (navigator.maxTouchPoints || 0) > 0;
 }
 
 export function isE2ETest() {
@@ -103,4 +112,76 @@ export function formatTime(ms) {
   const m = Math.floor(totalSeconds / 60);
   const s = totalSeconds % 60;
   return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+export function panelBox(width, height, preferredW, preferredH, pad = 32) {
+  const pw = Math.min(preferredW, Math.max(260, width - pad));
+  const ph = Math.min(preferredH, Math.max(180, height - 40));
+  return {
+    pw,
+    ph,
+    px: Math.round((width - pw) / 2),
+    py: Math.round((height - ph) / 2),
+  };
+}
+
+export function placeButtonRow(scene, cx, y, specs, gap = 16) {
+  const widths = specs.map((s) => s.opts?.width ?? 240);
+  const heights = specs.map((s) => s.opts?.height ?? 56);
+  const total = widths.reduce((a, b) => a + b, 0) + gap * Math.max(0, specs.length - 1);
+  const stack = total > scene.scale.width - 32;
+
+  if (!stack) {
+    let x = cx - total / 2;
+    return specs.map((spec, i) => {
+      const w = widths[i];
+      const btn = makeButton(scene, x + w / 2, y, spec.label, spec.onClick, spec.opts);
+      if (spec.depth != null) btn.setDepth(spec.depth);
+      x += w + gap;
+      return btn;
+    });
+  }
+
+  let yy = y;
+  return specs.map((spec, i) => {
+    const h = heights[i];
+    const btn = makeButton(scene, cx, yy, spec.label, spec.onClick, spec.opts);
+    if (spec.depth != null) btn.setDepth(spec.depth);
+    yy += h + 12;
+    return btn;
+  });
+}
+
+export function bindResizeRestart(scene, getData) {
+  let lastW = Math.round(scene.scale.width);
+  let lastH = Math.round(scene.scale.height);
+  let timer = null;
+  const startedAt = typeof performance !== "undefined" ? performance.now() : Date.now();
+
+  const onResize = (gameSize) => {
+    const w = Math.round(gameSize.width);
+    const h = Math.round(gameSize.height);
+    if (Math.abs(w - lastW) < 2 && Math.abs(h - lastH) < 2) return;
+    const now = typeof performance !== "undefined" ? performance.now() : Date.now();
+    if (now - startedAt < 250) {
+      lastW = w;
+      lastH = h;
+      return;
+    }
+    window.clearTimeout(timer);
+    timer = window.setTimeout(() => {
+      if (!scene.scene.isActive()) return;
+      lastW = w;
+      lastH = h;
+      const extra = typeof getData === "function" ? getData() : getData;
+      const data = { ...(scene.scene.settings.data || {}), ...(extra || {}) };
+      scene.scene.restart(data);
+    }, 160);
+  };
+
+  scene.scale.on("resize", onResize);
+  scene.events.once("shutdown", () => {
+    scene.scale.off("resize", onResize);
+    window.clearTimeout(timer);
+  });
 }

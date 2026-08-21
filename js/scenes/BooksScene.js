@@ -2,7 +2,8 @@ import { loadBooks } from "../utils/dataLoader.js";
 import { fetchBooksFromApiByTag } from "../utils/apiBooks.js";
 import { truncateSingleLineText } from "../utils/bookDetail.js";
 import { I18n } from "../utils/i18n.js?v=2";
-import { makeButton, goToScene, COLORS, FONTS } from "../utils/ui.js";
+import { makeButton, goToScene, COLORS, FONTS, isCoarsePointer } from "../utils/ui.js";
+import { fillLibraryRoom } from "../utils/libraryArt.js";
 
 const DEFAULT_TAGS = [
   "Lgbtiq",
@@ -66,6 +67,8 @@ export default class BooksScene extends Phaser.Scene {
     this.titleTooltip = null;
     this.localBooks = null;
     this.listLoading = false;
+    this.searchFocused = false;
+    this.layoutTimer = null;
     this.syncToolbarLayout = this.syncToolbarLayout.bind(this);
   }
 
@@ -93,14 +96,16 @@ export default class BooksScene extends Phaser.Scene {
     this.add
       .text(width / 2, 42, I18n.t("booksTitle"), {
         fontFamily: FONTS.title,
-        fontSize: "36px",
+        fontSize: width < 720 ? "26px" : "36px",
         color: "#f3e3c3",
         fontStyle: "bold",
+        wordWrap: { width: width - 180 },
+        align: "center",
       })
       .setOrigin(0.5);
 
-    makeButton(this, 80, 40, I18n.t("back"), () => goToScene(this, "MenuScene"), {
-      width: 120,
+    makeButton(this, Math.min(80, width * 0.18), 40, I18n.t("back"), () => goToScene(this, "MenuScene"), {
+      width: width < 420 ? 96 : 120,
       height: 40,
       fontSize: 16,
       fill: COLORS.woodLight,
@@ -135,7 +140,7 @@ export default class BooksScene extends Phaser.Scene {
 
   getPanelLayout() {
     const { width, height } = this.scale;
-    const w = Math.min(820, width - 90);
+    const w = Math.min(820, width - 24);
     const x = width / 2 - w / 2;
     const top = 92;
     const pagerY = height - PAGER_CENTER_FROM_BOTTOM;
@@ -173,19 +178,26 @@ export default class BooksScene extends Phaser.Scene {
   bindLayoutSync() {
     this.onLayoutChange = () => {
       this.syncToolbarLayout();
-      if (this.filterToolbarDom && !this.statusText) {
-        this.renderBookList();
-      }
+      window.clearTimeout(this.layoutTimer);
+      this.layoutTimer = window.setTimeout(() => {
+        if (this.filterToolbarDom && !this.statusText) {
+          this.renderBookList();
+        }
+      }, this.searchFocused ? 140 : 80);
     };
     this.scale.on("resize", this.onLayoutChange);
     window.addEventListener("resize", this.onLayoutChange);
     window.visualViewport?.addEventListener("resize", this.onLayoutChange);
+    window.visualViewport?.addEventListener("scroll", this.syncToolbarLayout);
   }
 
   cleanupDomControls() {
     this.scale.off("resize", this.onLayoutChange);
     window.removeEventListener("resize", this.onLayoutChange);
     window.visualViewport?.removeEventListener("resize", this.onLayoutChange);
+    window.visualViewport?.removeEventListener("scroll", this.syncToolbarLayout);
+    window.clearTimeout(this.layoutTimer);
+    document.body.classList.remove("lc-keyboard-open");
     this.hideTitleTooltip();
     this.filterToolbarDom?.remove();
     this.filterToolbarDom = null;
@@ -202,6 +214,7 @@ export default class BooksScene extends Phaser.Scene {
 
     const canvasRect = canvas.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
+    const vv = window.visualViewport;
     const scaleX = canvasRect.width / this.scale.width;
     const scaleY = canvasRect.height / this.scale.height;
     const domRect = this.filterToolbarDom.getBoundingClientRect();
@@ -210,10 +223,13 @@ export default class BooksScene extends Phaser.Scene {
     }
 
     const panel = this.getPanelLayout();
+    const top = canvasRect.top - containerRect.top + panel.toolbarGameY * scaleY;
+    const visibleTop = vv ? vv.offsetTop - containerRect.top : 0;
+    const clampedTop = Math.max(top, visibleTop + 8);
 
     Object.assign(this.filterToolbarDom.style, {
       left: `${canvasRect.left - containerRect.left + (panel.x + panel.toolbarPadding) * scaleX}px`,
-      top: `${canvasRect.top - containerRect.top + panel.toolbarGameY * scaleY}px`,
+      top: `${clampedTop}px`,
       width: `${(panel.w - panel.toolbarPadding * 2) * scaleX}px`,
       transform: "none",
       padding: "0",
@@ -255,6 +271,22 @@ export default class BooksScene extends Phaser.Scene {
     input.value = this.searchQuery;
     input.placeholder = I18n.t("booksSearchPlaceholder");
     input.setAttribute("aria-label", I18n.t("booksSearch"));
+    input.setAttribute("enterkeyhint", "search");
+    input.setAttribute("autocapitalize", "none");
+    input.autocomplete = "off";
+    input.addEventListener("focus", () => {
+      this.searchFocused = true;
+      document.body.classList.add("lc-keyboard-open");
+      window.setTimeout(() => {
+        this.syncToolbarLayout();
+        input.scrollIntoView({ block: "nearest", inline: "nearest" });
+      }, 50);
+    });
+    input.addEventListener("blur", () => {
+      this.searchFocused = false;
+      document.body.classList.remove("lc-keyboard-open");
+      window.setTimeout(() => this.onLayoutChange?.(), 80);
+    });
     input.addEventListener("input", () => {
       this.searchQuery = input.value;
       this.currentPage = 0;
@@ -346,7 +378,7 @@ export default class BooksScene extends Phaser.Scene {
   }
 
   renderBookList() {
-    const { width, height } = this.scale;
+    const { width } = this.scale;
     this.hideTitleTooltip();
     this.rows.forEach((row) => row.destroy());
     this.rows = [];
@@ -423,8 +455,17 @@ export default class BooksScene extends Phaser.Scene {
 
       const spine = this.add.graphics();
       const spineColor = Phaser.Display.Color.HexStringToColor(book.color || "#8a7358").color;
+      const spineX = panelX + 8;
+      const spineY = y + 6;
+      const spineH = rowHInner - 12;
       spine.fillStyle(spineColor, 1);
-      spine.fillRoundedRect(panelX + 8, y + 6, 10, rowHInner - 12, 3);
+      spine.fillRoundedRect(spineX, spineY, 14, spineH, 3);
+      spine.fillStyle(0x000000, 0.3);
+      spine.fillRect(spineX, spineY, 4, spineH);
+      spine.fillStyle(0xd9a441, 0.55);
+      spine.fillRect(spineX + 4, spineY + 3, 1, spineH - 6);
+      spine.fillStyle(0xf3e3c3, 0.45);
+      spine.fillRect(spineX + 12, spineY + 2, 1, spineH - 4);
       this.rows.push(spine);
 
       const titleMaxW = panelW * 0.38;
@@ -436,17 +477,30 @@ export default class BooksScene extends Phaser.Scene {
       };
       const titleDisplay = truncateSingleLineText(this, book.title, titleStyle, titleMaxW);
       const titleText = this.add
-        .text(panelX + 26, y + 10, titleDisplay, titleStyle)
+        .text(panelX + 28, y + 10, titleDisplay, titleStyle)
         .setOrigin(0, 0);
       if (titleDisplay !== String(book.title)) {
         titleText.setInteractive({ useHandCursor: true });
-        titleText.on("pointerover", () =>
+        titleText.on("pointerover", () => {
+          if (!isCoarsePointer()) {
+            this.showTitleTooltip(
+              { x: panelX + 28, y: y + 10, w: titleMaxW, h: 22 },
+              book.title
+            );
+          }
+        });
+        titleText.on("pointerout", () => {
+          if (!isCoarsePointer()) this.hideTitleTooltip();
+        });
+        titleText.on("pointerup", () => {
+          if (!isCoarsePointer()) return;
           this.showTitleTooltip(
-            { x: panelX + 26, y: y + 10, w: titleMaxW, h: 22 },
+            { x: panelX + 28, y: y + 10, w: titleMaxW, h: 22 },
             book.title
-          )
-        );
-        titleText.on("pointerout", () => this.hideTitleTooltip());
+          );
+          this.titleTooltipHide?.remove(false);
+          this.titleTooltipHide = this.time.delayedCall(2500, () => this.hideTitleTooltip());
+        });
       }
       this.rows.push(titleText);
 
@@ -530,6 +584,8 @@ export default class BooksScene extends Phaser.Scene {
   }
 
   hideTitleTooltip() {
+    this.titleTooltipHide?.remove(false);
+    this.titleTooltipHide = null;
     if (!this.titleTooltip) return;
     this.titleTooltip.txt.destroy();
     this.titleTooltip.bg.destroy();
@@ -541,7 +597,7 @@ export default class BooksScene extends Phaser.Scene {
 
     const prev = makeButton(
       this,
-      width / 2 - 150,
+      width / 2 - (width < 520 ? 100 : 150),
       pagerY,
       I18n.t("prevPage"),
       () => {
@@ -549,9 +605,9 @@ export default class BooksScene extends Phaser.Scene {
         this.renderBookList();
       },
       {
-        width: 120,
+        width: width < 520 ? 88 : 120,
         height: PAGER_BTN_H,
-        fontSize: 14,
+        fontSize: width < 520 ? 12 : 14,
         fill: COLORS.woodLight,
         textColor: "#f3e3c3",
         enabled: this.currentPage > 0,
@@ -576,7 +632,7 @@ export default class BooksScene extends Phaser.Scene {
 
     const next = makeButton(
       this,
-      width / 2 + 150,
+      width / 2 + (width < 520 ? 100 : 150),
       pagerY,
       I18n.t("nextPage"),
       () => {
@@ -584,9 +640,9 @@ export default class BooksScene extends Phaser.Scene {
         this.renderBookList();
       },
       {
-        width: 120,
+        width: width < 520 ? 88 : 120,
         height: PAGER_BTN_H,
-        fontSize: 14,
+        fontSize: width < 520 ? 12 : 14,
         fill: COLORS.woodLight,
         textColor: "#f3e3c3",
         enabled: this.currentPage < pageCount - 1,
@@ -596,16 +652,6 @@ export default class BooksScene extends Phaser.Scene {
   }
 
   drawBackground() {
-    const { width, height } = this.scale;
-    const g = this.add.graphics();
-    g.fillStyle(COLORS.woodDark, 1);
-    g.fillRect(0, 0, width, height);
-    g.lineStyle(2, 0x000000, 0.15);
-    for (let yy = 80; yy < height; yy += 90) {
-      g.beginPath();
-      g.moveTo(0, yy);
-      g.lineTo(width, yy);
-      g.strokePath();
-    }
+    fillLibraryRoom(this);
   }
 }

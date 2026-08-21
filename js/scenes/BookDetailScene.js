@@ -2,7 +2,8 @@ import { loadBooks } from "../utils/dataLoader.js";
 import { I18n } from "../utils/i18n.js";
 import { bookDetailRows, isLongBookTitle, truncateWrappedText } from "../utils/bookDetail.js";
 import { shouldOfferTranslation, translateText } from "../utils/translate.js";
-import { makeButton, goToScene, COLORS, FONTS } from "../utils/ui.js";
+import { makeButton, goToScene, COLORS, FONTS, bindResizeRestart } from "../utils/ui.js";
+import { fillLibraryRoom } from "../utils/libraryArt.js";
 
 const LABEL_W = 118;
 const META_ROW_GAP = 10;
@@ -41,8 +42,8 @@ export default class BookDetailScene extends Phaser.Scene {
     this.cameras.main.fadeIn(200, 0, 0, 0);
     this.drawBackground();
 
-    makeButton(this, 80, 40, I18n.t("back"), () => goToScene(this, "BooksScene"), {
-      width: 120,
+    makeButton(this, Math.min(80, width * 0.18), 40, I18n.t("back"), () => goToScene(this, "BooksScene"), {
+      width: width < 420 ? 96 : 120,
       height: 40,
       fontSize: 16,
       fill: COLORS.woodLight,
@@ -52,9 +53,11 @@ export default class BookDetailScene extends Phaser.Scene {
     this.add
       .text(width / 2, 42, I18n.t("booksTitle"), {
         fontFamily: FONTS.title,
-        fontSize: "36px",
+        fontSize: width < 720 ? "26px" : "36px",
         color: "#f3e3c3",
         fontStyle: "bold",
+        wordWrap: { width: width - 180 },
+        align: "center",
       })
       .setOrigin(0.5);
 
@@ -67,6 +70,7 @@ export default class BookDetailScene extends Phaser.Scene {
       .setOrigin(0.5);
 
     this.events.once("shutdown", () => this.unbindScroll());
+    bindResizeRestart(this);
     this.loadBook();
   }
 
@@ -140,7 +144,7 @@ export default class BookDetailScene extends Phaser.Scene {
 
   panelLayout(contentHeight = null) {
     const { width, height } = this.scale;
-    const w = Math.min(820, width - 90);
+    const w = Math.min(820, width - 24);
     const top = 88;
     const bottom = 24;
     const pad = 24;
@@ -212,6 +216,7 @@ export default class BookDetailScene extends Phaser.Scene {
         label !== I18n.t("bookDetailGenre") &&
         label !== I18n.t("bookDetailYear")
     );
+    const labelW = Math.min(LABEL_W, Math.max(72, Math.round(contentW * 0.36)));
     const metaStartY = y;
     const firstMetaIndex = this.contentContainer.length;
     let rowY = metaStartY + 14;
@@ -230,11 +235,11 @@ export default class BookDetailScene extends Phaser.Scene {
         })
         .setOrigin(0, 0);
       const valueText = this.add
-        .text(20 + LABEL_W, rowY, String(value), {
+        .text(20 + labelW, rowY, String(value), {
           fontFamily: FONTS.body,
           fontSize: "14px",
           color: "#f3e3c3",
-          wordWrap: { width: contentW - LABEL_W - 32 },
+          wordWrap: { width: contentW - labelW - 32 },
         })
         .setOrigin(0, 0);
       this.contentContainer.add([labelText, valueText]);
@@ -301,18 +306,19 @@ export default class BookDetailScene extends Phaser.Scene {
       this.contentContainer.add(this.translateBtn);
     }
 
-    y += descTitle.height + 10;
+    y = Math.round(y + descTitle.height + 10);
 
     this.descText = this.add
       .text(0, y, description || I18n.t("bookDetailNoDescription"), {
         fontFamily: FONTS.body,
-        fontSize: "14px",
-        color: description ? "#c9b08a" : "#8a7358",
+        fontSize: "16px",
+        color: description ? "#f3e3c3" : "#8a7358",
         fontStyle: description ? "normal" : "italic",
-        wordWrap: { width: contentW },
+        wordWrap: { width: Math.round(contentW) },
         lineSpacing: 6,
       })
-      .setOrigin(0, 0);
+      .setOrigin(0, 0)
+      .setResolution(Math.min(window.devicePixelRatio || 1, 2));
     this.contentContainer.add(this.descText);
     this.contentEndY = y + this.descText.height + 10;
 
@@ -335,7 +341,7 @@ export default class BookDetailScene extends Phaser.Scene {
     this.panelMask.fillStyle(0xffffff);
     this.panelMask.fillRoundedRect(0, 0, fitted.w - 16, fitted.h - 16, 12);
     this.contentContainer.setMask(this.panelMask.createGeometryMask());
-    this.contentContainer.setPosition(fitted.x + fitted.pad, fitted.y + fitted.pad);
+    this.contentContainer.setPosition(Math.round(fitted.x + fitted.pad), Math.round(fitted.y + fitted.pad));
 
     this.visibleH = fitted.h - fitted.pad * 2;
     this.baseContainerY = fitted.y + fitted.pad;
@@ -504,16 +510,6 @@ export default class BookDetailScene extends Phaser.Scene {
   }
 
   drawBackground() {
-    const { width, height } = this.scale;
-    const g = this.add.graphics();
-    g.fillStyle(COLORS.woodDark, 1);
-    g.fillRect(0, 0, width, height);
-    g.lineStyle(2, 0x000000, 0.15);
-    for (let yy = 80; yy < height; yy += 90) {
-      g.beginPath();
-      g.moveTo(0, yy);
-      g.lineTo(width, yy);
-      g.strokePath();
-    }
+    fillLibraryRoom(this);
   }
 }

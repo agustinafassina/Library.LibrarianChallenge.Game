@@ -25,4 +25,12 @@ export default [
       "no-console": "off",
     },
   },
+  {
+    files: ["sw.js"],
+    languageOptions: {
+      globals: {
+        ...globals.serviceworker,
+      },
+    },
+  },
 ];

@@ -1,26 +1,56 @@
 import { COLORS } from "../utils/ui.js";
 
+const FRAME_W = 240;
+const FRAME_H = 320;
+const MOODS = ["idle", "happy", "thinking", "blink"];
+
 export default class BootScene extends Phaser.Scene {
   constructor() {
     super("BootScene");
   }
 
-  preload() {}
+  preload() {
+    this.load.image("librarian-idle-src", "assets/images/librarian-idle.png");
+    this.load.image("librarian-happy-src", "assets/images/librarian-happy.png");
+    this.load.image("librarian-thinking-src", "assets/images/librarian-thinking.png");
+    this.load.image("librarian-blink-src", "assets/images/librarian-blink.png");
+    this.load.svg("spark", "assets/images/spark.svg", { width: 32, height: 32 });
+    this.load.on("loaderror", (file) => {
+      console.warn("[boot] missing asset", file?.key);
+    });
+  }
 
   create() {
-    this.createLibrarianTexture();
+    const artReady = MOODS.every((mood) => this.textures.exists(`librarian-${mood}-src`));
+    if (artReady) this.packLibrarianFromArt();
+    else this.createLibrarianTexture();
     this.createLibrarianAnimations();
-    this.createParticleTexture();
+    if (!this.textures.exists("spark")) this.createParticleTexture();
     this.scene.start("MenuScene");
+  }
+
+  packLibrarianFromArt() {
+    const canvasTex = this.textures.createCanvas("librarianSheet", FRAME_W * MOODS.length, FRAME_H);
+    const ctx = canvasTex.getContext();
+    MOODS.forEach((mood, i) => {
+      const src = this.textures.get(`librarian-${mood}-src`).getSourceImage();
+      ctx.drawImage(src, 0, 0, src.width, src.height, i * FRAME_W, 0, FRAME_W, FRAME_H);
+    });
+    canvasTex.refresh();
+    MOODS.forEach((mood, i) => {
+      canvasTex.add(mood, 0, i * FRAME_W, 0, FRAME_W, FRAME_H);
+    });
+    if (this.textures.exists("librarian")) this.textures.remove("librarian");
+    this.textures.renameTexture("librarianSheet", "librarian");
+    MOODS.forEach((mood) => this.textures.remove(`librarian-${mood}-src`));
   }
 
   createLibrarianTexture() {
     const w = 120;
     const h = 170;
-    const frames = ["idle", "happy", "thinking"];
-    const strip = this.make.renderTexture({ width: w * frames.length, height: h, add: false });
+    const strip = this.make.renderTexture({ width: w * MOODS.length, height: h, add: false });
 
-    frames.forEach((mood, i) => {
+    MOODS.forEach((mood, i) => {
       const frameKey = `librarian-frame-${mood}`;
       this.drawLibrarianFrame(frameKey, w, h, mood);
       strip.draw(frameKey, i * w, 0);
@@ -34,7 +64,7 @@ export default class BootScene extends Phaser.Scene {
     tex.add("idle", 0, 0, 0, w, h);
     tex.add("happy", 0, w, 0, w, h);
     tex.add("thinking", 0, w * 2, 0, w, h);
-    // Backward-compatible static key used by old scene code paths.
+    tex.add("blink", 0, w * 3, 0, w, h);
     tex.add("legacy", 0, 0, 0, w, h);
     if (this.textures.exists("librarian")) {
       this.textures.remove("librarian");
@@ -95,13 +125,23 @@ export default class BootScene extends Phaser.Scene {
     g.fillRect(40, 26, 6, 46);
 
     const eyeY = mood === "thinking" ? 48 : 50;
-    g.lineStyle(3, 0x2c1d14, 1);
-    g.strokeCircle(49, eyeY, 9);
-    g.strokeCircle(71, eyeY, 9);
-    g.lineBetween(58, eyeY, 62, eyeY);
-    g.fillStyle(0x2c1d14, 1);
-    g.fillCircle(49, eyeY, 3);
-    g.fillCircle(71, eyeY, 3);
+    if (mood === "blink") {
+      g.lineStyle(3, 0x2c1d14, 1);
+      g.beginPath();
+      g.arc(49, eyeY, 7, Phaser.Math.DegToRad(20), Phaser.Math.DegToRad(160), false);
+      g.strokePath();
+      g.beginPath();
+      g.arc(71, eyeY, 7, Phaser.Math.DegToRad(20), Phaser.Math.DegToRad(160), false);
+      g.strokePath();
+    } else {
+      g.lineStyle(3, 0x2c1d14, 1);
+      g.strokeCircle(49, eyeY, 9);
+      g.strokeCircle(71, eyeY, 9);
+      g.lineBetween(58, eyeY, 62, eyeY);
+      g.fillStyle(0x2c1d14, 1);
+      g.fillCircle(49, eyeY, 3);
+      g.fillCircle(71, eyeY, 3);
+    }
 
     g.fillStyle(0xe79a8a, 0.5);
     g.fillCircle(44, 58, 5);
@@ -137,38 +177,34 @@ export default class BootScene extends Phaser.Scene {
   }
 
   createLibrarianAnimations() {
-    if (!this.anims.exists("librarian-idle")) {
-      this.anims.create({
-        key: "librarian-idle",
-        frames: [{ key: "librarian", frame: "idle" }],
-        frameRate: 2,
-        repeat: -1,
-      });
-    }
-    if (!this.anims.exists("librarian-happy")) {
-      this.anims.create({
-        key: "librarian-happy",
-        frames: [
-          { key: "librarian", frame: "happy" },
-          { key: "librarian", frame: "idle" },
-          { key: "librarian", frame: "happy" },
-          { key: "librarian", frame: "idle" },
-        ],
-        frameRate: 5,
-        repeat: -1,
-      });
-    }
-    if (!this.anims.exists("librarian-thinking")) {
-      this.anims.create({
-        key: "librarian-thinking",
-        frames: [
-          { key: "librarian", frame: "thinking" },
-          { key: "librarian", frame: "idle" },
-        ],
-        frameRate: 3,
-        repeat: -1,
-      });
-    }
+    const idle = { key: "librarian", frame: "idle" };
+    const happy = { key: "librarian", frame: "happy" };
+    const thinking = { key: "librarian", frame: "thinking" };
+    const blink = { key: "librarian", frame: "blink" };
+
+    if (this.anims.exists("librarian-idle")) this.anims.remove("librarian-idle");
+    this.anims.create({
+      key: "librarian-idle",
+      frames: [idle, idle, idle, idle, idle, idle, idle, blink, idle],
+      frameRate: 7,
+      repeat: -1,
+    });
+
+    if (this.anims.exists("librarian-happy")) this.anims.remove("librarian-happy");
+    this.anims.create({
+      key: "librarian-happy",
+      frames: [happy, idle, happy, idle],
+      frameRate: 5,
+      repeat: -1,
+    });
+
+    if (this.anims.exists("librarian-thinking")) this.anims.remove("librarian-thinking");
+    this.anims.create({
+      key: "librarian-thinking",
+      frames: [thinking],
+      frameRate: 2,
+      repeat: -1,
+    });
   }
 
   createParticleTexture() {

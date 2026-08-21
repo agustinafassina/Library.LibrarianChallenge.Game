@@ -6,22 +6,26 @@ year, and a combined rule).
 
 ## Tech stack
 - **HTML5** — single `index.html` entry point.
-- **CSS3** — page background, layout and a responsive, centered canvas.
+- **CSS3** — page background and a full-viewport game canvas.
 - **JavaScript (ES Modules)** — vanilla JS, no framework or transpiler; scenes
   and utilities are split into native `import`/`export` modules.
 - **Phaser 3** (v3.80.1, vendored in `vendor/phaser.min.js`) — 2D game
   framework, rendered on a **WebGL** canvas (`Phaser.AUTO` falls back to
-  Canvas2D) with `Scale.FIT` for responsiveness and built-in mouse + touch drag
-  input.
+  Canvas2D) with `Scale.RESIZE` so the game matches the viewport (1 CSS pixel,
+  plus `devicePixelRatio` on Retina) and built-in mouse + touch drag input.
+  Layout is **portrait-first** on phones and landscape on desktop.
 - **Web Storage API (`localStorage`)** — saves progress (unlocked levels, best
   scores) and the selected language.
+- **Web Audio API** — short UI / drop / win cues (`assets/audio/`), muted from
+  Settings. The first tap unlocks playback (browser autoplay rules).
+- **PWA** — `manifest.json`, service worker (`sw.js`) and icons so phones can
+  **Add to Home Screen**.
 - **Fetch API** — loads levels from local JSON, optionally real books from
   `Library.LibrarianChallenge.Game.Api`, and submits player feedback to
   [Formspree](https://formspree.io/) (reCAPTCHA v3 recommended for production).
 - **No build system** — runs from any static file server. Production defaults to
-  the local catalogue in `data/books.json` (`useApiBooks: false`). Art
-  (librarian, particles) is generated procedurally at runtime via Phaser
-  `Graphics` textures.
+  the local catalogue in `data/books.json` (`useApiBooks: false`). Illustrated
+  librarian sprites and a spark particle live in `assets/images/`.
 
 Tooling used during development: any static server (e.g. Python's
 `http.server` or `npx serve`) and a modern WebGL-capable browser.
@@ -39,7 +43,10 @@ python -m http.server 8000
 npx serve .
 ```
 
-Then open <http://localhost:8000>.
+Then open <http://localhost:8000>. On a phone (HTTPS or localhost), the
+browser can **Add to Home Screen** / **Install app** (Chrome may show an
+Install button; Safari uses the share sheet). Recaptcha for Feedback is
+already in `runtime-config` when `recaptchaSiteKey` is set.
 
 ### Docker
 ```bash
@@ -134,15 +141,16 @@ expected for a client-only demo, not anti-cheat.
 ## Controls
 
 - **Drag & drop** a book to move it into a slot; the row reshuffles to make room.
-- **Check Order** button verifies the current arrangement (it also auto-checks
-  after every move).
-- **R** or the **Reset** button restarts the current level.
-- On big levels the shelves span several **pages**: use the right-edge arrow or
-  the `‹ Page X / Y ›` pager next to the buttons. While dragging a book, push it
+- **Check Order** (✓) verifies the current arrangement (it also auto-checks
+  after every move). On a phone, tap an icon to see its label.
+- **Hold** a book (without dragging) to read the full title and metadata.
+- **R** or **Reset** restarts the current level.
+- On big levels the shelves span several **pages**. In landscape, use the
+  side arrows. In portrait, use the small ‹ › under the shelf, or drag a book
   against the left/right edge to carry it to the previous/next page.
 - Some levels add an optional **challenge** (move and/or time limit). Exceeding
   either limit shows a fail modal; you can retry or continue without the bonus.
-- Works with mouse and touch.
+- Works with mouse and touch. Phones use a stacked HUD and a bottom action bar.
 
 ## Levels
 100 levels with a steadily increasing difficulty curve and book count (4 → 67), spread across shelves
@@ -158,7 +166,9 @@ static server (no manual server needed).
 ```bash
 npm install                 # once: installs Playwright
 npx playwright install chromium   # once: downloads the browser
-npm test                    # runs tests/runAllLevels.mjs
+npm test                    # all levels (1280×800) + portrait smoke (390×844)
+npm run test:e2e            # every level, desktop viewport only
+npm run test:portrait       # Menu + two levels + Books catalogue at 390×844
 ```
 
 How it works: the page is opened with `?test=1`, which exposes the Phaser game on
@@ -201,18 +211,18 @@ book data as gameplay (`loadBooks()`), including API results when available.
 ## How it works
 ```
 index.html            page shell, loads Phaser (vendored) + runtime config + js/main.js
-css/styles.css        page background + canvas centering / responsiveness
+css/styles.css        page background + full-viewport canvas
 vendor/
   phaser.min.js       Phaser 3.80.1 (self-hosted; no CDN)
 js/
   runtime-config.js   window.LIBRARIAN_CHALLENGE_CONFIG (prod-safe defaults)
-  main.js             Phaser config + scene registration
+  main.js             Phaser Scale.RESIZE + scene registration
   config/
-    layout.js         shelf/book layout constants (rows, spacing, areas)
+    layout.js         getUiLayout() — portrait/landscape metrics
   game/
     BoardController.js  shelf paging + slot logic used by GameScene
   scenes/
-    BootScene.js          generates placeholder art (librarian, spark) at runtime
+    BootScene.js          loads librarian / spark art (procedural fallback)
     MenuScene.js          Start / Continue / Level Select + Tutorial / Books / Settings / Feedback
     LevelSelectScene.js   grid of unlocked levels + best scores
     BooksScene.js         tag-filtered book catalogue (search + pagination)
@@ -226,11 +236,19 @@ js/
     rules.js          defines + checks each sorting rule
     storage.js        localStorage progress (max level, best scores, guest stats)
     i18n.js           UI translations (English / Spanish), language persisted
+    sfx.js            Web Audio cues (ui / drop / win) + mute preference
+    libraryArt.js     book spines + wood room / shelf drawing
+    pwa.js            Add to Home Screen / install prompt
     ui.js             shared buttons / colors / helpers
 data/
   books.json          offline book catalogue (70 real titles + metadata)
   levels.json         level definitions (each references book ids)
-assets/               drop real images/audio here to replace placeholders
+assets/
+  images/             librarian sprites + spark particle
+  audio/              ui.wav, drop.wav, win.wav
+  icons/              PWA / Apple touch icons
+manifest.json         web app manifest (Add to Home Screen)
+sw.js                 service worker (same-origin cache)
 ```
 
 ### Where books / levels are loaded
@@ -294,7 +312,20 @@ Change tags or API URL in `js/runtime-config.js` via
 - `globalStats` — aggregate local stats such as completed levels, total
   completions, moves and play time.
 
-## Replacing placeholder art
-The librarian and particle are drawn at runtime in `BootScene.js`. To use real
-art, add PNGs under `assets/images/`, load them in `BootScene.preload()`, and
-remove the matching generated texture.
+## Art, audio, and PWA
+Librarian frames (`idle`, `happy`, `thinking`) are PNGs in `assets/images/`,
+packed into a sprite sheet in `BootScene`. The win spark is
+`assets/images/spark.svg`. If a file fails to load, BootScene still draws the
+old procedural textures so the game can start.
+
+Book spines and the library room (wood planks, distant shelves, shelf lips) are
+drawn in `js/utils/libraryArt.js` — cloth/leather grain, gold foil marks by
+genre, and a unique texture per book. Colour stays the spine fill so the colour
+rule still works.
+
+Cues live in `assets/audio/` (`ui.wav`, `drop.wav`, `win.wav`, plus a quiet
+looping `ambience.wav`). Mute them from **Settings**. Regenerating the WAVs:
+`node scripts/generate-sfx.mjs`.
+
+`manifest.json` + `sw.js` + `assets/icons/` (192 / 512 / Apple touch) make the
+game installable. The service worker is not registered during e2e (`?test`).
