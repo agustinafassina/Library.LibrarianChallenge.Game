@@ -1,4 +1,6 @@
-const CACHE = "lc-shell-v6";
+importScripts("./sw-version.js");
+
+const CACHE = typeof SW_CACHE === "string" ? SW_CACHE : "lc-shell-dev";
 
 self.addEventListener("install", (event) => {
   event.waitUntil(self.skipWaiting());
@@ -17,7 +19,7 @@ self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
   const url = new URL(event.request.url);
   if (url.origin !== self.location.origin) return;
-  if (url.pathname.endsWith("/sw.js")) return;
+  if (url.pathname.endsWith("/sw.js") || url.pathname.endsWith("/sw-version.js")) return;
 
   event.respondWith(
     caches.open(CACHE).then(async (cache) => {

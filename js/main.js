@@ -66,7 +66,8 @@ if (isE2E) {
   window.__GAME__ = game;
 } else if ("serviceWorker" in navigator && window.location.protocol.startsWith("http")) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js").catch((err) => {
+    const version = window.LIBRARIAN_CHALLENGE_CONFIG?.version || "dev";
+    navigator.serviceWorker.register(`./sw.js?v=${encodeURIComponent(version)}`).catch((err) => {
       console.warn("[pwa] service worker failed", err);
     });
   });

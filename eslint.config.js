@@ -26,10 +26,11 @@ export default [
     },
   },
   {
-    files: ["sw.js"],
+    files: ["sw.js", "sw-version.js"],
     languageOptions: {
       globals: {
         ...globals.serviceworker,
+        SW_CACHE: "readonly",
       },
     },
   },
