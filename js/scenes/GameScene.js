@@ -1908,9 +1908,11 @@ export default class GameScene extends Phaser.Scene {
     const pagerY = this.ui.portrait ? this.ui.areaBottom - 14 : this.ui.areaBottom + 8;
 
     if (this.ui.sidePager) {
+      const prevX = Math.round(Math.max(28, this.ui.leftReserved - 24));
+      const nextX = Math.round(width - Math.max(28, this.ui.rightMargin + 24));
       this.sidePrev = makeButton(
         this,
-        28,
+        prevX,
         midY,
         "\u2039",
         () => this.goToPage(this.currentPage - 1),
@@ -1919,7 +1921,7 @@ export default class GameScene extends Phaser.Scene {
 
       this.sideNext = makeButton(
         this,
-        width - 28,
+        nextX,
         midY,
         "\u203a",
         () => this.goToPage(this.currentPage + 1),

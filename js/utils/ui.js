@@ -1,4 +1,5 @@
 import { Sfx } from "./sfx.js";
+import { getUiLayout } from "../config/layout.js";
 
 export const COLORS = {
   wood: 0x6b4423,
@@ -112,6 +113,41 @@ export function formatTime(ms) {
   const m = Math.floor(totalSeconds / 60);
   const s = totalSeconds % 60;
   return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
+export function placeSceneHeader(scene, { title, backLabel, onBack }) {
+  const { width } = scene.scale;
+  const ui = getUiLayout(width, scene.scale.height);
+  const backW = width < 420 ? 88 : 120;
+  const backH = 40;
+  const backY = Math.round(28 + ui.safe.top);
+  const backX = Math.round(16 + ui.safe.left + backW / 2);
+
+  const backBtn = makeButton(scene, backX, backY, backLabel, onBack, {
+    width: backW,
+    height: backH,
+    fontSize: 15,
+    fill: COLORS.woodLight,
+    textColor: "#f3e3c3",
+  });
+
+  const titleLeft = backX + backW / 2 + 10;
+  const titleMaxW = Math.max(96, width - titleLeft - 16 - ui.safe.right);
+  const titleObj = scene.add
+    .text(titleLeft + titleMaxW / 2, backY, title, {
+      fontFamily: FONTS.title,
+      fontSize: width < 720 ? "22px" : "36px",
+      color: "#f3e3c3",
+      fontStyle: "bold",
+      align: "center",
+      wordWrap: { width: titleMaxW },
+    })
+    .setOrigin(0.5);
+
+  const headerBottom = Math.round(
+    Math.max(backY + backH / 2, titleObj.y + titleObj.height / 2) + 10
+  );
+  return { backBtn, titleObj, backY, headerBottom };
 }
 
 export function panelBox(width, height, preferredW, preferredH, pad = 32) {

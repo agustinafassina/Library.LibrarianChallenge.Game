@@ -21,24 +21,59 @@ export default class MenuScene extends Phaser.Scene {
 
     this.drawBackground();
 
-    const lib = ui.portrait
-      ? { x: width - 52 - ui.safe.right, y: 58 + ui.safe.top, scale: 0.34, alpha: 1, originY: 0 }
-      : {
-          x: width * 0.8,
-          y: height * 0.62,
-          scale: Math.max(0.9, ui.librarianScale * 1.12),
-          alpha: 1,
-          originY: 0.5,
-        };
+    const menu = ui.menu;
     const mascot = this.add
-      .sprite(lib.x, lib.y, "librarian", "idle")
-      .setScale(lib.scale)
-      .setOrigin(0.5, lib.originY)
-      .setAlpha(lib.alpha)
+      .sprite(menu.mascotX, menu.mascotY, "librarian", "idle")
+      .setScale(menu.mascotScale)
+      .setOrigin(0.5, menu.mascotOriginY)
       .play("librarian-idle");
+
+    const title = this.add
+      .text(width / 2, menu.titleY, I18n.t("appTitle"), {
+        fontFamily: FONTS.title,
+        fontSize: `${menu.titleSize}px`,
+        color: "#f3e3c3",
+        fontStyle: "bold",
+        align: "center",
+        wordWrap: { width: Math.max(160, width - 40) },
+      })
+      .setOrigin(0.5)
+      .setShadow(0, 4, "#00000088", 6);
+
+    const subtitleY = Math.max(menu.subtitleY, Math.round(title.y + title.height / 2 + 10));
+    const subtitle = this.add
+      .text(width / 2, subtitleY, I18n.t("subtitle"), {
+        fontFamily: FONTS.body,
+        fontSize: ui.compact || ui.shortLandscape ? "15px" : "20px",
+        color: "#d9a441",
+        align: "center",
+        wordWrap: { width: Math.max(160, width - 40) },
+      })
+      .setOrigin(0.5);
+
+    const cx = menu.menuCx;
+    const btnW = menu.menuBtnW;
+    const primaryH = ui.shortLandscape ? 44 : 56;
+    const secW = menu.secW;
+    const secH = menu.secH;
+    const secGapX = 12;
+    const placed = ui.portrait
+      ? this.placePortraitButtons(menu, subtitle, primaryH, secH)
+      : {
+          y: Math.max(menu.buttonsY, subtitleY + 32),
+          gap: menu.gap,
+          gapToSecondary: ui.shortLandscape ? 8 : 20,
+          secRowGap: menu.secGapY,
+          mascotY: menu.mascotY,
+          mascotScale: menu.mascotScale,
+        };
+
+    mascot.y = placed.mascotY;
+    mascot.setScale(placed.mascotScale);
+    this.tweens.killTweensOf(mascot);
     this.tweens.add({
       targets: mascot,
-      y: lib.y - 7,
+      y: placed.mascotY - 7,
       angle: 1.6,
       duration: 1500,
       yoyo: true,
@@ -46,38 +81,12 @@ export default class MenuScene extends Phaser.Scene {
       ease: "Sine.inOut",
     });
 
-    const titleSize = ui.compact ? (ui.portrait ? 36 : 42) : 52;
-    const titleY = ui.portrait ? 56 + ui.safe.top : height * 0.2;
-    this.add
-      .text(width / 2, titleY, I18n.t("appTitle"), {
-        fontFamily: FONTS.title,
-        fontSize: `${titleSize}px`,
-        color: "#f3e3c3",
-        fontStyle: "bold",
-        align: "center",
-        wordWrap: { width: width - 32 },
-      })
-      .setOrigin(0.5)
-      .setShadow(0, 4, "#00000088", 6);
-
-    this.add
-      .text(width / 2, titleY + (ui.portrait ? 42 : height * 0.08), I18n.t("subtitle"), {
-        fontFamily: FONTS.body,
-        fontSize: ui.compact ? "16px" : "20px",
-        color: "#d9a441",
-        align: "center",
-        wordWrap: { width: width - 40 },
-      })
-      .setOrigin(0.5);
-
-    const cx = ui.menuCx;
-    const btnW = ui.menuBtnW;
-    let y = ui.portrait ? titleY + 110 : height * 0.38;
-    const gap = ui.portrait ? Math.min(58, (height - y - 120) / 5) : 58;
+    let y = placed.y;
+    const gap = placed.gap;
 
     makeButton(this, cx, y, I18n.t("start"), () => {
       goToScene(this, "GameScene", { level: 1 });
-    }, { width: btnW });
+    }, { width: btnW, height: primaryH });
 
     const hasProgress = Storage.hasProgress();
     y += gap;
@@ -87,40 +96,38 @@ export default class MenuScene extends Phaser.Scene {
       y,
       hasProgress ? I18n.t("continueLvl", { level: Storage.getMaxLevelUnlocked() }) : I18n.t("continue"),
       () => goToScene(this, "GameScene", { level: Storage.getMaxLevelUnlocked() }),
-      { enabled: hasProgress, width: btnW }
+      { enabled: hasProgress, width: btnW, height: primaryH }
     );
 
     y += gap;
-    makeButton(this, cx, y, I18n.t("levelSelect"), () => {
-      goToScene(this, "LevelSelectScene");
-    }, { width: btnW });
-
-    y += gap + (ui.portrait ? 12 : 20);
-    const secW = ui.portrait ? Math.min(148, (btnW - 12) / 2) : 110;
-    const secH = 50;
-    const secGapX = 12;
-    const secGapY = 12;
-    const secOpts = { width: secW, height: secH, fontSize: 15, fill: COLORS.woodLight, textColor: "#f3e3c3" };
-    const secRow1Y = y;
-    const secRow2Y = y + secH + secGapY;
-
-    makeButton(this, cx - secW / 2 - secGapX / 2, secRow1Y, I18n.t("tutorial"), () => this.openTutorial(), secOpts);
-    makeButton(this, cx + secW / 2 + secGapX / 2, secRow1Y, I18n.t("books"), () => goToScene(this, "BooksScene"), secOpts);
-    makeButton(this, cx - secW / 2 - secGapX / 2, secRow2Y, I18n.t("settings"), () => this.openSettings(), secOpts);
-    makeButton(this, cx + secW / 2 + secGapX / 2, secRow2Y, I18n.t("feedback"), () => openFeedbackForm({ scene: this }), secOpts);
-
-    makeButton(this, cx, height - 36 - ui.safe.bottom, I18n.t("resetProgress"), () => this.confirmReset(), {
-      width: Math.min(200, btnW),
-      height: 36,
-      fontSize: 14,
+    makeButton(this, cx, y, I18n.t("resetProgress"), () => this.confirmReset(), {
+      width: btnW,
+      height: primaryH,
+      fontSize: 18,
       fill: COLORS.bad,
       fillHover: 0xa53f3e,
       textColor: "#ffffff",
       enabled: hasProgress,
     });
 
+    y += gap;
+    makeButton(this, cx, y, I18n.t("levelSelect"), () => {
+      goToScene(this, "LevelSelectScene");
+    }, { width: btnW, height: primaryH });
+
+    y += primaryH / 2 + placed.gapToSecondary + secH / 2;
+    const secFont = ui.shortLandscape ? 13 : 15;
+    const secOpts = { width: secW, height: secH, fontSize: secFont, fill: COLORS.woodLight, textColor: "#f3e3c3" };
+    const secRow1Y = y;
+    const secRow2Y = y + secH + (placed.secRowGap ?? menu.secGapY);
+
+    makeButton(this, cx - secW / 2 - secGapX / 2, secRow1Y, I18n.t("tutorial"), () => this.openTutorial(), secOpts);
+    makeButton(this, cx + secW / 2 + secGapX / 2, secRow1Y, I18n.t("books"), () => goToScene(this, "BooksScene"), secOpts);
+    makeButton(this, cx - secW / 2 - secGapX / 2, secRow2Y, I18n.t("settings"), () => this.openSettings(), secOpts);
+    makeButton(this, cx + secW / 2 + secGapX / 2, secRow2Y, I18n.t("feedback"), () => openFeedbackForm({ scene: this }), secOpts);
+
     this.add
-      .text(width - 16 - ui.safe.right, height - 12 - ui.safe.bottom, I18n.t("appVersion", { version: appVersion() }), {
+      .text(width - 16 - ui.safe.right, menu.versionY, I18n.t("appVersion", { version: appVersion() }), {
         fontFamily: FONTS.body,
         fontSize: "14px",
         color: "#c9b08a",
@@ -128,20 +135,60 @@ export default class MenuScene extends Phaser.Scene {
       .setOrigin(1, 1)
       .setDepth(10);
 
-    this.placeInstallHint(width, height, ui);
+    this.placeInstallHint(width, ui, menu);
 
     bindResizeRestart(this);
     this.events.once("shutdown", () => closeFeedbackForm());
   }
 
-  placeInstallHint(width, height, ui) {
+  placePortraitButtons(menu, subtitle, primaryH, secH) {
+    const subtitleBottom = subtitle.y + subtitle.height / 2;
+    const availableTop = subtitleBottom + 16;
+    const footerTop = menu.versionY - 12;
+    let mascotScale = menu.mascotScale;
+    let mascotH = 320 * mascotScale;
+    const mascotY = footerTop - 4;
+    let contentBottom = mascotY - mascotH - 16;
+
+    const itemsH = 4 * primaryH + 2 * secH;
+    const minGap = 16;
+    const spaces = 7;
+    let innerH = contentBottom - availableTop;
+
+    if (innerH < itemsH + minGap * spaces) {
+      mascotScale = Math.max(0.3, mascotScale * 0.7);
+      mascotH = 320 * mascotScale;
+      contentBottom = mascotY - mascotH - 16;
+      innerH = contentBottom - availableTop;
+    }
+
+    const free = Math.max(0, innerH - itemsH);
+    const even = free / spaces;
+    const betweenPrimary = Math.max(minGap, even);
+    const gapToSecondary = Math.max(minGap, even);
+    const lead = Math.max(minGap, even);
+    const y = Math.round(availableTop + lead + primaryH / 2);
+
+    return {
+      y,
+      gap: primaryH + betweenPrimary,
+      gapToSecondary,
+      secRowGap: betweenPrimary,
+      mascotY: Math.round(mascotY),
+      mascotScale,
+    };
+  }
+
+  placeInstallHint(width, ui, menu) {
     if (Pwa.isStandalone()) return;
-    const y = height - 12 - ui.safe.bottom;
+    const hintLeft = 16 + ui.safe.left;
+    const hintY = menu.versionY;
+
     if (Pwa.canPrompt()) {
       makeButton(
         this,
-        16 + ui.safe.left + 70,
-        height - 28 - ui.safe.bottom,
+        hintLeft + 70,
+        hintY - 6,
         I18n.t("installApp"),
         () => {
           Pwa.promptInstall();
@@ -150,13 +197,13 @@ export default class MenuScene extends Phaser.Scene {
       ).setDepth(10);
       return;
     }
-    if (!isCoarsePointer() && width >= 720) return;
+    if (!isCoarsePointer() && width >= 720 && !ui.shortLandscape) return;
     this.add
-      .text(16 + ui.safe.left, y, I18n.t("installHint"), {
+      .text(hintLeft, hintY, I18n.t("installHint"), {
         fontFamily: FONTS.body,
         fontSize: "12px",
         color: "#c9b08a",
-        wordWrap: { width: Math.min(200, width * 0.42) },
+        wordWrap: { width: Math.min(220, width * 0.55) },
       })
       .setOrigin(0, 1)
       .setDepth(10);

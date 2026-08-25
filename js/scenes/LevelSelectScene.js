@@ -1,7 +1,7 @@
 import { Storage } from "../utils/storage.js";
 import { loadLevels } from "../utils/dataLoader.js";
 import { I18n } from "../utils/i18n.js?v=2";
-import { makeButton, goToScene, COLORS, FONTS, formatTime, bindResizeRestart } from "../utils/ui.js";
+import { makeButton, goToScene, COLORS, FONTS, formatTime, bindResizeRestart, placeSceneHeader } from "../utils/ui.js";
 import { getUiLayout } from "../config/layout.js";
 import { fillLibraryRoom } from "../utils/libraryArt.js";
 
@@ -68,24 +68,10 @@ export default class LevelSelectScene extends Phaser.Scene {
 
     fillLibraryRoom(this);
 
-    // Header
-    this.add
-      .text(width / 2, 52, I18n.t("levelSelect"), {
-        fontFamily: FONTS.title,
-        fontSize: width < 720 ? "28px" : "36px",
-        color: "#f3e3c3",
-        fontStyle: "bold",
-        wordWrap: { width: width - 180 },
-        align: "center",
-      })
-      .setOrigin(0.5);
-
-    makeButton(this, Math.min(80, width * 0.18), 40, I18n.t("back"), () => goToScene(this, "MenuScene"), {
-      width: width < 420 ? 96 : 120,
-      height: 40,
-      fontSize: 16,
-      fill: COLORS.woodLight,
-      textColor: "#f3e3c3",
+    const header = placeSceneHeader(this, {
+      title: I18n.t("levelSelect"),
+      backLabel: I18n.t("back"),
+      onBack: () => goToScene(this, "MenuScene"),
     });
 
     // Loading
@@ -120,7 +106,7 @@ export default class LevelSelectScene extends Phaser.Scene {
     const CELL_H = ui.cellH;
     const CARD_W = ui.cardW;
     const CARD_H = ui.cardH;
-    const GRID_TOP = ui.gridTop;
+    const GRID_TOP = Math.max(ui.gridTop, header.headerBottom + 8);
     const GRID_BOTTOM = ui.gridBottom;
 
     this.pageCount = Math.ceil(levels.length / PER_PAGE);
@@ -360,7 +346,7 @@ export default class LevelSelectScene extends Phaser.Scene {
   buildPager(width, height) {
     if (this.pageCount <= 1) return;
 
-    const btnY = height - 32;
+    const btnY = height - 32 - getUiLayout(width, height).safe.bottom;
 
     this.prevPageBtn = makeButton(
       this,

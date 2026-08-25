@@ -2,7 +2,7 @@ import { loadBooks } from "../utils/dataLoader.js";
 import { I18n } from "../utils/i18n.js";
 import { bookDetailRows, isLongBookTitle, truncateWrappedText } from "../utils/bookDetail.js";
 import { shouldOfferTranslation, translateText } from "../utils/translate.js";
-import { makeButton, goToScene, COLORS, FONTS, bindResizeRestart } from "../utils/ui.js";
+import { makeButton, goToScene, COLORS, FONTS, bindResizeRestart, placeSceneHeader } from "../utils/ui.js";
 import { fillLibraryRoom } from "../utils/libraryArt.js";
 
 const LABEL_W = 118;
@@ -38,31 +38,18 @@ export default class BookDetailScene extends Phaser.Scene {
   }
 
   create() {
-    const { width } = this.scale;
     this.cameras.main.fadeIn(200, 0, 0, 0);
     this.drawBackground();
 
-    makeButton(this, Math.min(80, width * 0.18), 40, I18n.t("back"), () => goToScene(this, "BooksScene"), {
-      width: width < 420 ? 96 : 120,
-      height: 40,
-      fontSize: 16,
-      fill: COLORS.woodLight,
-      textColor: "#f3e3c3",
+    const header = placeSceneHeader(this, {
+      title: I18n.t("booksTitle"),
+      backLabel: I18n.t("back"),
+      onBack: () => goToScene(this, "BooksScene"),
     });
-
-    this.add
-      .text(width / 2, 42, I18n.t("booksTitle"), {
-        fontFamily: FONTS.title,
-        fontSize: width < 720 ? "26px" : "36px",
-        color: "#f3e3c3",
-        fontStyle: "bold",
-        wordWrap: { width: width - 180 },
-        align: "center",
-      })
-      .setOrigin(0.5);
+    this.headerBottom = header.headerBottom;
 
     this.statusText = this.add
-      .text(width / 2, this.scale.height / 2, I18n.t("loadingBooks"), {
+      .text(this.scale.width / 2, this.scale.height / 2, I18n.t("loadingBooks"), {
         fontFamily: FONTS.body,
         fontSize: "22px",
         color: "#d9a441",
@@ -145,7 +132,7 @@ export default class BookDetailScene extends Phaser.Scene {
   panelLayout(contentHeight = null) {
     const { width, height } = this.scale;
     const w = Math.min(820, width - 24);
-    const top = 88;
+    const top = Math.max(88, (this.headerBottom ?? 80) + 8);
     const bottom = 24;
     const pad = 24;
     const maxH = height - top - bottom;

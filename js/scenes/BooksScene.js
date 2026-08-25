@@ -2,7 +2,7 @@ import { loadBooks } from "../utils/dataLoader.js";
 import { fetchBooksFromApiByTag } from "../utils/apiBooks.js";
 import { truncateSingleLineText } from "../utils/bookDetail.js";
 import { I18n } from "../utils/i18n.js?v=2";
-import { makeButton, goToScene, COLORS, FONTS, isCoarsePointer } from "../utils/ui.js";
+import { makeButton, goToScene, COLORS, FONTS, isCoarsePointer, placeSceneHeader } from "../utils/ui.js";
 import { fillLibraryRoom } from "../utils/libraryArt.js";
 
 const DEFAULT_TAGS = [
@@ -93,24 +93,12 @@ export default class BooksScene extends Phaser.Scene {
     this.cameras.main.fadeIn(200, 0, 0, 0);
     this.drawBackground();
 
-    this.add
-      .text(width / 2, 42, I18n.t("booksTitle"), {
-        fontFamily: FONTS.title,
-        fontSize: width < 720 ? "26px" : "36px",
-        color: "#f3e3c3",
-        fontStyle: "bold",
-        wordWrap: { width: width - 180 },
-        align: "center",
-      })
-      .setOrigin(0.5);
-
-    makeButton(this, Math.min(80, width * 0.18), 40, I18n.t("back"), () => goToScene(this, "MenuScene"), {
-      width: width < 420 ? 96 : 120,
-      height: 40,
-      fontSize: 16,
-      fill: COLORS.woodLight,
-      textColor: "#f3e3c3",
+    const header = placeSceneHeader(this, {
+      title: I18n.t("booksTitle"),
+      backLabel: I18n.t("back"),
+      onBack: () => goToScene(this, "MenuScene"),
     });
+    this.headerBottom = header.headerBottom;
 
     this.statusText = this.add
       .text(width / 2, height / 2, I18n.t("loadingBooks"), {
@@ -142,7 +130,7 @@ export default class BooksScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const w = Math.min(820, width - 24);
     const x = width / 2 - w / 2;
-    const top = 92;
+    const top = Math.max(92, (this.headerBottom ?? 88) + 8);
     const pagerY = height - PAGER_CENTER_FROM_BOTTOM;
     const panelBottom = pagerY + PAGER_BTN_H / 2 + PAGER_BOTTOM_PAD;
     const h = panelBottom - top;
