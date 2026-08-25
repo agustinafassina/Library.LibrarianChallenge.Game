@@ -53,16 +53,19 @@ export default class MenuScene extends Phaser.Scene {
 
     const cx = menu.menuCx;
     const btnW = menu.menuBtnW;
-    const primaryH = ui.shortLandscape ? 44 : 56;
+    const primaryH = ui.shortLandscape ? 44 : 52;
+    const resetH = ui.shortLandscape ? 34 : 40;
+    const resetW = Math.min(btnW, Math.round(btnW * 0.86));
     const secW = menu.secW;
     const secH = menu.secH;
-    const secGapX = 12;
+    const secGapX = 10;
     const placed = ui.portrait
-      ? this.placePortraitButtons(menu, subtitle, primaryH, secH)
+      ? this.placePortraitButtons(menu, subtitle, primaryH, resetH, secH)
       : {
           y: Math.max(menu.buttonsY, subtitleY + 32),
           gap: menu.gap,
-          gapToSecondary: ui.shortLandscape ? 8 : 20,
+          gapInner: ui.shortLandscape ? 10 : 14,
+          gapToSecondary: ui.shortLandscape ? 10 : 18,
           secRowGap: menu.secGapY,
           mascotY: menu.mascotY,
           mascotScale: menu.mascotScale,
@@ -70,12 +73,13 @@ export default class MenuScene extends Phaser.Scene {
 
     mascot.y = placed.mascotY;
     mascot.setScale(placed.mascotScale);
+    mascot.setAlpha(0.92);
     this.tweens.killTweensOf(mascot);
     this.tweens.add({
       targets: mascot,
-      y: placed.mascotY - 7,
-      angle: 1.6,
-      duration: 1500,
+      y: placed.mascotY - 6,
+      angle: 1.2,
+      duration: 1600,
       yoyo: true,
       repeat: -1,
       ease: "Sine.inOut",
@@ -83,6 +87,7 @@ export default class MenuScene extends Phaser.Scene {
 
     let y = placed.y;
     const gap = placed.gap;
+    const gapInner = placed.gapInner ?? 14;
 
     makeButton(this, cx, y, I18n.t("start"), () => {
       goToScene(this, "GameScene", { level: 1 });
@@ -100,23 +105,23 @@ export default class MenuScene extends Phaser.Scene {
     );
 
     y += gap;
+    makeButton(this, cx, y, I18n.t("levelSelect"), () => {
+      goToScene(this, "LevelSelectScene");
+    }, { width: btnW, height: primaryH });
+
+    y += primaryH / 2 + gapInner + resetH / 2;
     makeButton(this, cx, y, I18n.t("resetProgress"), () => this.confirmReset(), {
-      width: btnW,
-      height: primaryH,
-      fontSize: 18,
+      width: resetW,
+      height: resetH,
+      fontSize: 15,
       fill: COLORS.bad,
       fillHover: 0xa53f3e,
       textColor: "#ffffff",
       enabled: hasProgress,
     });
 
-    y += gap;
-    makeButton(this, cx, y, I18n.t("levelSelect"), () => {
-      goToScene(this, "LevelSelectScene");
-    }, { width: btnW, height: primaryH });
-
-    y += primaryH / 2 + placed.gapToSecondary + secH / 2;
-    const secFont = ui.shortLandscape ? 13 : 15;
+    y += resetH / 2 + placed.gapToSecondary + secH / 2;
+    const secFont = ui.shortLandscape ? 13 : 14;
     const secOpts = { width: secW, height: secH, fontSize: secFont, fill: COLORS.woodLight, textColor: "#f3e3c3" };
     const secRow1Y = y;
     const secRow2Y = y + secH + (placed.secRowGap ?? menu.secGapY);
@@ -141,39 +146,41 @@ export default class MenuScene extends Phaser.Scene {
     this.events.once("shutdown", () => closeFeedbackForm());
   }
 
-  placePortraitButtons(menu, subtitle, primaryH, secH) {
+  placePortraitButtons(menu, subtitle, primaryH, resetH, secH) {
     const subtitleBottom = subtitle.y + subtitle.height / 2;
-    const availableTop = subtitleBottom + 16;
-    const footerTop = menu.versionY - 12;
+    const availableTop = subtitleBottom + 20;
+    const footerTop = menu.versionY - 10;
     let mascotScale = menu.mascotScale;
     let mascotH = 320 * mascotScale;
-    const mascotY = footerTop - 4;
-    let contentBottom = mascotY - mascotH - 16;
+    const mascotY = footerTop - 2;
+    let contentBottom = mascotY - mascotH * 0.55 - 12;
 
-    const itemsH = 4 * primaryH + 2 * secH;
-    const minGap = 16;
+    const itemsH = 3 * primaryH + resetH + 2 * secH;
+    const minGap = 14;
+    const maxGap = 22;
     const spaces = 7;
     let innerH = contentBottom - availableTop;
 
     if (innerH < itemsH + minGap * spaces) {
-      mascotScale = Math.max(0.3, mascotScale * 0.7);
+      mascotScale = Math.max(0.26, mascotScale * 0.75);
       mascotH = 320 * mascotScale;
-      contentBottom = mascotY - mascotH - 16;
+      contentBottom = mascotY - mascotH * 0.5 - 10;
       innerH = contentBottom - availableTop;
     }
 
     const free = Math.max(0, innerH - itemsH);
-    const even = free / spaces;
-    const betweenPrimary = Math.max(minGap, even);
-    const gapToSecondary = Math.max(minGap, even);
-    const lead = Math.max(minGap, even);
+    const even = Math.min(maxGap, Math.max(minGap, free / spaces));
+    const used = itemsH + even * spaces;
+    const leftover = Math.max(0, innerH - used);
+    const lead = even + leftover * 0.42;
     const y = Math.round(availableTop + lead + primaryH / 2);
 
     return {
       y,
-      gap: primaryH + betweenPrimary,
-      gapToSecondary,
-      secRowGap: betweenPrimary,
+      gap: primaryH + even,
+      gapInner: even,
+      gapToSecondary: even + 4,
+      secRowGap: even,
       mascotY: Math.round(mascotY),
       mascotScale,
     };

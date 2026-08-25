@@ -49,23 +49,22 @@ function menuMetrics(w, h, safe, portrait, compact, shortLandscape, librarianSca
   if (portrait) {
     const edge = Math.max(safe.bottom, 16);
     const versionYPortrait = h - 22 - edge;
-    const titleY = Math.round(60 + safe.top);
-    const titleSize = compact ? 32 : 44;
-    const subtitleY = titleY + 40;
-    const tall = h >= 800;
-    const mascotScale = Math.min(tall ? 0.64 : 0.46, Math.max(0.32, (h * (tall ? 0.26 : 0.18)) / 320));
+    const titleY = Math.round(52 + safe.top);
+    const titleSize = compact ? 30 : 44;
+    const subtitleY = titleY + 36;
+    const mascotScale = Math.min(0.48, Math.max(0.3, (h * 0.16) / 320));
     return {
       titleY,
       titleSize,
       subtitleY,
-      buttonsY: subtitleY + 36,
+      buttonsY: subtitleY + 32,
       gap: 56,
-      secH: 50,
-      secW: Math.min(148, (menuBtnW - 12) / 2),
-      secGapY: 12,
+      secH: 42,
+      secW: Math.min(140, (menuBtnW - 12) / 2),
+      secGapY: 10,
       versionY: versionYPortrait,
-      mascotX: Math.round(w * (tall ? 0.56 : 0.78)),
-      mascotY: Math.round(h - 48 - edge),
+      mascotX: Math.round(w * 0.78),
+      mascotY: Math.round(h - 36 - edge),
       mascotScale,
       mascotOriginY: 1,
       menuBtnW,
