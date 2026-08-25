@@ -254,11 +254,16 @@ export default class GameScene extends Phaser.Scene {
     const menuFont = stacked ? 13 : compact ? 14 : 16;
     const pauseW = compact || stacked ? 40 : 44;
     const pauseGap = 8;
-    const titleY = Math.round(ui.safe.top + (stacked ? 22 : 28));
+    const titleY = ui.hudTitleY;
 
     const bar = this.add.graphics();
     bar.fillStyle(COLORS.ink, 0.92);
     bar.fillRect(0, 0, width, ui.topBarH);
+    if (stacked) {
+      const divY = Math.round((titleY + menuH / 2 + ui.hudStatsY - 10) / 2);
+      bar.lineStyle(1, COLORS.accent, 0.22);
+      bar.lineBetween(16 + ui.safe.left, divY, width - rightPad, divY);
+    }
     bar.setDepth(50);
 
     this.titleText = this.add
@@ -274,7 +279,7 @@ export default class GameScene extends Phaser.Scene {
     this.levelText = this.add
       .text(0, titleY, "", {
         fontFamily: FONTS.body,
-        fontSize: stacked ? "13px" : compact ? "15px" : "18px",
+        fontSize: stacked ? (ui.tallPortrait ? "14px" : "13px") : compact ? "15px" : "18px",
         color: "#d9a441",
         fontStyle: "bold",
       })
@@ -284,7 +289,7 @@ export default class GameScene extends Phaser.Scene {
     this.movesText = this.add
       .text(0, titleY, I18n.t("movesLabel", { moves: 0 }), {
         fontFamily: FONTS.body,
-        fontSize: stacked ? "13px" : compact ? "15px" : "18px",
+        fontSize: stacked ? (ui.tallPortrait ? "14px" : "13px") : compact ? "15px" : "18px",
         color: "#f3e3c3",
       })
       .setOrigin(0.5)
@@ -293,7 +298,7 @@ export default class GameScene extends Phaser.Scene {
     this.timeText = this.add
       .text(0, titleY, I18n.t("timeLabel", { time: "0:00" }), {
         fontFamily: FONTS.body,
-        fontSize: stacked ? "13px" : compact ? "15px" : "18px",
+        fontSize: stacked ? (ui.tallPortrait ? "14px" : "13px") : compact ? "15px" : "18px",
         color: "#f3e3c3",
         fontStyle: "bold",
       })
@@ -479,25 +484,41 @@ export default class GameScene extends Phaser.Scene {
     const compact = ui.compact;
     const stacked = ui.stackedHud;
     const titleBase = stacked ? 16 : compact ? 18 : 22;
-    const infoBase = stacked ? 13 : compact ? 15 : 18;
+    const infoBase = stacked ? (ui.tallPortrait ? 14 : 13) : compact ? 15 : 18;
     const leftPad = 16 + ui.safe.left;
-    const titleY = Math.round(ui.safe.top + (stacked ? 22 : 28));
+    const titleY = ui.hudTitleY;
+    const statsY = ui.hudStatsY;
 
     if (stacked) {
       const titleMaxW = Math.max(110, width - 24 - (this.headerMenuW ?? 72) - (this.headerPauseW ?? 40) - 20);
       this.titleText.setPosition(leftPad, titleY);
       this.fitTextToWidth(this.titleText, titleMaxW, titleBase, 11);
 
-      const row2Y = Math.round(ui.safe.top + 58);
-      const statsPad = 16;
-      const statsW = width - statsPad * 2;
-      const step = statsW / 3;
-      this.fitTextToWidth(this.levelText, step - 8, infoBase, 10);
-      this.fitTextToWidth(this.movesText, step - 8, infoBase, 10);
-      this.fitTextToWidth(this.timeText, step - 8, infoBase, 10);
-      this.levelText.setPosition(Math.round(statsPad + step * 0.5), row2Y);
-      this.movesText.setPosition(Math.round(statsPad + step * 1.5), row2Y);
-      this.timeText.setPosition(Math.round(statsPad + step * 2.5), row2Y);
+      const statsPad = ui.tallPortrait ? 28 : 20;
+      const statsGap = ui.tallPortrait ? 22 : 16;
+      this.fitTextToWidth(this.levelText, 140, infoBase, 10);
+      this.fitTextToWidth(this.movesText, 120, infoBase, 10);
+      this.fitTextToWidth(this.timeText, 120, infoBase, 10);
+      const clusterW =
+        this.levelText.width + this.movesText.width + this.timeText.width + statsGap * 2;
+      const maxCluster = width - statsPad * 2;
+      if (clusterW <= maxCluster) {
+        let x = Math.round((width - clusterW) / 2);
+        this.levelText.setPosition(x + this.levelText.width / 2, statsY);
+        x += this.levelText.width + statsGap;
+        this.movesText.setPosition(x + this.movesText.width / 2, statsY);
+        x += this.movesText.width + statsGap;
+        this.timeText.setPosition(x + this.timeText.width / 2, statsY);
+      } else {
+        const statsW = width - statsPad * 2;
+        const step = statsW / 3;
+        this.fitTextToWidth(this.levelText, step - 8, infoBase, 10);
+        this.fitTextToWidth(this.movesText, step - 8, infoBase, 10);
+        this.fitTextToWidth(this.timeText, step - 8, infoBase, 10);
+        this.levelText.setPosition(Math.round(statsPad + step * 0.5), statsY);
+        this.movesText.setPosition(Math.round(statsPad + step * 1.5), statsY);
+        this.timeText.setPosition(Math.round(statsPad + step * 2.5), statsY);
+      }
       return;
     }
 
@@ -545,12 +566,13 @@ export default class GameScene extends Phaser.Scene {
     const rows = Math.max(1, Math.ceil(count / this.ui.maxPerRow));
     this.pageCount = Math.max(1, Math.ceil(rows / this.ui.maxRowsPerPage));
     const rowsOnScreen = Math.min(rows, this.ui.maxRowsPerPage);
+    const pagerReserve = this.ui.portrait && this.pageCount > 1 ? 44 : 0;
 
     const regionLeft = this.ui.leftReserved;
     const regionRight = width - (this.pageCount > 1 ? this.ui.rightGutter : this.ui.rightMargin);
     const regionCenter = (regionLeft + regionRight) / 2;
     const availW = regionRight - regionLeft;
-    const availH = this.ui.areaBottom - this.areaTop;
+    const availH = this.ui.areaBottom - this.areaTop - pagerReserve;
 
     const rowCounts = [];
     let remaining = count;
@@ -566,15 +588,25 @@ export default class GameScene extends Phaser.Scene {
       60, this.ui.bookWMax
     );
     const rawBookH = (availH - rowsOnScreen * this.ui.boardH - (rowsOnScreen - 1) * this.ui.gapY) / rowsOnScreen;
-    // Cap height so a single-row level doesn't fill the whole vertical space.
-    const maxBookHForRows = rowsOnScreen === 1 ? Math.min(rawBookH, this.bookW * 1.6)
-      : rowsOnScreen === 2 ? Math.min(rawBookH, this.bookW * 1.8)
-      : rawBookH;
-    this.bookH = Phaser.Math.Clamp(maxBookHForRows, this.ui.portrait ? 64 : 78, this.ui.bookHMax);
+    const ratioCap = rowsOnScreen === 1 ? this.bookW * 1.6
+      : rowsOnScreen === 2 ? this.bookW * 1.8
+      : this.ui.portrait ? this.bookW * 1.68 : this.bookW * 1.55;
+    this.bookH = Math.max(48, Math.min(rawBookH, this.ui.bookHMax, ratioCap));
 
-    const rowStride = this.bookH + this.ui.boardH + this.ui.gapY;
-    const totalH = rowsOnScreen * this.bookH + rowsOnScreen * this.ui.boardH + (rowsOnScreen - 1) * this.ui.gapY;
-    const startY = this.areaTop + (availH - totalH) / 2;
+    let rowGap = this.ui.gapY;
+    let totalH = rowsOnScreen * this.bookH + rowsOnScreen * this.ui.boardH + (rowsOnScreen - 1) * rowGap;
+    let extra = Math.max(0, availH - totalH);
+    if (this.ui.portrait && rowsOnScreen > 1 && extra > 12) {
+      const bump = Math.min(this.ui.tallPortrait ? 14 : 8, extra / (rowsOnScreen - 1));
+      rowGap += bump;
+      extra -= bump * (rowsOnScreen - 1);
+      totalH = rowsOnScreen * this.bookH + rowsOnScreen * this.ui.boardH + (rowsOnScreen - 1) * rowGap;
+    }
+    const topSlack = this.ui.portrait ? Math.min(extra * 0.18, 20) : extra / 2;
+    const startY = this.areaTop + topSlack;
+    const rowStride = this.bookH + this.ui.boardH + rowGap;
+    const widestRowW = widestRow * this.bookW + (widestRow - 1) * this.ui.gapX;
+    const gridLeft = regionCenter - widestRowW / 2;
 
     this.slots = [];
     this.rowRects = [];
@@ -582,8 +614,7 @@ export default class GameScene extends Phaser.Scene {
       const page = Math.floor(r / this.ui.maxRowsPerPage);
       const screenRow = r % this.ui.maxRowsPerPage;
       const cnt = rowCounts[r];
-      const rowW = cnt * this.bookW + (cnt - 1) * this.ui.gapX;
-      const startX = regionCenter - rowW / 2 + this.bookW / 2;
+      const startX = gridLeft + this.bookW / 2;
       const centerY = startY + this.bookH / 2 + screenRow * rowStride;
       for (let c = 0; c < cnt; c++) {
         this.slots.push({
@@ -594,9 +625,9 @@ export default class GameScene extends Phaser.Scene {
         });
       }
       this.rowRects.push({
-        x: startX - this.bookW / 2 - 16,
+        x: gridLeft - 16,
         y: startY + this.bookH + screenRow * rowStride,
-        w: rowW + 32,
+        w: widestRowW + 32,
         page, zoneIdx: 0,
       });
     }
@@ -649,10 +680,8 @@ export default class GameScene extends Phaser.Scene {
       (availW - (maxWidestRow - 1) * this.ui.gapX) / maxWidestRow,
       60, this.ui.bookWMax
     );
-    this.bookH = Phaser.Math.Clamp(
-      (availH - totalRows * this.ui.boardH - (totalRows - 1) * this.ui.gapY) / totalRows,
-      this.ui.portrait ? 64 : 78, this.ui.bookHMax
-    );
+    const rawBookH = (availH - totalRows * this.ui.boardH - (totalRows - 1) * this.ui.gapY) / totalRows;
+    this.bookH = Math.max(48, Math.min(rawBookH, this.ui.bookHMax));
 
     const rowStride = this.bookH + this.ui.boardH + this.ui.gapY;
 
@@ -836,7 +865,7 @@ export default class GameScene extends Phaser.Scene {
   createBookCard(book, slot, primaryAttr = null) {
     const w = this.bookW;
     const h = this.bookH;
-    const face = bookFaceSize(book, w, h);
+    const face = bookFaceSize(book, w, h, { varySize: primaryAttr === "size" });
 
     let subtitle;
     if (primaryAttr === "pages") {
@@ -1209,14 +1238,23 @@ export default class GameScene extends Phaser.Scene {
     this.updateTopBarLayout();
 
     const zones = this.levelDef.zones;
+    const portrait = this.ui.portrait;
+    const cardPadX = portrait ? (this.ui.tallPortrait ? 18 : 14) : 0;
+    const cardPadY = portrait ? (this.ui.tallPortrait ? 14 : 10) : 0;
     const bx = Math.round(width / 2);
-    const by = Math.round(this.ui.instructionY);
-    const wrapW = Math.round(this.ui.instructionWrap);
+    const cardTop = Math.round(this.ui.instructionY);
+    const by = cardTop + cardPadY;
+    const cardW = portrait
+      ? Math.min(width - 24, Math.round(this.ui.instructionWrap) + cardPadX * 2)
+      : 0;
+    const wrapW = portrait ? cardW - cardPadX * 2 : Math.round(this.ui.instructionWrap);
     const textRes = Math.min(window.devicePixelRatio || 1, 2);
+    const ruleSize = portrait ? (this.ui.tallPortrait ? "16px" : "15px") : this.ui.compact ? "16px" : "18px";
+    const detailSize = portrait ? (this.ui.tallPortrait ? "14px" : "13px") : "15px";
+    const detailMaxLines = portrait ? (this.ui.tallPortrait ? 3 : 2) : 4;
     let bottomOfInstruction;
 
     if (zones.length === 1) {
-      // Single-zone: show "Rule: <label>" + optional hint
       const ruleName = this.ruleDisplayName(zones[0].rule);
       const ruleLine = I18n.t("ruleColon", { label: ruleName });
       const detail =
@@ -1225,52 +1263,83 @@ export default class GameScene extends Phaser.Scene {
       const ruleObj = this.add
         .text(bx, by, ruleLine, {
           fontFamily: FONTS.body,
-          fontSize: this.ui.compact ? "16px" : "18px",
+          fontSize: ruleSize,
           color: "#d9a441",
           fontStyle: "bold",
           align: "center",
           wordWrap: { width: wrapW },
+          lineSpacing: 4,
         })
         .setOrigin(0.5, 0)
+        .setDepth(2)
         .setResolution(textRes);
+      this.fitTextToLines(ruleObj, ruleLine, wrapW, 2, Number.parseInt(ruleSize, 10), 12);
 
-      bottomOfInstruction = Math.round(by + ruleObj.height + 6);
+      bottomOfInstruction = Math.round(by + ruleObj.height + this.ui.ruleDetailGap);
 
       if (detail) {
         const detailObj = this.add
           .text(bx, bottomOfInstruction, detail, {
             fontFamily: FONTS.body,
-            fontSize: "15px",
+            fontSize: detailSize,
             color: "#f3e3c3",
             align: "center",
             wordWrap: { width: wrapW },
-            lineSpacing: 3,
+            lineSpacing: portrait ? 5 : 3,
           })
           .setOrigin(0.5, 0)
+          .setDepth(2)
           .setResolution(textRes);
-        bottomOfInstruction = Math.round(bottomOfInstruction + detailObj.height + 6);
+        this.fitTextToLines(
+          detailObj,
+          detail,
+          wrapW,
+          detailMaxLines,
+          Number.parseInt(detailSize, 10),
+          11
+        );
+        bottomOfInstruction = Math.round(bottomOfInstruction + detailObj.height);
       }
     } else {
-      // Multi-zone: show level-wide hint (or generic multi-zone hint)
       const detail =
         I18n.pick(this.levelDef, "hint") || I18n.pick(this.levelDef, "description");
       const hintText = detail || I18n.t("multiZoneHint");
       const hintObj = this.add
         .text(bx, by, hintText, {
           fontFamily: FONTS.body,
-          fontSize: "15px",
+          fontSize: detailSize,
           color: "#f3e3c3",
           align: "center",
           wordWrap: { width: wrapW },
-          lineSpacing: 3,
+          lineSpacing: portrait ? 5 : 3,
         })
         .setOrigin(0.5, 0)
+        .setDepth(2)
         .setResolution(textRes);
-      bottomOfInstruction = Math.round(by + hintObj.height + 6);
+      this.fitTextToLines(
+        hintObj,
+        hintText,
+        wrapW,
+        detailMaxLines,
+        Number.parseInt(detailSize, 10),
+        11
+      );
+      bottomOfInstruction = Math.round(by + hintObj.height);
+    }
+
+    if (portrait) {
+      const cardH = Math.round(bottomOfInstruction - cardTop + cardPadY);
+      const cardX = Math.round((width - cardW) / 2);
+      const cardBg = this.add.graphics().setDepth(1);
+      cardBg.fillStyle(0x1a100c, 0.42);
+      cardBg.fillRoundedRect(cardX, cardTop, cardW, cardH, 12);
+      cardBg.lineStyle(1, COLORS.accent, 0.28);
+      cardBg.strokeRoundedRect(cardX, cardTop, cardW, cardH, 12);
+      bottomOfInstruction = cardTop + cardH;
     }
 
     if (this.challenge) {
-      const challengeY = bottomOfInstruction + 8;
+      const challengeY = bottomOfInstruction + (portrait ? 12 : 8);
       this.challengeBadgeBg = this.add.graphics().setDepth(51);
       this.challengeText = this.add
         .text(bx, challengeY, this.buildChallengeDisplayText(), {
@@ -1284,14 +1353,13 @@ export default class GameScene extends Phaser.Scene {
         .setOrigin(0.5, 0)
         .setDepth(52);
       this.refreshChallengeBadge();
-      bottomOfInstruction = challengeY + this.challengeText.height + 16;
+      bottomOfInstruction = challengeY + this.challengeText.height + 8;
     } else {
       this.challengeText = null;
       this.challengeBadgeBg = null;
     }
 
-    // Adjust this.areaTop dynamically so the grid never overlaps the instructions
-    this.areaTop = Math.max(this.ui.areaTopBase, bottomOfInstruction + 10);
+    this.areaTop = Math.max(this.ui.areaTopBase, bottomOfInstruction + this.ui.boardTopGap);
   }
 
   buildLibrarian() {
@@ -1310,7 +1378,7 @@ export default class GameScene extends Phaser.Scene {
       .sprite(x, y, "librarian", "thinking")
       .setScale(scale)
       .setOrigin(0.5, 1)
-      .setDepth(portrait ? 8 : 5);
+      .setDepth(portrait ? 0 : 5);
     this.librarian.play("librarian-thinking");
     this.librarianHomeX = x;
     this.librarianHomeY = y;

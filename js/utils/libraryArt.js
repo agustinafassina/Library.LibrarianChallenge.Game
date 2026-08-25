@@ -38,83 +38,95 @@ function roundedRectPath(ctx, x, y, w, h, r) {
   ctx.closePath();
 }
 
-export function bookFaceSize(book, maxW, maxH) {
+export function bookFaceSize(book, maxW, maxH, opts = {}) {
+  const slotW = Math.max(1, Math.round(maxW));
+  const slotH = Math.max(1, Math.round(maxH));
+  if (!opts.varySize) return { w: slotW, h: slotH };
+
   const size = String(book?.size || "medium").toLowerCase();
-  const hScale = size === "small" ? 0.78 : size === "large" ? 1 : 0.9;
-  const wScale = size === "small" ? 0.9 : size === "large" ? 1 : 0.95;
+  const hScale = size === "small" ? 0.88 : size === "large" ? 1 : 0.95;
+  const wScale = size === "small" ? 0.94 : size === "large" ? 1 : 0.98;
   return {
-    w: Math.max(52, Math.round(maxW * wScale)),
-    h: Math.max(70, Math.round(maxH * hScale)),
+    w: Math.min(slotW, Math.round(slotW * wScale)),
+    h: Math.min(slotH, Math.round(slotH * hScale)),
   };
+}
+
+function ellipsizeToWidth(ctx, text, maxWidth) {
+  if (ctx.measureText(text).width <= maxWidth) return text;
+  let s = String(text);
+  while (s.length > 1 && ctx.measureText(`${s}…`).width > maxWidth) {
+    s = s.slice(0, -1);
+  }
+  return `${s}…`;
+}
+
+function wrapAtWords(ctx, words, maxWidth) {
+  const lines = [];
+  let line = "";
+  for (const word of words) {
+    const test = line ? `${line} ${word}` : word;
+    if (!line || ctx.measureText(test).width <= maxWidth) {
+      line = test;
+    } else {
+      lines.push(line);
+      line = word;
+    }
+  }
+  if (line) lines.push(line);
+  return lines;
 }
 
 function wrapWords(ctx, text, maxWidth, maxLines, useEllipsis) {
   const words = String(text || "")
     .split(/\s+/)
-    .filter(Boolean);
-  const lines = [];
-  let line = "";
-
-  const flush = () => {
-    if (line) {
-      lines.push(line);
-      line = "";
-    }
-  };
-
-  const splitWord = (word) => {
-    let chunk = "";
-    for (const ch of word) {
-      if (chunk && ctx.measureText(chunk + ch).width > maxWidth) {
-        lines.push(chunk);
-        chunk = ch;
-      } else {
-        chunk += ch;
-      }
-    }
-    return chunk;
-  };
-
-  for (const raw of words) {
-    let word = raw;
-    if (ctx.measureText(word).width > maxWidth) word = splitWord(word);
-    const test = line ? `${line} ${word}` : word;
-    if (ctx.measureText(test).width <= maxWidth) {
-      line = test;
-    } else {
-      flush();
-      line = word;
-    }
-  }
-  flush();
+    .filter(Boolean)
+    .map((word) =>
+      useEllipsis && ctx.measureText(word).width > maxWidth
+        ? ellipsizeToWidth(ctx, word, maxWidth)
+        : word
+    );
+  const lines = wrapAtWords(ctx, words, maxWidth);
 
   if (useEllipsis && lines.length > maxLines) {
     const kept = lines.slice(0, maxLines);
-    let last = kept[maxLines - 1];
-    while (last.length > 1 && ctx.measureText(`${last}…`).width > maxWidth) {
-      last = last.slice(0, -1).trimEnd();
-    }
-    kept[maxLines - 1] = `${last}…`;
+    kept[maxLines - 1] = ellipsizeToWidth(ctx, kept[maxLines - 1], maxWidth);
     return kept;
   }
   return lines.slice(0, maxLines);
 }
 
-function fitCoverText(ctx, text, maxWidth, maxLines, maxSize, minSize) {
+function lineHeight(size) {
+  return Math.round(size * 1.18);
+}
+
+function fitCoverText(ctx, text, maxWidth, maxLines, maxSize, minSize, maxHeight = Infinity) {
+  const words = String(text || "")
+    .split(/\s+/)
+    .filter(Boolean);
+
   for (let size = maxSize; size >= minSize; size -= 1) {
     ctx.font = `bold ${size}px Trebuchet MS, Segoe UI, sans-serif`;
-    const lines = wrapWords(ctx, text, maxWidth, 20, false);
-    if (lines.length <= maxLines) return { lines, size };
+    if (words.some((word) => ctx.measureText(word).width > maxWidth)) continue;
+    const lines = wrapAtWords(ctx, words, maxWidth);
+    if (lines.length <= maxLines && lines.length * lineHeight(size) <= maxHeight) {
+      return { lines, size };
+    }
   }
+
   ctx.font = `bold ${minSize}px Trebuchet MS, Segoe UI, sans-serif`;
-  return { lines: wrapWords(ctx, text, maxWidth, maxLines, true), size: minSize };
+  const fallbackLines = Math.max(
+    1,
+    Math.min(maxLines, Math.floor(maxHeight / lineHeight(minSize)) || maxLines)
+  );
+  return { lines: wrapWords(ctx, text, maxWidth, fallbackLines, true), size: minSize };
 }
 
 function paintCaption(ctx, lines, x, y, size, ink) {
   ctx.font = `bold ${size}px Trebuchet MS, Segoe UI, sans-serif`;
   ctx.textAlign = "center";
   ctx.textBaseline = "top";
-  const lh = Math.round(size * 1.18);
+  const lh = lineHeight(size);
   lines.forEach((line, i) => {
     const yy = y + i * lh;
     ctx.fillStyle = "rgba(20,12,8,0.45)";
@@ -147,7 +159,7 @@ export function bookSpineTextureKey(book, w, h, extras = {}) {
   const sub = String(extras.subtitle ?? "")
     .replace(/[^a-zA-Z0-9]+/g, "")
     .slice(0, 16);
-  return `spine-v6-${id}-${Math.round(w)}x${Math.round(h)}-${color}-${title}-${sub}`;
+  return `spine-v7-${id}-${Math.round(w)}x${Math.round(h)}-${color}-${title}-${sub}`;
 }
 
 export function ensureBookSpineTexture(scene, book, width, height, extras = {}) {
@@ -194,14 +206,28 @@ export function ensureBookSpineTexture(scene, book, width, height, extras = {}) 
   ctx.fillRect(3, Math.round(h * 0.42), bindW - 6, 3);
   ctx.fillRect(3, Math.round(h * 0.58), bindW - 6, 3);
 
-  const textW = w - bindW - 14;
+  const textW = Math.max(16, w - bindW - 10);
   const textX = bindW + (w - bindW) / 2;
-  const titleFit = fitCoverText(ctx, title, textW, 4, Math.round(Math.min(14, w * 0.13)), 9);
-  paintCaption(ctx, titleFit.lines, textX, 12, titleFit.size, ink);
+  const titleTop = 10;
+  const subReserve = subtitle ? 28 : 8;
+  const titleMaxH = Math.max(18, h - titleTop - subReserve);
+  const titleMaxLines = h < 88 ? 3 : 4;
+  const titleMin = Math.min(8, Math.max(6, Math.round(w * 0.1)));
+  const titleFit = fitCoverText(
+    ctx,
+    title,
+    textW,
+    titleMaxLines,
+    Math.round(Math.min(14, w * 0.13)),
+    titleMin,
+    titleMaxH
+  );
+  paintCaption(ctx, titleFit.lines, textX, titleTop, titleFit.size, ink);
 
   if (subtitle) {
-    const subFit = fitCoverText(ctx, subtitle, textW, 2, Math.round(Math.min(11, w * 0.1)), 8);
-    paintCaption(ctx, subFit.lines, textX, h - 12 - subFit.lines.length * Math.round(subFit.size * 1.18), subFit.size, ink);
+    const subFit = fitCoverText(ctx, subtitle, textW, 2, Math.round(Math.min(11, w * 0.1)), 7);
+    const subH = subFit.lines.length * lineHeight(subFit.size);
+    paintCaption(ctx, subFit.lines, textX, h - 10 - subH, subFit.size, ink);
   }
 
   ctx.restore();

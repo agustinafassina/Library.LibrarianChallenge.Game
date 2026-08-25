@@ -107,11 +107,38 @@ export function getUiLayout(width, height) {
   const stackedHud = portrait || w < 560;
   const shortLandscape = !portrait && h < 520;
 
-  const topBarH = stackedHud ? Math.round(92 + safe.top) : Math.round(56 + safe.top);
+  const tallPortrait = portrait && h >= 720;
+  const hudBtnH = 40;
+  let hudTitleY;
+  let hudStatsY;
+  let topBarH;
+  let instructionGap;
+  let ruleDetailGap;
+  let boardTopGap;
+
+  if (stackedHud) {
+    const padTop = tallPortrait ? 18 : 12;
+    const titleStatsGap = tallPortrait ? 18 : 12;
+    const padBottom = tallPortrait ? 18 : 12;
+    hudTitleY = Math.round(safe.top + padTop + hudBtnH / 2);
+    hudStatsY = Math.round(hudTitleY + hudBtnH / 2 + titleStatsGap + 9);
+    topBarH = Math.round(hudStatsY + 11 + padBottom);
+    instructionGap = tallPortrait ? 22 : 10;
+    ruleDetailGap = tallPortrait ? 10 : 6;
+    boardTopGap = tallPortrait ? 20 : 12;
+  } else {
+    hudTitleY = Math.round(safe.top + 28);
+    hudStatsY = hudTitleY;
+    topBarH = Math.round(56 + safe.top);
+    instructionGap = 18;
+    ruleDetailGap = 8;
+    boardTopGap = 16;
+  }
+
   const bottomBarH = portrait ? Math.round(72 + safe.bottom) : 0;
 
-  const maxPerRow = portrait ? (w < 360 ? 2 : 3) : w < 900 ? 5 : 6;
-  const maxRowsPerPage = portrait ? 4 : 3;
+  const maxPerRow = portrait ? (w < 330 ? 2 : 4) : w < 900 ? 5 : 6;
+  const maxRowsPerPage = 3;
 
   const bookWMax = w >= 1400 ? 140 : w >= 1100 ? 124 : w >= 800 ? 112 : 108;
   const bookHMax = Math.round(bookWMax * 1.49);
@@ -137,9 +164,9 @@ export function getUiLayout(width, height) {
   const flipGutter = portrait ? Math.max(64, Math.round(w * 0.16)) : 60;
   const rightGutter = portrait ? Math.max(16, Math.round(flipGutter * 0.35)) : actionColW;
   const areaBottom = portrait ? h - bottomBarH : h - 24;
-  const instructionY = topBarH + (stackedHud ? 6 : 18);
-  const areaTopBase = instructionY + (stackedHud ? 48 : 56);
-  const wrapPad = portrait ? 32 : Math.max(200, leftReserved + 24);
+  const instructionY = topBarH + instructionGap;
+  const areaTopBase = instructionY + (stackedHud ? (tallPortrait ? 90 : 56) : 56);
+  const wrapPad = portrait ? (tallPortrait ? 48 : 36) : Math.max(200, leftReserved + 24);
 
   const lsCols = portrait ? 2 : w < 900 ? 3 : 5;
   const lsGridTop = Math.round((shortLandscape ? 64 : compact ? 88 : 108) + safe.top);
@@ -161,7 +188,13 @@ export function getUiLayout(width, height) {
     portrait,
     compact,
     stackedHud,
+    tallPortrait,
     shortLandscape,
+    hudTitleY,
+    hudStatsY,
+    instructionGap,
+    ruleDetailGap,
+    boardTopGap,
     topBarH,
     bottomBarH,
     maxPerRow,
@@ -169,7 +202,7 @@ export function getUiLayout(width, height) {
     bookWMax,
     bookHMax,
     gapX: portrait ? 10 : GAME_LAYOUT.gapX,
-    gapY: portrait ? 12 : GAME_LAYOUT.gapY,
+    gapY: portrait ? (tallPortrait ? 18 : 12) : GAME_LAYOUT.gapY,
     boardH: GAME_LAYOUT.boardH,
     leftReserved,
     rightMargin,
