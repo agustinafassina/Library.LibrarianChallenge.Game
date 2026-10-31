@@ -30,7 +30,7 @@ year, and a combined rule).
 Tooling used during development: any static server (e.g. Python's
 `http.server` or `npx serve`) and a modern WebGL-capable browser.
 
-## Run it
+## Run it 🚀
 The game loads JSON from `data/` with `fetch()`, so it must be served over HTTP
 (opening `index.html` directly via `file://` will be blocked by the browser).
 Use any static server from the project root:
