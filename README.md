@@ -1,4 +1,7 @@
 # Librarian's Challenge 👾
+
+[![CI](https://github.com/agustinafassina/Library.LibrarianChallenge.Game/actions/workflows/ci.yml/badge.svg)](https://github.com/agustinafassina/Library.LibrarianChallenge.Game/actions/workflows/ci.yml)
+
 A small 2D browser game built with **Phaser 3** (no build system). You play a
 librarian who must restore order to a messy library by sorting books on a shelf,
 level by level. Each level introduces a new sorting rule (title, author, genre,
@@ -30,6 +33,11 @@ year, and a combined rule).
 Tooling used during development: any static server (e.g. Python's
 `http.server` or `npx serve`) and a modern WebGL-capable browser.
 
+## Requirements
+- **Playing:** any modern WebGL-capable browser and a static file server.
+- **Developing** (build, lint, tests, tools): **Node.js 22+** (the version CI
+  uses) and npm. Run `npm install` once in the project root.
+
 ## Run it 🚀
 The game loads JSON from `data/` with `fetch()`, so it must be served over HTTP
 (opening `index.html` directly via `file://` will be blocked by the browser).
@@ -45,8 +53,8 @@ npx serve .
 
 Then open <http://localhost:8000>. On a phone (HTTPS or localhost), the
 browser can **Add to Home Screen** / **Install app** (Chrome may show an
-Install button; Safari uses the share sheet). Recaptcha for Feedback is
-already in `runtime-config` when `recaptchaSiteKey` is set.
+Install button; Safari uses the share sheet). The Feedback form uses
+reCAPTCHA v3 when `recaptchaSiteKey` is set in `js/runtime-config.js`.
 
 ### Docker
 ```bash
@@ -68,9 +76,17 @@ On the VPS these come from the infra repo / GitHub Actions secrets. See
 
 ```bash
 # copy .env.example → .env, edit values, then:
-set LC_API_BASE_URL=https://api.example.com   # PowerShell: $env:LC_API_BASE_URL="..."
-set LC_API_KEY=your-key
-set LC_USE_API_BOOKS=true
+export LC_API_BASE_URL=https://api.example.com
+export LC_API_KEY=your-key
+export LC_USE_API_BOOKS=true
+npm run build
+```
+
+```powershell
+# PowerShell
+$env:LC_API_BASE_URL="https://api.example.com"
+$env:LC_API_KEY="your-key"
+$env:LC_USE_API_BOOKS="true"
 npm run build
 ```
 
@@ -138,6 +154,7 @@ Before public deploy:
 
 Progress and scores live only in `localStorage` and can be edited in DevTools —
 expected for a client-only demo, not anti-cheat.
+
 ## Controls
 
 - **Drag & drop** a book to move it into a slot; the row reshuffles to make room.
@@ -153,11 +170,34 @@ expected for a client-only demo, not anti-cheat.
 - Works with mouse and touch. Phones use a stacked HUD and a bottom action bar.
 
 ## Levels
-100 levels with a steadily increasing difficulty curve and book count (4 → 67), spread across shelves
-and up to three pages. See the full breakdown (books, shelves and pages per
+100 levels with a steadily increasing difficulty curve and book count (4 → 67),
+spread across shelves and up to three pages. See the full breakdown (books, shelves and pages per
 level) in **[LEVELS.md](LEVELS.md)**.
 
-## Automated test (run every level)
+## Tests and code quality
+
+### Unit tests
+Fast [Vitest](https://vitest.dev/) tests cover the sorting rules, the API book
+mapper and the translations (`tests/rules.test.js`, `tests/apiBooks.test.js`,
+`tests/translate.test.js`):
+
+```bash
+npm run test:unit         # run once
+npm run test:unit:watch   # re-run on file changes
+```
+
+### Lint and formatting
+The project uses [ESLint](https://eslint.org/) (`eslint.config.js`) and
+[Prettier](https://prettier.io/) (`.prettierrc.json`):
+
+```bash
+npm run lint           # report problems
+npm run lint:fix       # fix what can be fixed automatically
+npm run format         # format every file
+npm run format:check   # check formatting without changing files
+```
+
+### End-to-end test (run every level)
 An end-to-end smoke test opens a real browser tab, plays through **every level**
 automatically, verifies each one is solvable and that progress is saved, then
 closes the tab. It uses [Playwright](https://playwright.dev/) and a tiny built-in
@@ -177,6 +217,35 @@ How it works: the page is opened with `?test=1`, which exposes the Phaser game o
 order and triggers the win check), then waits for the Level Complete screen.
 This exercises real level loading, rule evaluation, win detection and progress
 saving. The `autosolve` hook and `window.__GAME__` are only active with `?test=1`.
+
+`tests/responsiveShot.mjs` takes screenshots at several phone, tablet and
+laptop sizes into `test-results/responsive/` for a quick visual check
+(`node tests/responsiveShot.mjs`).
+
+### Continuous integration
+[`.github/workflows/ci.yml`](.github/workflows/ci.yml) runs on every push and
+pull request to `main`: install, lint, unit tests, build (with empty API
+settings and `LC_USE_API_BOOKS=false`) and the end-to-end tests.
+
+## Tools
+**Level designer** — previews a new level before you add it to
+`data/levels.json`. It prints the expected order for the chosen rule and books,
+and can write the level JSON to a draft file:
+
+```bash
+npm run level:preview -- --level 63 --title "My Level" --title_es "Mi nivel" --rule title_az --books 4,1,3,2
+npm run level:preview -- --level 64 --title "Custom" --title_es "Custom" --keys genre,year:desc,title --books 3,18,4,6,1,7
+```
+
+Optional flags: `--hint`, `--hint_es`, `--challengeMoves`,
+`--challengeTimeSec` and `--out data/level-draft.json`.
+
+**Book importer** — converts a JSON file of books returned by the API into the
+game's book shape and adds them to `data/books.json`:
+
+```bash
+node tools/import-real-books.mjs <api-books.json> [--start-id=1]
+```
 
 ## Language (English / Spanish)
 Open **Settings** from the main menu to switch the interface language. The choice
@@ -211,6 +280,8 @@ book data as gameplay (`loadBooks()`), including API results when available.
 ## How it works
 ```
 index.html            page shell, loads Phaser (vendored) + runtime config + js/main.js
+book-detail.html      standalone book details page (js/book-detail.js)
+update.html           clears the service worker + caches, then returns to the game (sw-reset.js)
 css/styles.css        page background + full-viewport canvas
 vendor/
   phaser.min.js       Phaser 3.80.1 (self-hosted; no CDN)
@@ -247,15 +318,27 @@ assets/
   images/             librarian sprites + spark particle
   audio/              ui.wav, drop.wav, win.wav
   icons/              PWA / Apple touch icons
+scripts/
+  generate-runtime-config.mjs  npm run build: writes runtime-config.js + sw-version.js
+  generate-sfx.mjs             regenerates the WAV cues
+tools/
+  level-designer.mjs  npm run level:preview
+  import-real-books.mjs  API books → data/books.json
+tests/                unit tests (Vitest) + Playwright e2e / portrait / screenshot scripts
 manifest.json         web app manifest (Add to Home Screen)
 sw.js                 service worker (same-origin cache)
+sw-version.js         cache version for sw.js (generated by npm run build)
+sw-reset.js           unregisters the service worker and clears caches
+Dockerfile            nginx image that serves the game
+nginx.conf            nginx config with CSP + security headers
+.github/workflows/    CI pipeline
 ```
 
 ### Where books / levels are loaded
 All data access goes through `js/utils/dataLoader.js`:
 
 - `loadBooks()` reads `data/books.json` as the local base/fallback, then tries
-  `GET /api/v1/Book/google/by-tag/{tag}?maxResults=20&autoTag=true` for LGTBIQ+,
+  `GET /api/v1/Book/google/by-tag/{tag}?maxResults=20&autoTag=true` for LGBTIQ+,
   queer, lesbian, trans, feminist and activism tags.
 - API requests include the configured `X-API-Key` header.
 - `loadLevels()` reads `data/levels.json`.
