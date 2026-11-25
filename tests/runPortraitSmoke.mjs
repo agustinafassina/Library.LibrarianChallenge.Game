@@ -29,7 +29,9 @@ async function playLevel(page, level) {
   await page.waitForFunction(
     () => {
       const gs = window.__GAME__.scene.getScene("GameScene");
-      return gs && gs.scene.isActive() && gs.levelDef && gs.order && gs.order.length > 0 && !gs.solved;
+      return (
+        gs && gs.scene.isActive() && gs.levelDef && gs.order && gs.order.length > 0 && !gs.solved
+      );
     },
     null,
     { timeout: 15000 }
@@ -60,16 +62,12 @@ async function playLevel(page, level) {
     throw new Error(`Expected a wide flip gutter in portrait, got ${layout.flipGutter}`);
   }
 
-  const solved = await page.evaluate(() =>
-    window.__GAME__.scene.getScene("GameScene").autosolve()
-  );
+  const solved = await page.evaluate(() => window.__GAME__.scene.getScene("GameScene").autosolve());
   if (!solved) throw new Error(`Level ${level} did not solve after autosolve()`);
 
-  await page.waitForFunction(
-    () => window.__GAME__.scene.isActive("LevelCompleteScene"),
-    null,
-    { timeout: 20000 }
-  );
+  await page.waitForFunction(() => window.__GAME__.scene.isActive("LevelCompleteScene"), null, {
+    timeout: 20000,
+  });
 
   return layout;
 }
@@ -104,20 +102,16 @@ async function main() {
     );
 
     const later = await playLevel(page, 20);
-    console.log(
-      `  Level 20 solved (${later.bookCount} books, ${later.pageCount} page(s))`
-    );
+    console.log(`  Level 20 solved (${later.bookCount} books, ${later.pageCount} page(s))`);
 
     await page.evaluate(() => {
       const g = window.__GAME__;
       ["GameScene", "LevelCompleteScene"].forEach((k) => g.scene.stop(k));
       g.scene.start("BooksScene");
     });
-    await page.waitForFunction(
-      () => window.__GAME__.scene.isActive("BooksScene"),
-      null,
-      { timeout: 15000 }
-    );
+    await page.waitForFunction(() => window.__GAME__.scene.isActive("BooksScene"), null, {
+      timeout: 15000,
+    });
     console.log("  Books catalogue opened.");
 
     if (failures.length) {

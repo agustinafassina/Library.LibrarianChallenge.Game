@@ -32,11 +32,7 @@ async function startScene(page, key, data) {
     },
     { key, data }
   );
-  await page.waitForFunction(
-    (key) => window.__GAME__.scene.isActive(key),
-    key,
-    { timeout: 15000 }
-  );
+  await page.waitForFunction((key) => window.__GAME__.scene.isActive(key), key, { timeout: 15000 });
   if (key === "GameScene") {
     await page.waitForFunction(
       () => {

@@ -2,7 +2,14 @@ import { loadBooks } from "../utils/dataLoader.js";
 import { I18n } from "../utils/i18n.js";
 import { bookDetailRows, isLongBookTitle, truncateWrappedText } from "../utils/bookDetail.js";
 import { shouldOfferTranslation, translateText } from "../utils/translate.js";
-import { makeButton, goToScene, COLORS, FONTS, bindResizeRestart, placeSceneHeader } from "../utils/ui.js";
+import {
+  makeButton,
+  goToScene,
+  COLORS,
+  FONTS,
+  bindResizeRestart,
+  placeSceneHeader,
+} from "../utils/ui.js";
 import { fillLibraryRoom } from "../utils/libraryArt.js";
 
 const LABEL_W = 118;
@@ -156,7 +163,10 @@ export default class BookDetailScene extends Phaser.Scene {
     const bodyX = coverW + coverGap;
     const bodyW = contentW - bodyX;
 
-    this.contentContainer = this.add.container(basePanel.x + basePanel.pad, basePanel.y + basePanel.pad);
+    this.contentContainer = this.add.container(
+      basePanel.x + basePanel.pad,
+      basePanel.y + basePanel.pad
+    );
     let y = 0;
 
     const coverColor = Phaser.Display.Color.HexStringToColor(book.color || "#8a7358").color;
@@ -187,7 +197,12 @@ export default class BookDetailScene extends Phaser.Scene {
       .setOrigin(0, 0);
     this.contentContainer.add(byline);
 
-    const genreBadge = this.drawGenreBadge(bodyX, byline.y + byline.height + 10, book.genre || "—", coverColor);
+    const genreBadge = this.drawGenreBadge(
+      bodyX,
+      byline.y + byline.height + 10,
+      book.genre || "—",
+      coverColor
+    );
     this.contentContainer.add(genreBadge);
 
     const heroH = Math.max(coverW * 1.45, genreBadge.y + genreBadge.height);
@@ -234,7 +249,10 @@ export default class BookDetailScene extends Phaser.Scene {
     });
 
     const metaPanelH = rowY - metaStartY + 8;
-    this.contentContainer.addAt(this.drawInsetPanel(0, metaStartY, contentW, metaPanelH), firstMetaIndex);
+    this.contentContainer.addAt(
+      this.drawInsetPanel(0, metaStartY, contentW, metaPanelH),
+      firstMetaIndex
+    );
 
     y = metaStartY + metaPanelH + 14;
     this.contentContainer.add(this.drawSectionDivider(contentW, y));
@@ -328,11 +346,18 @@ export default class BookDetailScene extends Phaser.Scene {
     this.panelMask.fillStyle(0xffffff);
     this.panelMask.fillRoundedRect(0, 0, fitted.w - 16, fitted.h - 16, 12);
     this.contentContainer.setMask(this.panelMask.createGeometryMask());
-    this.contentContainer.setPosition(Math.round(fitted.x + fitted.pad), Math.round(fitted.y + fitted.pad));
+    this.contentContainer.setPosition(
+      Math.round(fitted.x + fitted.pad),
+      Math.round(fitted.y + fitted.pad)
+    );
 
     this.visibleH = fitted.h - fitted.pad * 2;
     this.baseContainerY = fitted.y + fitted.pad;
-    this.scrollOffset = Phaser.Math.Clamp(this.scrollOffset ?? 0, 0, Math.max(0, this.contentEndY - this.visibleH));
+    this.scrollOffset = Phaser.Math.Clamp(
+      this.scrollOffset ?? 0,
+      0,
+      Math.max(0, this.contentEndY - this.visibleH)
+    );
     this.contentContainer.y = this.baseContainerY - this.scrollOffset;
     this.maxScroll = Math.max(0, this.contentEndY - this.visibleH);
     this.bindScroll();

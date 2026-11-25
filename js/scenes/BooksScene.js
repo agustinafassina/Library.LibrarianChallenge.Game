@@ -2,7 +2,14 @@ import { loadBooks } from "../utils/dataLoader.js";
 import { fetchBooksFromApiByTag } from "../utils/apiBooks.js";
 import { truncateSingleLineText } from "../utils/bookDetail.js";
 import { I18n } from "../utils/i18n.js?v=2";
-import { makeButton, goToScene, COLORS, FONTS, isCoarsePointer, placeSceneHeader } from "../utils/ui.js";
+import {
+  makeButton,
+  goToScene,
+  COLORS,
+  FONTS,
+  isCoarsePointer,
+  placeSceneHeader,
+} from "../utils/ui.js";
 import { fillLibraryRoom } from "../utils/libraryArt.js";
 
 const DEFAULT_TAGS = [
@@ -167,11 +174,14 @@ export default class BooksScene extends Phaser.Scene {
     this.onLayoutChange = () => {
       this.syncToolbarLayout();
       window.clearTimeout(this.layoutTimer);
-      this.layoutTimer = window.setTimeout(() => {
-        if (this.filterToolbarDom && !this.statusText) {
-          this.renderBookList();
-        }
-      }, this.searchFocused ? 140 : 80);
+      this.layoutTimer = window.setTimeout(
+        () => {
+          if (this.filterToolbarDom && !this.statusText) {
+            this.renderBookList();
+          }
+        },
+        this.searchFocused ? 140 : 80
+      );
     };
     this.scale.on("resize", this.onLayoutChange);
     window.addEventListener("resize", this.onLayoutChange);
@@ -386,12 +396,17 @@ export default class BooksScene extends Phaser.Scene {
 
     const titleY = panel.titleY;
     const title = this.add
-      .text(width / 2, titleY, I18n.t("booksForTag", { tag: this.selectedTag, count: books.length }), {
-        fontFamily: FONTS.body,
-        fontSize: "17px",
-        color: "#d9a441",
-        fontStyle: "bold",
-      })
+      .text(
+        width / 2,
+        titleY,
+        I18n.t("booksForTag", { tag: this.selectedTag, count: books.length }),
+        {
+          fontFamily: FONTS.body,
+          fontSize: "17px",
+          color: "#d9a441",
+          fontStyle: "bold",
+        }
+      )
       .setOrigin(0.5, 0);
     this.rows.push(title);
 
@@ -471,10 +486,7 @@ export default class BooksScene extends Phaser.Scene {
         titleText.setInteractive({ useHandCursor: true });
         titleText.on("pointerover", () => {
           if (!isCoarsePointer()) {
-            this.showTitleTooltip(
-              { x: panelX + 28, y: y + 10, w: titleMaxW, h: 22 },
-              book.title
-            );
+            this.showTitleTooltip({ x: panelX + 28, y: y + 10, w: titleMaxW, h: 22 }, book.title);
           }
         });
         titleText.on("pointerout", () => {
@@ -482,10 +494,7 @@ export default class BooksScene extends Phaser.Scene {
         });
         titleText.on("pointerup", () => {
           if (!isCoarsePointer()) return;
-          this.showTitleTooltip(
-            { x: panelX + 28, y: y + 10, w: titleMaxW, h: 22 },
-            book.title
-          );
+          this.showTitleTooltip({ x: panelX + 28, y: y + 10, w: titleMaxW, h: 22 }, book.title);
           this.titleTooltipHide?.remove(false);
           this.titleTooltipHide = this.time.delayedCall(2500, () => this.hideTitleTooltip());
         });
@@ -529,14 +538,7 @@ export default class BooksScene extends Phaser.Scene {
     const q = this.searchQuery.trim().toLowerCase();
     if (!q) return true;
 
-    return [
-      book.title,
-      book.author,
-      book.genre,
-      book.year,
-      book.pages,
-      ...(book.tags ?? []),
-    ]
+    return [book.title, book.author, book.genre, book.year, book.pages, ...(book.tags ?? [])]
       .filter((value) => value !== null && value !== undefined)
       .some((value) => String(value).toLowerCase().includes(q));
   }
@@ -566,7 +568,10 @@ export default class BooksScene extends Phaser.Scene {
     bg.lineStyle(2, COLORS.accent, 1);
     bg.strokeRoundedRect(cx - tw / 2, cy - th, tw, th, 10);
 
-    txt.setOrigin(0.5, 1).setPosition(cx, cy - pad).setDepth(99);
+    txt
+      .setOrigin(0.5, 1)
+      .setPosition(cx, cy - pad)
+      .setDepth(99);
 
     this.titleTooltip = { txt, bg };
   }

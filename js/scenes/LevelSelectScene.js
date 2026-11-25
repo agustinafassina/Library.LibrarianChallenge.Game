@@ -1,24 +1,32 @@
 import { Storage } from "../utils/storage.js";
 import { loadLevels } from "../utils/dataLoader.js";
 import { I18n } from "../utils/i18n.js?v=2";
-import { makeButton, goToScene, COLORS, FONTS, formatTime, bindResizeRestart, placeSceneHeader } from "../utils/ui.js";
+import {
+  makeButton,
+  goToScene,
+  COLORS,
+  FONTS,
+  formatTime,
+  bindResizeRestart,
+  placeSceneHeader,
+} from "../utils/ui.js";
 import { getUiLayout } from "../config/layout.js";
 import { fillLibraryRoom } from "../utils/libraryArt.js";
 
 const RULE_BADGE = {
-  title_az:         { en: "Title A–Z",       es: "Título A–Z" },
-  author_az:        { en: "Author A–Z",      es: "Autor A–Z" },
-  genre_az:         { en: "Genre A–Z",       es: "Género A–Z" },
-  year_asc:         { en: "Year ↑",          es: "Año ↑" },
-  genre_then_title: { en: "Genre › Title",   es: "Género › Título" },
-  year_desc:        { en: "Year ↓",          es: "Año ↓" },
-  title_za:         { en: "Title Z–A",       es: "Título Z–A" },
-  author_za:        { en: "Author Z–A",      es: "Autor Z–A" },
-  size_asc:         { en: "Size ↑",          es: "Tamaño ↑" },
-  size_desc:        { en: "Size ↓",          es: "Tamaño ↓" },
-  color_rainbow:    { en: "Color 🌈",        es: "Color 🌈" },
-  pages_asc:        { en: "Pages ↑",         es: "Páginas ↑" },
-  pages_desc:       { en: "Pages ↓",         es: "Páginas ↓" },
+  title_az: { en: "Title A–Z", es: "Título A–Z" },
+  author_az: { en: "Author A–Z", es: "Autor A–Z" },
+  genre_az: { en: "Genre A–Z", es: "Género A–Z" },
+  year_asc: { en: "Year ↑", es: "Año ↑" },
+  genre_then_title: { en: "Genre › Title", es: "Género › Título" },
+  year_desc: { en: "Year ↓", es: "Año ↓" },
+  title_za: { en: "Title Z–A", es: "Título Z–A" },
+  author_za: { en: "Author Z–A", es: "Autor Z–A" },
+  size_asc: { en: "Size ↑", es: "Tamaño ↑" },
+  size_desc: { en: "Size ↓", es: "Tamaño ↓" },
+  color_rainbow: { en: "Color 🌈", es: "Color 🌈" },
+  pages_asc: { en: "Pages ↑", es: "Páginas ↑" },
+  pages_desc: { en: "Pages ↓", es: "Páginas ↓" },
 };
 
 function ruleBadgeLabel(rule) {
@@ -43,10 +51,8 @@ function computeStars(best, levelDef) {
   const targetSeconds = Math.max(25, Math.round(books * 7));
 
   if (best.moves <= targetMoves && seconds <= targetSeconds) return 3;
-  if (
-    best.moves <= Math.round(targetMoves * 1.35) &&
-    seconds <= Math.round(targetSeconds * 1.35)
-  ) return 2;
+  if (best.moves <= Math.round(targetMoves * 1.35) && seconds <= Math.round(targetSeconds * 1.35))
+    return 2;
   return 1;
 }
 
@@ -57,8 +63,8 @@ export default class LevelSelectScene extends Phaser.Scene {
 
   init(data) {
     this.currentPage = data?.page ?? 0;
-    this.pageCount   = 1;
-    this.cardGroups  = []; // [{page, objects:[]}]
+    this.pageCount = 1;
+    this.cardGroups = []; // [{page, objects:[]}]
     this.lockedFeedback = null;
   }
 
@@ -123,15 +129,15 @@ export default class LevelSelectScene extends Phaser.Scene {
 
     levels.forEach((lvl, i) => {
       const page = Math.floor(i / PER_PAGE);
-      const idx  = i % PER_PAGE;
-      const col  = idx % COLS;
-      const row  = Math.floor(idx / COLS);
-      const x    = startX + col * CELL_W;
-      const y    = startY + row * CELL_H;
+      const idx = i % PER_PAGE;
+      const col = idx % COLS;
+      const row = Math.floor(idx / COLS);
+      const x = startX + col * CELL_W;
+      const y = startY + row * CELL_H;
       const unlocked = lvl.level <= maxUnlocked;
-      const best     = Storage.getBestForLevel(lvl.level);
-      const played   = !!best;
-      const stars    = played ? computeStars(best, lvl) : 0;
+      const best = Storage.getBestForLevel(lvl.level);
+      const played = !!best;
+      const stars = played ? computeStars(best, lvl) : 0;
 
       const objects = [];
 
@@ -146,12 +152,21 @@ export default class LevelSelectScene extends Phaser.Scene {
         card.fillStyle(COLORS.wood, 1);
         card.fillRoundedRect(x - CARD_W / 2, y - CARD_H / 2, CARD_W, CARD_H, 10);
         // Accent border: gold for best, green for played, normal for unlocked
-        const borderColor = played ? (best.score >= 800 ? COLORS.good : COLORS.accent) : COLORS.accent;
+        const borderColor = played
+          ? best.score >= 800
+            ? COLORS.good
+            : COLORS.accent
+          : COLORS.accent;
         card.lineStyle(played ? 2.5 : 1.5, borderColor, 1);
         card.strokeRoundedRect(x - CARD_W / 2, y - CARD_H / 2, CARD_W, CARD_H, 10);
         // Inner highlight line
         card.lineStyle(1, 0xffffff, 0.12);
-        card.lineBetween(x - CARD_W / 2 + 8, y - CARD_H / 2 + 2, x + CARD_W / 2 - 8, y - CARD_H / 2 + 2);
+        card.lineBetween(
+          x - CARD_W / 2 + 8,
+          y - CARD_H / 2 + 2,
+          x + CARD_W / 2 - 8,
+          y - CARD_H / 2 + 2
+        );
       }
       objects.push(card);
 
@@ -186,9 +201,11 @@ export default class LevelSelectScene extends Phaser.Scene {
         if (badgeRule === "__multi__") {
           badgeLabel = I18n.lang === "es" ? "Multi-estante" : "Multi-shelf";
         } else if (badgeRule === "__custom__") {
-          badgeLabel = (I18n.lang === "es" ? lvl.ruleLabel_es : lvl.ruleLabel)
-            || lvl.ruleLabel || lvl.ruleLabel_es
-            || (I18n.lang === "es" ? "Regla combinada" : "Combined rule");
+          badgeLabel =
+            (I18n.lang === "es" ? lvl.ruleLabel_es : lvl.ruleLabel) ||
+            lvl.ruleLabel ||
+            lvl.ruleLabel_es ||
+            (I18n.lang === "es" ? "Regla combinada" : "Combined rule");
         } else {
           badgeLabel = ruleBadgeLabel(badgeRule);
         }
@@ -229,7 +246,8 @@ export default class LevelSelectScene extends Phaser.Scene {
 
         // ── Stars by time + moves ──────────────────────────────
         const starsText = "★".repeat(stars) + "☆".repeat(3 - stars);
-        const starsColor = stars === 3 ? "#ffd766" : stars === 2 ? "#e9c77b" : stars === 1 ? "#caa56a" : "#6e5a43";
+        const starsColor =
+          stars === 3 ? "#ffd766" : stars === 2 ? "#e9c77b" : stars === 1 ? "#caa56a" : "#6e5a43";
         const starsObj = this.add
           .text(x, y + 14, starsText, {
             fontFamily: FONTS.body,
@@ -266,9 +284,7 @@ export default class LevelSelectScene extends Phaser.Scene {
           card.setAlpha(1);
           this.tweens.add({ targets: [numTxt, titleTxt], y: `+=2`, duration: 80 });
         });
-        hit.on("pointerdown", () =>
-          goToScene(this, "GameScene", { level: lvl.level })
-        );
+        hit.on("pointerdown", () => goToScene(this, "GameScene", { level: lvl.level }));
         objects.push(hit);
       } else {
         const hit = this.add

@@ -61,11 +61,30 @@ function writeWav(name, pcm) {
   console.log("wrote", path, buf.length, "bytes");
 }
 
-const ui = render(0.07, (t) => sampleAt(t, [{ f: 980, amp: 0.7 }, { f: 1960, amp: 0.35 }], 0.07, 0.04));
+const ui = render(0.07, (t) =>
+  sampleAt(
+    t,
+    [
+      { f: 980, amp: 0.7 },
+      { f: 1960, amp: 0.35 },
+    ],
+    0.07,
+    0.04
+  )
+);
 writeWav("ui.wav", ui);
 
 const drop = render(0.22, (t) => {
-  const thud = sampleAt(t, [{ f: 92, amp: 1 }, { f: 48, amp: 0.7 }, { f: 180, amp: 0.25 }], 0.22, 0.12 * Math.exp(-t * 18));
+  const thud = sampleAt(
+    t,
+    [
+      { f: 92, amp: 1 },
+      { f: 48, amp: 0.7 },
+      { f: 180, amp: 0.25 },
+    ],
+    0.22,
+    0.12 * Math.exp(-t * 18)
+  );
   const tick = t < 0.03 ? sampleAt(t, [{ f: 420, amp: 0.35 }], 0.03, 0.05) : 0;
   return thud + tick;
 });
@@ -82,7 +101,14 @@ const win = render(0.72, (t) => {
   for (const note of notes) {
     const local = t - note.at;
     if (local < 0 || local > 0.42) continue;
-    v += sampleAt(local, [{ f: note.f, amp: 0.9 }, { f: note.f * 2, amp: 0.18 }], 0.42);
+    v += sampleAt(
+      local,
+      [
+        { f: note.f, amp: 0.9 },
+        { f: note.f * 2, amp: 0.18 },
+      ],
+      0.42
+    );
   }
   return v;
 });
@@ -105,14 +131,19 @@ function renderLoop(seconds, fn, peakTarget = 0.22) {
 }
 
 let brown = 0;
-const ambience = renderLoop(8, (t) => {
-  const lfo = 0.72 + 0.28 * Math.sin((2 * Math.PI * t) / 8);
-  const pad =
-    Math.sin(2 * Math.PI * 110 * t) * 0.22 +
-    Math.sin(2 * Math.PI * 165 * t) * 0.14 +
-    Math.sin(2 * Math.PI * 220 * t) * 0.09;
-  brown = brown * 0.97 + (Math.random() * 2 - 1) * 0.03;
-  const dust = Math.sin(2 * Math.PI * 880 * t) * 0.012 * (0.5 + 0.5 * Math.sin((2 * Math.PI * t) / 4));
-  return pad * lfo + brown * 0.55 + dust;
-}, 0.2);
+const ambience = renderLoop(
+  8,
+  (t) => {
+    const lfo = 0.72 + 0.28 * Math.sin((2 * Math.PI * t) / 8);
+    const pad =
+      Math.sin(2 * Math.PI * 110 * t) * 0.22 +
+      Math.sin(2 * Math.PI * 165 * t) * 0.14 +
+      Math.sin(2 * Math.PI * 220 * t) * 0.09;
+    brown = brown * 0.97 + (Math.random() * 2 - 1) * 0.03;
+    const dust =
+      Math.sin(2 * Math.PI * 880 * t) * 0.012 * (0.5 + 0.5 * Math.sin((2 * Math.PI * t) / 4));
+    return pad * lfo + brown * 0.55 + dust;
+  },
+  0.2
+);
 writeWav("ambience.wav", ambience);

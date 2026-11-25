@@ -187,9 +187,7 @@ export function evaluateOrder(currentBooks, rule) {
   const { keys } = resolveRule(rule);
   const expected = getExpectedOrder(currentBooks, rule);
 
-  const perSlot = currentBooks.map(
-    (book, i) => compareByKeys(book, expected[i], keys) === 0
-  );
+  const perSlot = currentBooks.map((book, i) => compareByKeys(book, expected[i], keys) === 0);
 
   return {
     perSlot,

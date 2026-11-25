@@ -54,7 +54,12 @@ async function main() {
         () => {
           const gs = window.__GAME__.scene.getScene("GameScene");
           return (
-            gs && gs.scene.isActive() && gs.levelDef && gs.order && gs.order.length > 0 && !gs.solved
+            gs &&
+            gs.scene.isActive() &&
+            gs.levelDef &&
+            gs.order &&
+            gs.order.length > 0 &&
+            !gs.solved
           );
         },
         null,
@@ -70,11 +75,9 @@ async function main() {
       );
       if (!solved) throw new Error(`Level ${level} did not solve after autosolve()`);
 
-      await page.waitForFunction(
-        () => window.__GAME__.scene.isActive("LevelCompleteScene"),
-        null,
-        { timeout: 20000 }
-      );
+      await page.waitForFunction(() => window.__GAME__.scene.isActive("LevelCompleteScene"), null, {
+        timeout: 20000,
+      });
 
       console.log(`  Level ${level}/${totalLevels} solved (${bookCount} books) OK`);
     }

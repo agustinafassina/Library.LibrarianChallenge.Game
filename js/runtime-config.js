@@ -1,13 +1,13 @@
 window.LIBRARIAN_CHALLENGE_CONFIG = {
-  version: "1.0.0",
-  apiBaseUrl: "",
-  apiKey: "",
-  formspreeUrl: "https://formspree.io/f/xbdvbarg",
-  recaptchaSiteKey: "",
-  useApiBooks: false,
-  maxResultsPerTag: 20,
-  autoTag: true,
-  bookTags: [
+  "version": "1.3.0",
+  "apiBaseUrl": "",
+  "apiKey": "",
+  "formspreeUrl": "https://formspree.io/f/xbdvbarg",
+  "recaptchaSiteKey": "",
+  "useApiBooks": false,
+  "maxResultsPerTag": 20,
+  "autoTag": true,
+  "bookTags": [
     "Lgbtiq",
     "Queer",
     "Lesbian",

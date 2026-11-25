@@ -1,5 +1,12 @@
 import { I18n } from "../utils/i18n.js?v=2";
-import { goToScene, COLORS, FONTS, bindResizeRestart, panelBox, placeButtonRow } from "../utils/ui.js";
+import {
+  goToScene,
+  COLORS,
+  FONTS,
+  bindResizeRestart,
+  panelBox,
+  placeButtonRow,
+} from "../utils/ui.js";
 import { fillLibraryRoom } from "../utils/libraryArt.js";
 
 export default class ErrorScene extends Phaser.Scene {
@@ -76,7 +83,13 @@ export default class ErrorScene extends Phaser.Scene {
       {
         label: I18n.t("menu"),
         onClick: () => goToScene(this, "MenuScene"),
-        opts: { width: 180, height: 48, fontSize: 18, fill: COLORS.woodLight, textColor: "#f3e3c3" },
+        opts: {
+          width: 180,
+          height: 48,
+          fontSize: 18,
+          fill: COLORS.woodLight,
+          textColor: "#f3e3c3",
+        },
       },
     ]);
 

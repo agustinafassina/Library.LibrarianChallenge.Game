@@ -2,7 +2,15 @@ import { Storage } from "../utils/storage.js";
 import { I18n } from "../utils/i18n.js?v=2";
 import { openFeedbackForm, closeFeedbackForm } from "../utils/feedbackForm.js";
 import { appVersion } from "../utils/appInfo.js";
-import { makeButton, goToScene, COLORS, FONTS, bindResizeRestart, panelBox, isCoarsePointer } from "../utils/ui.js";
+import {
+  makeButton,
+  goToScene,
+  COLORS,
+  FONTS,
+  bindResizeRestart,
+  panelBox,
+  isCoarsePointer,
+} from "../utils/ui.js";
 import { Sfx } from "../utils/sfx.js";
 import { Pwa } from "../utils/pwa.js";
 import { getUiLayout } from "../config/layout.js";
@@ -89,9 +97,16 @@ export default class MenuScene extends Phaser.Scene {
     const gap = placed.gap;
     const gapInner = placed.gapInner ?? 14;
 
-    makeButton(this, cx, y, I18n.t("start"), () => {
-      goToScene(this, "GameScene", { level: 1 });
-    }, { width: btnW, height: primaryH });
+    makeButton(
+      this,
+      cx,
+      y,
+      I18n.t("start"),
+      () => {
+        goToScene(this, "GameScene", { level: 1 });
+      },
+      { width: btnW, height: primaryH }
+    );
 
     const hasProgress = Storage.hasProgress();
     y += gap;
@@ -99,15 +114,24 @@ export default class MenuScene extends Phaser.Scene {
       this,
       cx,
       y,
-      hasProgress ? I18n.t("continueLvl", { level: Storage.getMaxLevelUnlocked() }) : I18n.t("continue"),
+      hasProgress
+        ? I18n.t("continueLvl", { level: Storage.getMaxLevelUnlocked() })
+        : I18n.t("continue"),
       () => goToScene(this, "GameScene", { level: Storage.getMaxLevelUnlocked() }),
       { enabled: hasProgress, width: btnW, height: primaryH }
     );
 
     y += gap;
-    makeButton(this, cx, y, I18n.t("levelSelect"), () => {
-      goToScene(this, "LevelSelectScene");
-    }, { width: btnW, height: primaryH });
+    makeButton(
+      this,
+      cx,
+      y,
+      I18n.t("levelSelect"),
+      () => {
+        goToScene(this, "LevelSelectScene");
+      },
+      { width: btnW, height: primaryH }
+    );
 
     y += primaryH / 2 + gapInner + resetH / 2;
     makeButton(this, cx, y, I18n.t("resetProgress"), () => this.confirmReset(), {
@@ -122,21 +146,60 @@ export default class MenuScene extends Phaser.Scene {
 
     y += resetH / 2 + placed.gapToSecondary + secH / 2;
     const secFont = ui.shortLandscape ? 13 : 14;
-    const secOpts = { width: secW, height: secH, fontSize: secFont, fill: COLORS.woodLight, textColor: "#f3e3c3" };
+    const secOpts = {
+      width: secW,
+      height: secH,
+      fontSize: secFont,
+      fill: COLORS.woodLight,
+      textColor: "#f3e3c3",
+    };
     const secRow1Y = y;
     const secRow2Y = y + secH + (placed.secRowGap ?? menu.secGapY);
 
-    makeButton(this, cx - secW / 2 - secGapX / 2, secRow1Y, I18n.t("tutorial"), () => this.openTutorial(), secOpts);
-    makeButton(this, cx + secW / 2 + secGapX / 2, secRow1Y, I18n.t("books"), () => goToScene(this, "BooksScene"), secOpts);
-    makeButton(this, cx - secW / 2 - secGapX / 2, secRow2Y, I18n.t("settings"), () => this.openSettings(), secOpts);
-    makeButton(this, cx + secW / 2 + secGapX / 2, secRow2Y, I18n.t("feedback"), () => openFeedbackForm({ scene: this }), secOpts);
+    makeButton(
+      this,
+      cx - secW / 2 - secGapX / 2,
+      secRow1Y,
+      I18n.t("tutorial"),
+      () => this.openTutorial(),
+      secOpts
+    );
+    makeButton(
+      this,
+      cx + secW / 2 + secGapX / 2,
+      secRow1Y,
+      I18n.t("books"),
+      () => goToScene(this, "BooksScene"),
+      secOpts
+    );
+    makeButton(
+      this,
+      cx - secW / 2 - secGapX / 2,
+      secRow2Y,
+      I18n.t("settings"),
+      () => this.openSettings(),
+      secOpts
+    );
+    makeButton(
+      this,
+      cx + secW / 2 + secGapX / 2,
+      secRow2Y,
+      I18n.t("feedback"),
+      () => openFeedbackForm({ scene: this }),
+      secOpts
+    );
 
     this.add
-      .text(width - 16 - ui.safe.right, menu.versionY, I18n.t("appVersion", { version: appVersion() }), {
-        fontFamily: FONTS.body,
-        fontSize: "14px",
-        color: "#c9b08a",
-      })
+      .text(
+        width - 16 - ui.safe.right,
+        menu.versionY,
+        I18n.t("appVersion", { version: appVersion() }),
+        {
+          fontFamily: FONTS.body,
+          fontSize: "14px",
+          color: "#c9b08a",
+        }
+      )
       .setOrigin(1, 1)
       .setDepth(10);
 
@@ -321,12 +384,7 @@ export default class MenuScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const langs = I18n.available;
     const stack = width < 500;
-    const { pw, ph } = panelBox(
-      width,
-      height,
-      440,
-      stack ? 320 + langs.length * 58 : 380
-    );
+    const { pw, ph } = panelBox(width, height, 440, stack ? 320 + langs.length * 58 : 380);
     const { items, close } = this.openModal(pw, ph);
     const top = height / 2 - ph / 2;
 
@@ -404,11 +462,16 @@ export default class MenuScene extends Phaser.Scene {
 
     items.push(
       this.add
-        .text(width / 2, height / 2 + ph / 2 - 78, I18n.t("appVersion", { version: appVersion() }), {
-          fontFamily: FONTS.body,
-          fontSize: "15px",
-          color: "#c9b08a",
-        })
+        .text(
+          width / 2,
+          height / 2 + ph / 2 - 78,
+          I18n.t("appVersion", { version: appVersion() }),
+          {
+            fontFamily: FONTS.body,
+            fontSize: "15px",
+            color: "#c9b08a",
+          }
+        )
         .setOrigin(0.5)
         .setDepth(102)
     );
@@ -470,7 +533,14 @@ export default class MenuScene extends Phaser.Scene {
           close();
           this.scene.restart();
         },
-        { width: Math.min(170, pw - 48), height: 50, fontSize: 18, fill: COLORS.bad, fillHover: 0xa53f3e, textColor: "#ffffff" }
+        {
+          width: Math.min(170, pw - 48),
+          height: 50,
+          fontSize: 18,
+          fill: COLORS.bad,
+          fillHover: 0xa53f3e,
+          textColor: "#ffffff",
+        }
       ).setDepth(102)
     );
     items.push(
