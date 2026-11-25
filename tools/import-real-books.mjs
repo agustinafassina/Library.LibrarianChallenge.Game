@@ -26,7 +26,7 @@ if (!Number.isFinite(startId) || startId < 1) {
 }
 
 const payload = JSON.parse(fs.readFileSync(inputPath, "utf8"));
-const apiBooks = Array.isArray(payload) ? payload : payload.books ?? [];
+const apiBooks = Array.isArray(payload) ? payload : (payload.books ?? []);
 const existing = JSON.parse(fs.readFileSync(booksPath, "utf8"));
 
 const mapped = uniqueBySourceId(apiBooks)

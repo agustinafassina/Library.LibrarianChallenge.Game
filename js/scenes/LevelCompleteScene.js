@@ -1,5 +1,14 @@
 import { I18n } from "../utils/i18n.js?v=2";
-import { makeButton, goToScene, COLORS, FONTS, formatTime, bindResizeRestart, panelBox, placeButtonRow } from "../utils/ui.js";
+import {
+  makeButton,
+  goToScene,
+  COLORS,
+  FONTS,
+  formatTime,
+  bindResizeRestart,
+  panelBox,
+  placeButtonRow,
+} from "../utils/ui.js";
 import { fillLibraryRoom } from "../utils/libraryArt.js";
 
 export default class LevelCompleteScene extends Phaser.Scene {
@@ -14,7 +23,16 @@ export default class LevelCompleteScene extends Phaser.Scene {
   create() {
     const { width, height } = this.scale;
     this.cameras.main.fadeIn(200, 0, 0, 0);
-    const { level, totalLevels, timeMs, moves, score, isBest, autoUsed, hintsUsed = 0 } = this.result;
+    const {
+      level,
+      totalLevels,
+      timeMs,
+      moves,
+      score,
+      isBest,
+      autoUsed,
+      hintsUsed = 0,
+    } = this.result;
 
     fillLibraryRoom(this);
 
@@ -96,21 +114,43 @@ export default class LevelCompleteScene extends Phaser.Scene {
     let by = py + 295;
 
     if (hasNext) {
-      makeButton(this, width / 2, by, I18n.t("nextLevel"), () =>
-        goToScene(this, "GameScene", { level: level + 1 }),
-        { width: Math.min(280, pw - 48), height: 54, fontSize: 22, fill: COLORS.good, textColor: "#ffffff" }
+      makeButton(
+        this,
+        width / 2,
+        by,
+        I18n.t("nextLevel"),
+        () => goToScene(this, "GameScene", { level: level + 1 }),
+        {
+          width: Math.min(280, pw - 48),
+          height: 54,
+          fontSize: 22,
+          fill: COLORS.good,
+          textColor: "#ffffff",
+        }
       );
       by += 70;
       placeButtonRow(this, width / 2, by, [
         {
           label: I18n.t("replay"),
           onClick: () => goToScene(this, "GameScene", { level }),
-          opts: { width: 160, height: 42, fontSize: 16, fill: COLORS.woodLight, textColor: "#f3e3c3" },
+          opts: {
+            width: 160,
+            height: 42,
+            fontSize: 16,
+            fill: COLORS.woodLight,
+            textColor: "#f3e3c3",
+          },
         },
         {
           label: I18n.t("levels"),
           onClick: () => goToScene(this, "LevelSelectScene"),
-          opts: { width: 160, height: 42, fontSize: 16, fill: COLORS.woodLight, textColor: "#f3e3c3" },
+          opts: {
+            width: 160,
+            height: 42,
+            fontSize: 16,
+            fill: COLORS.woodLight,
+            textColor: "#f3e3c3",
+          },
         },
       ]);
     } else {
@@ -128,12 +168,24 @@ export default class LevelCompleteScene extends Phaser.Scene {
         {
           label: I18n.t("replay"),
           onClick: () => goToScene(this, "GameScene", { level }),
-          opts: { width: 160, height: 42, fontSize: 16, fill: COLORS.woodLight, textColor: "#f3e3c3" },
+          opts: {
+            width: 160,
+            height: 42,
+            fontSize: 16,
+            fill: COLORS.woodLight,
+            textColor: "#f3e3c3",
+          },
         },
         {
           label: I18n.t("levels"),
           onClick: () => goToScene(this, "LevelSelectScene"),
-          opts: { width: 160, height: 42, fontSize: 16, fill: COLORS.woodLight, textColor: "#f3e3c3" },
+          opts: {
+            width: 160,
+            height: 42,
+            fontSize: 16,
+            fill: COLORS.woodLight,
+            textColor: "#f3e3c3",
+          },
         },
       ]);
     }

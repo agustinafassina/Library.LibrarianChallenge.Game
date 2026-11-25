@@ -72,7 +72,19 @@ const config = {
   bookTags: DEFAULT_TAGS,
 };
 
-const contents = `window.LIBRARIAN_CHALLENGE_CONFIG = ${JSON.stringify(config, null, 2)};\n`;
+// Preloads reCAPTCHA v3 when a site key is set (feedbackForm.js also loads it on demand).
+const recaptchaPreload = `(function () {
+  var siteKey = window.LIBRARIAN_CHALLENGE_CONFIG.recaptchaSiteKey;
+  if (!siteKey) return;
+  var script = document.createElement("script");
+  script.id = "lc-recaptcha-script";
+  script.src = "https://www.google.com/recaptcha/api.js?render=" + encodeURIComponent(siteKey);
+  script.async = true;
+  document.head.appendChild(script);
+})();
+`;
+
+const contents = `window.LIBRARIAN_CHALLENGE_CONFIG = ${JSON.stringify(config, null, 2)};\n${recaptchaPreload}`;
 
 fs.writeFileSync(outPath, contents, "utf8");
 console.log(`[build] wrote ${outPath}`);

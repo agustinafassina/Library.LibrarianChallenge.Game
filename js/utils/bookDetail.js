@@ -92,10 +92,7 @@ export function bookDetailRows(book) {
     [I18n.t("bookDetailAuthor"), book.author || "—"],
     [I18n.t("bookDetailGenre"), book.genre || "—"],
     [I18n.t("bookDetailYear"), book.year ?? "—"],
-    [
-      I18n.t("bookDetailPages"),
-      book.pages != null ? I18n.t("pagesCount", { n: book.pages }) : "—",
-    ],
+    [I18n.t("bookDetailPages"), book.pages != null ? I18n.t("pagesCount", { n: book.pages }) : "—"],
     [I18n.t("bookDetailSize"), bookSizeLabel(book.size)],
     [I18n.t("bookDetailTags"), (book.tags ?? []).join(", ") || "—"],
   ];

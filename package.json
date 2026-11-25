@@ -6,6 +6,7 @@
   "description": "A small 2D browser game where you sort books shelf by shelf.",
   "scripts": {
     "build": "node scripts/generate-runtime-config.mjs",
+    "check:config": "node scripts/check-runtime-config.mjs",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
@@ -16,7 +17,7 @@
     "test": "node tests/runAllLevels.mjs && node tests/runPortraitSmoke.mjs",
     "test:e2e": "node tests/runAllLevels.mjs",
     "test:portrait": "node tests/runPortraitSmoke.mjs",
-    "pretest": "playwright install chromium"
+    "test:install": "playwright install chromium"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",

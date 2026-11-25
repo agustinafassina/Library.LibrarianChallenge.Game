@@ -87,7 +87,10 @@ async function getRecaptchaToken(siteKey) {
       loadRecaptchaScript(siteKey).then(
         () =>
           new Promise((resolve, reject) => {
-            globalThis.grecaptcha.execute(siteKey, { action: "submit" }).then(resolve).catch(reject);
+            globalThis.grecaptcha
+              .execute(siteKey, { action: "submit" })
+              .then(resolve)
+              .catch(reject);
           })
       ),
       RECAPTCHA_TIMEOUT_MS,
@@ -103,7 +106,8 @@ function captchaErrorMessage(err) {
   const message = err?.message || "";
   const hostname = window.location.hostname;
   if (message.includes("timeout")) return I18n.t("feedbackCaptchaTimeout");
-  if (message.includes("Invalid site key")) return I18n.t("feedbackCaptchaInvalidKey", { hostname });
+  if (message.includes("Invalid site key"))
+    return I18n.t("feedbackCaptchaInvalidKey", { hostname });
   return I18n.t("feedbackCaptchaHint", { hostname });
 }
 

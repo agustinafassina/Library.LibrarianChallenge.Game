@@ -88,10 +88,8 @@ export class BoardController {
 
       const isBetter =
         score.correctCount < bestScore.correctCount ||
-        (
-          score.correctCount === bestScore.correctCount &&
-          score.avgDisplacement > bestScore.avgDisplacement
-        );
+        (score.correctCount === bestScore.correctCount &&
+          score.avgDisplacement > bestScore.avgDisplacement);
       if (isBetter) {
         bestArr = candidate;
         bestScore = score;
@@ -158,15 +156,15 @@ export class BoardController {
       const sorted = [...slice].sort(
         (a, b) => expected.indexOf(getBook(a)) - expected.indexOf(getBook(b))
       );
-      sorted.forEach((it, i) => { this.items[range.start + i] = it; });
+      sorted.forEach((it, i) => {
+        this.items[range.start + i] = it;
+      });
     });
   }
 
   pickHintTargetIndex(getBook) {
     const result = this.evaluateAll(getBook);
-    const wrong = result.perSlot
-      .map((ok, i) => (!ok ? i : -1))
-      .filter((i) => i >= 0);
+    const wrong = result.perSlot.map((ok, i) => (!ok ? i : -1)).filter((i) => i >= 0);
     if (wrong.length === 0) return -1;
     const onCurrent = wrong.find((i) => this.slots[i].page === this.currentPage);
     return onCurrent ?? wrong[0];

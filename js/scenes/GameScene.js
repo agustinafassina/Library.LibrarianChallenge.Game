@@ -2,11 +2,25 @@ import { getLevelWithBooks, getLevelCount } from "../utils/dataLoader.js";
 import { getRuleLabel, resolveRule } from "../utils/rules.js";
 import { Storage } from "../utils/storage.js";
 import { I18n } from "../utils/i18n.js?v=2";
-import { makeButton, goToScene, isE2ETest, COLORS, FONTS, formatTime, panelBox, isCoarsePointer } from "../utils/ui.js";
+import {
+  makeButton,
+  goToScene,
+  isE2ETest,
+  COLORS,
+  FONTS,
+  formatTime,
+  panelBox,
+  isCoarsePointer,
+} from "../utils/ui.js";
 import { getUiLayout } from "../config/layout.js";
 import { BoardController } from "../game/BoardController.js";
 import { Sfx } from "../utils/sfx.js";
-import { fillLibraryRoom, drawShelfPlank, ensureBookSpineTexture, bookFaceSize } from "../utils/libraryArt.js";
+import {
+  fillLibraryRoom,
+  drawShelfPlank,
+  ensureBookSpineTexture,
+  bookFaceSize,
+} from "../utils/libraryArt.js";
 
 const HINT_SCORE_PENALTY = 120;
 
@@ -118,9 +132,7 @@ export default class GameScene extends Phaser.Scene {
     this.input.keyboard.on("keydown-ESC", this.handlers.onKeyEsc);
     this.input.keyboard.on("keydown-Z", this.handlers.onKeyZ);
 
-    this.startTime = this.resume
-      ? this.time.now - (this.resume.elapsed ?? 0)
-      : this.time.now;
+    this.startTime = this.resume ? this.time.now - (this.resume.elapsed ?? 0) : this.time.now;
     this.timerStarted = true;
     this.updateChallengeDisplay();
 
@@ -188,9 +200,7 @@ export default class GameScene extends Phaser.Scene {
     }
     const maxMoves = Number.isFinite(raw.maxMoves) ? raw.maxMoves : null;
     const maxTimeMs = Number.isFinite(raw.maxTimeSec) ? raw.maxTimeSec * 1000 : null;
-    this.challenge = maxMoves == null && maxTimeMs == null
-      ? null
-      : { maxMoves, maxTimeMs };
+    this.challenge = maxMoves == null && maxTimeMs == null ? null : { maxMoves, maxTimeMs };
   }
 
   buildChallengeDisplayText() {
@@ -311,20 +321,13 @@ export default class GameScene extends Phaser.Scene {
     this.headerPauseW = pauseW;
     this.headerMenuW = menuW;
 
-    this.pauseBtn = makeButton(
-      this,
-      pbx,
-      titleY,
-      "\u2016",
-      () => this.togglePause(),
-      {
-        width: pauseW,
-        height: menuH,
-        fontSize: stacked ? 16 : compact ? 18 : 20,
-        fill: COLORS.woodLight,
-        textColor: "#f3e3c3",
-      }
-    ).setDepth(51);
+    this.pauseBtn = makeButton(this, pbx, titleY, "\u2016", () => this.togglePause(), {
+      width: pauseW,
+      height: menuH,
+      fontSize: stacked ? 16 : compact ? 18 : 20,
+      fill: COLORS.woodLight,
+      textColor: "#f3e3c3",
+    }).setDepth(51);
     this.pauseBtn.on("pointerover", () => {
       if (!isCoarsePointer()) this.showActionTooltip(pbx, titleY + 34, I18n.t("pause"));
     });
@@ -335,20 +338,13 @@ export default class GameScene extends Phaser.Scene {
       if (!isCoarsePointer()) this.hideActionTooltip();
     });
 
-    this.menuBtn = makeButton(
-      this,
-      menuX,
-      titleY,
-      I18n.t("menu"),
-      () => this.toggleActionMenu(),
-      {
-        width: menuW,
-        height: menuH,
-        fontSize: menuFont,
-        fill: COLORS.woodLight,
-        textColor: "#f3e3c3",
-      }
-    ).setDepth(51);
+    this.menuBtn = makeButton(this, menuX, titleY, I18n.t("menu"), () => this.toggleActionMenu(), {
+      width: menuW,
+      height: menuH,
+      fontSize: menuFont,
+      fill: COLORS.woodLight,
+      textColor: "#f3e3c3",
+    }).setDepth(51);
 
     this.updateTopBarLayout();
   }
@@ -378,8 +374,13 @@ export default class GameScene extends Phaser.Scene {
   truncateTextToWidth(textObj, fullText, maxWidth, baseSize, minSize = 10) {
     if (!textObj) return;
 
-    const normalized = String(fullText ?? "").replace(/\s+/g, " ").trim();
-    if (normalized.length === 0) { textObj.setText(""); return; }
+    const normalized = String(fullText ?? "")
+      .replace(/\s+/g, " ")
+      .trim();
+    if (normalized.length === 0) {
+      textObj.setText("");
+      return;
+    }
 
     const ellipsis = "\u2026";
 
@@ -407,7 +408,10 @@ export default class GameScene extends Phaser.Scene {
       words.pop();
       const candidate = `${words.join(" ")}${ellipsis}`;
       for (let sz = baseSize; sz >= minSize; sz--) {
-        if (tryAt(candidate, sz)) { truncated = { text: candidate, size: sz }; break outer; }
+        if (tryAt(candidate, sz)) {
+          truncated = { text: candidate, size: sz };
+          break outer;
+        }
       }
     }
 
@@ -418,7 +422,10 @@ export default class GameScene extends Phaser.Scene {
         chars -= 1;
         const candidate = `${normalized.slice(0, chars).trimEnd()}${ellipsis}`;
         for (let sz = baseSize; sz >= minSize; sz--) {
-          if (tryAt(candidate, sz)) { truncated = { text: candidate, size: sz }; break; }
+          if (tryAt(candidate, sz)) {
+            truncated = { text: candidate, size: sz };
+            break;
+          }
         }
         if (truncated) break;
       }
@@ -435,7 +442,9 @@ export default class GameScene extends Phaser.Scene {
 
   fitTextToLines(textObj, fullText, maxWidth, maxLines, baseSize, minSize = 11) {
     if (!textObj) return;
-    const normalized = String(fullText ?? "").replace(/\s+/g, " ").trim();
+    const normalized = String(fullText ?? "")
+      .replace(/\s+/g, " ")
+      .trim();
     if (!normalized) {
       textObj.setText("");
       return;
@@ -490,7 +499,10 @@ export default class GameScene extends Phaser.Scene {
     const statsY = ui.hudStatsY;
 
     if (stacked) {
-      const titleMaxW = Math.max(110, width - 24 - (this.headerMenuW ?? 72) - (this.headerPauseW ?? 40) - 20);
+      const titleMaxW = Math.max(
+        110,
+        width - 24 - (this.headerMenuW ?? 72) - (this.headerPauseW ?? 40) - 20
+      );
       this.titleText.setPosition(leftPad, titleY);
       this.fitTextToWidth(this.titleText, titleMaxW, titleBase, 11);
 
@@ -527,9 +539,7 @@ export default class GameScene extends Phaser.Scene {
     this.fitTextToWidth(this.titleText, titleMaxW, titleBase, compact ? 12 : 14);
 
     const titleRight = leftPad + this.titleText.width;
-    const rightBound = this.pauseBtn
-      ? this.pauseBtn.x - this.headerPauseW / 2 - 12
-      : width - 180;
+    const rightBound = this.pauseBtn ? this.pauseBtn.x - this.headerPauseW / 2 - 12 : width - 180;
     const centerEnd = rightBound;
     let centerStart = Math.max(titleRight + 18, width * (compact ? 0.35 : 0.32));
     if (centerEnd - centerStart < 150) {
@@ -585,22 +595,29 @@ export default class GameScene extends Phaser.Scene {
 
     this.bookW = Phaser.Math.Clamp(
       (availW - (widestRow - 1) * this.ui.gapX) / widestRow,
-      60, this.ui.bookWMax
+      60,
+      this.ui.bookWMax
     );
-    const rawBookH = (availH - rowsOnScreen * this.ui.boardH - (rowsOnScreen - 1) * this.ui.gapY) / rowsOnScreen;
-    const ratioCap = rowsOnScreen === 1 ? this.bookW * 1.6
-      : rowsOnScreen === 2 ? this.bookW * 1.8
-      : this.ui.portrait ? this.bookW * 1.68 : this.bookW * 1.55;
+    const rawBookH =
+      (availH - rowsOnScreen * this.ui.boardH - (rowsOnScreen - 1) * this.ui.gapY) / rowsOnScreen;
+    const ratioCap =
+      rowsOnScreen === 1
+        ? this.bookW * 1.6
+        : rowsOnScreen === 2
+          ? this.bookW * 1.8
+          : this.ui.portrait
+            ? this.bookW * 1.68
+            : this.bookW * 1.55;
     this.bookH = Math.max(48, Math.min(rawBookH, this.ui.bookHMax, ratioCap));
 
     let rowGap = this.ui.gapY;
-    let totalH = rowsOnScreen * this.bookH + rowsOnScreen * this.ui.boardH + (rowsOnScreen - 1) * rowGap;
+    const totalH =
+      rowsOnScreen * this.bookH + rowsOnScreen * this.ui.boardH + (rowsOnScreen - 1) * rowGap;
     let extra = Math.max(0, availH - totalH);
     if (this.ui.portrait && rowsOnScreen > 1 && extra > 12) {
       const bump = Math.min(this.ui.tallPortrait ? 14 : 8, extra / (rowsOnScreen - 1));
       rowGap += bump;
       extra -= bump * (rowsOnScreen - 1);
-      totalH = rowsOnScreen * this.bookH + rowsOnScreen * this.ui.boardH + (rowsOnScreen - 1) * rowGap;
     }
     const topSlack = this.ui.portrait ? Math.min(extra * 0.18, 20) : extra / 2;
     const startY = this.areaTop + topSlack;
@@ -628,12 +645,21 @@ export default class GameScene extends Phaser.Scene {
         x: gridLeft - 16,
         y: startY + this.bookH + screenRow * rowStride,
         w: widestRowW + 32,
-        page, zoneIdx: 0,
+        page,
+        zoneIdx: 0,
       });
     }
 
-    this.zoneRanges = [{ zi: 0, rule: zone.rule, label: zone.label, label_es: zone.label_es,
-      start: 0, end: count - 1 }];
+    this.zoneRanges = [
+      {
+        zi: 0,
+        rule: zone.rule,
+        label: zone.label,
+        label_es: zone.label_es,
+        start: 0,
+        end: count - 1,
+      },
+    ];
     this.zoneTopYMap = null;
     this.celebrateY = (this.areaTop + this.ui.areaBottom) / 2;
   }
@@ -678,9 +704,11 @@ export default class GameScene extends Phaser.Scene {
 
     this.bookW = Phaser.Math.Clamp(
       (availW - (maxWidestRow - 1) * this.ui.gapX) / maxWidestRow,
-      60, this.ui.bookWMax
+      60,
+      this.ui.bookWMax
     );
-    const rawBookH = (availH - totalRows * this.ui.boardH - (totalRows - 1) * this.ui.gapY) / totalRows;
+    const rawBookH =
+      (availH - totalRows * this.ui.boardH - (totalRows - 1) * this.ui.gapY) / totalRows;
     this.bookH = Math.max(48, Math.min(rawBookH, this.ui.bookHMax));
 
     const rowStride = this.bookH + this.ui.boardH + this.ui.gapY;
@@ -714,14 +742,19 @@ export default class GameScene extends Phaser.Scene {
           x: startX - this.bookW / 2 - 16,
           y: currentY + this.bookH,
           w: rowW + 32,
-          page: 0, zoneIdx: zi,
+          page: 0,
+          zoneIdx: zi,
         });
         currentY += rowStride;
       }
 
       this.zoneRanges.push({
-        zi, rule: zone.rule, label: zone.label, label_es: zone.label_es,
-        start: slotStart, end: slotStart + meta.count - 1,
+        zi,
+        rule: zone.rule,
+        label: zone.label,
+        label_es: zone.label_es,
+        start: slotStart,
+        end: slotStart + meta.count - 1,
       });
       slotStart += meta.count;
 
@@ -749,19 +782,23 @@ export default class GameScene extends Phaser.Scene {
         const labelY = this.zoneTopYMap.get(range.zi);
         if (labelY == null) return;
 
-        const rawLabel = I18n.lang === "es"
-          ? (range.label_es || range.label || "")
-          : (range.label || range.label_es || "");
+        const rawLabel =
+          I18n.lang === "es"
+            ? range.label_es || range.label || ""
+            : range.label || range.label_es || "";
         const ruleName = this.ruleDisplayName(range.rule);
-        const displayText = rawLabel
-          ? `${rawLabel} \u2014 ${ruleName}`
-          : ruleName;
+        const displayText = rawLabel ? `${rawLabel} \u2014 ${ruleName}` : ruleName;
 
         // Separator line above zone (except first)
         if (range.zi > 0) {
           const sepG = this.add.graphics();
           sepG.lineStyle(1, COLORS.accent, 0.25);
-          sepG.lineBetween(this.ui.leftReserved, labelY - 8, this.scale.width - this.ui.rightMargin, labelY - 8);
+          sepG.lineBetween(
+            this.ui.leftReserved,
+            labelY - 8,
+            this.scale.width - this.ui.rightMargin,
+            labelY - 8
+          );
           this.zoneLabelObjects.push(sepG);
         }
 
@@ -1149,8 +1186,7 @@ export default class GameScene extends Phaser.Scene {
   }
 
   refreshUndoButton() {
-    const canUndo =
-      this.board.hasUndo() && !this.solved && !this.failed && !this.autoArranging;
+    const canUndo = this.board.hasUndo() && !this.solved && !this.failed && !this.autoArranging;
     this.undoBtn?.setEnabled(canUndo);
   }
 
@@ -1249,7 +1285,13 @@ export default class GameScene extends Phaser.Scene {
       : 0;
     const wrapW = portrait ? cardW - cardPadX * 2 : Math.round(this.ui.instructionWrap);
     const textRes = Math.min(window.devicePixelRatio || 1, 2);
-    const ruleSize = portrait ? (this.ui.tallPortrait ? "16px" : "15px") : this.ui.compact ? "16px" : "18px";
+    const ruleSize = portrait
+      ? this.ui.tallPortrait
+        ? "16px"
+        : "15px"
+      : this.ui.compact
+        ? "16px"
+        : "18px";
     const detailSize = portrait ? (this.ui.tallPortrait ? "14px" : "13px") : "15px";
     const detailMaxLines = portrait ? (this.ui.tallPortrait ? 3 : 2) : 4;
     let bottomOfInstruction;
@@ -1257,8 +1299,7 @@ export default class GameScene extends Phaser.Scene {
     if (zones.length === 1) {
       const ruleName = this.ruleDisplayName(zones[0].rule);
       const ruleLine = I18n.t("ruleColon", { label: ruleName });
-      const detail =
-        I18n.pick(this.levelDef, "hint") || I18n.pick(this.levelDef, "description");
+      const detail = I18n.pick(this.levelDef, "hint") || I18n.pick(this.levelDef, "description");
 
       const ruleObj = this.add
         .text(bx, by, ruleLine, {
@@ -1301,8 +1342,7 @@ export default class GameScene extends Phaser.Scene {
         bottomOfInstruction = Math.round(bottomOfInstruction + detailObj.height);
       }
     } else {
-      const detail =
-        I18n.pick(this.levelDef, "hint") || I18n.pick(this.levelDef, "description");
+      const detail = I18n.pick(this.levelDef, "hint") || I18n.pick(this.levelDef, "description");
       const hintText = detail || I18n.t("multiZoneHint");
       const hintObj = this.add
         .text(bx, by, hintText, {
@@ -1464,7 +1504,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     const ringX = step.ringX ?? step.x;
-    const ringY = step.ringY ?? (this.order[0]?.y ?? step.y);
+    const ringY = step.ringY ?? this.order[0]?.y ?? step.y;
     const ring = this.add.graphics().setDepth(78);
     ring.lineStyle(3, COLORS.accent, 0.95);
     ring.strokeRoundedRect(ringX - step.w / 2, ringY - step.h / 2, step.w, step.h, 10);
@@ -1476,7 +1516,11 @@ export default class GameScene extends Phaser.Scene {
       repeat: -1,
     });
 
-    const bubbleY = Phaser.Math.Clamp(step.y, 70, height - (this.ui.portrait ? this.ui.bottomBarH + 70 : 80));
+    const bubbleY = Phaser.Math.Clamp(
+      step.y,
+      70,
+      height - (this.ui.portrait ? this.ui.bottomBarH + 70 : 80)
+    );
     const txt = this.add
       .text(0, 0, step.text, {
         fontFamily: FONTS.body,
@@ -1508,7 +1552,13 @@ export default class GameScene extends Phaser.Scene {
       by + bh - skipH / 2 - 8,
       I18n.t("coachSkip"),
       () => this.advanceCoach(),
-      { width: Math.min(132, bw - 24), height: 32, fontSize: 14, fill: COLORS.accent, textColor: "#2c1d14" }
+      {
+        width: Math.min(132, bw - 24),
+        height: 32,
+        fontSize: 14,
+        fill: COLORS.accent,
+        textColor: "#2c1d14",
+      }
     ).setDepth(82);
 
     this.coachItems = [ring, bg, txt, skip];
@@ -1564,58 +1614,60 @@ export default class GameScene extends Phaser.Scene {
       this.hintX = Math.round(start + step * 2.5);
       gap = 0;
     } else {
-      bx = this.headerMenuX ?? (width - 70);
+      bx = this.headerMenuX ?? width - 70;
       by = this.ui.topBarH + 40;
       this.undoX = bx;
       this.hintX = bx;
     }
 
-    this.checkBtn = makeButton(
-      this,
-      bx,
-      by,
-      "\u2713",
-      () => this.checkSolved(true),
-      { width: btnW, height: btnH, fontSize: 26, fill: COLORS.good, textColor: "#ffffff" }
-    ).setDepth(51);
+    this.checkBtn = makeButton(this, bx, by, "\u2713", () => this.checkSolved(true), {
+      width: btnW,
+      height: btnH,
+      fontSize: 26,
+      fill: COLORS.good,
+      textColor: "#ffffff",
+    }).setDepth(51);
     this.checkBtn.on("pointerover", () => {
-      if (!isCoarsePointer()) this.showActionTooltip(bx, portrait ? by - 40 : by + 40, I18n.t("checkOrder"));
+      if (!isCoarsePointer())
+        this.showActionTooltip(bx, portrait ? by - 40 : by + 40, I18n.t("checkOrder"));
     });
     this.checkBtn.on("pointerdown", () => {
-      if (isCoarsePointer()) this.showActionTooltip(bx, portrait ? by - 40 : by + 40, I18n.t("checkOrder"), 1400);
+      if (isCoarsePointer())
+        this.showActionTooltip(bx, portrait ? by - 40 : by + 40, I18n.t("checkOrder"), 1400);
     });
     this.checkBtn.on("pointerout", () => {
       if (!isCoarsePointer()) this.hideActionTooltip();
     });
 
     const uy = portrait ? by : by + gap;
-    this.undoBtn = makeButton(
-      this,
-      this.undoX,
-      uy,
-      "\u21B6",
-      () => this.undoMove(),
-      { width: btnW, height: btnH, fontSize: 24, fill: COLORS.woodLight, textColor: "#f3e3c3", enabled: false }
-    ).setDepth(51);
+    this.undoBtn = makeButton(this, this.undoX, uy, "\u21B6", () => this.undoMove(), {
+      width: btnW,
+      height: btnH,
+      fontSize: 24,
+      fill: COLORS.woodLight,
+      textColor: "#f3e3c3",
+      enabled: false,
+    }).setDepth(51);
     this.undoBtn.on("pointerover", () => {
-      if (!isCoarsePointer()) this.showActionTooltip(this.undoX, portrait ? uy - 40 : uy + 40, I18n.t("undo"));
+      if (!isCoarsePointer())
+        this.showActionTooltip(this.undoX, portrait ? uy - 40 : uy + 40, I18n.t("undo"));
     });
     this.undoBtn.on("pointerdown", () => {
-      if (isCoarsePointer()) this.showActionTooltip(this.undoX, portrait ? uy - 40 : uy + 40, I18n.t("undo"), 1400);
+      if (isCoarsePointer())
+        this.showActionTooltip(this.undoX, portrait ? uy - 40 : uy + 40, I18n.t("undo"), 1400);
     });
     this.undoBtn.on("pointerout", () => {
       if (!isCoarsePointer()) this.hideActionTooltip();
     });
 
     const hy = portrait ? by : uy + gap;
-    this.hintBtn = makeButton(
-      this,
-      this.hintX,
-      hy,
-      "?",
-      () => this.giveHint(),
-      { width: btnW, height: btnH, fontSize: 24, fill: COLORS.accent, textColor: "#2c1d14" }
-    ).setDepth(51);
+    this.hintBtn = makeButton(this, this.hintX, hy, "?", () => this.giveHint(), {
+      width: btnW,
+      height: btnH,
+      fontSize: 24,
+      fill: COLORS.accent,
+      textColor: "#2c1d14",
+    }).setDepth(51);
     this.hintBtn.on("pointerover", () => {
       if (!isCoarsePointer()) {
         this.showActionTooltip(
@@ -1736,16 +1788,23 @@ export default class GameScene extends Phaser.Scene {
 
     defs.forEach((def, i) => {
       const cy = baseY + i * (itemH + vgap);
-      const btn = makeButton(this, menuX, cy, def.label, () => {
-        this.closeActionMenu();
-        def.onTap();
-      }, {
-        width: itemW,
-        height: itemH,
-        fontSize: 16,
-        fill: def.fill,
-        textColor: def.textColor,
-      }).setDepth(60);
+      const btn = makeButton(
+        this,
+        menuX,
+        cy,
+        def.label,
+        () => {
+          this.closeActionMenu();
+          def.onTap();
+        },
+        {
+          width: itemW,
+          height: itemH,
+          fontSize: 16,
+          fill: def.fill,
+          textColor: def.textColor,
+        }
+      ).setDepth(60);
       this.actionMenuItems.push(btn);
     });
   }
@@ -1762,10 +1821,18 @@ export default class GameScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const stack = width < 500;
     const langs = I18n.available;
-    const { pw, ph, px, py } = panelBox(width, height, 380, stack ? 140 + langs.length * 58 + 52 : 200);
+    const { pw, ph, px, py } = panelBox(
+      width,
+      height,
+      380,
+      stack ? 140 + langs.length * 58 + 52 : 200
+    );
 
-    const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.55)
-      .setOrigin(0).setDepth(60).setInteractive();
+    const overlay = this.add
+      .rectangle(0, 0, width, height, 0x000000, 0.55)
+      .setOrigin(0)
+      .setDepth(60)
+      .setInteractive();
 
     const panel = this.add.graphics().setDepth(61);
     panel.fillStyle(COLORS.ink, 0.97);
@@ -1773,9 +1840,15 @@ export default class GameScene extends Phaser.Scene {
     panel.lineStyle(2, COLORS.accent, 1);
     panel.strokeRoundedRect(px, py, pw, ph, 14);
 
-    const title = this.add.text(width / 2, py + 30, I18n.t("language"), {
-      fontFamily: FONTS.title, fontSize: "22px", color: "#f3e3c3", fontStyle: "bold",
-    }).setOrigin(0.5).setDepth(62);
+    const title = this.add
+      .text(width / 2, py + 30, I18n.t("language"), {
+        fontFamily: FONTS.title,
+        fontSize: "22px",
+        color: "#f3e3c3",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5)
+      .setDepth(62);
 
     const modalItems = [overlay, panel, title];
 
@@ -1803,7 +1876,9 @@ export default class GameScene extends Phaser.Scene {
           }
         },
         {
-          width: Math.min(150, pw - 48), height: 46, fontSize: 17,
+          width: Math.min(150, pw - 48),
+          height: 46,
+          fontSize: 17,
           fill: isCurrent ? COLORS.accent : COLORS.woodLight,
           textColor: isCurrent ? "#2c1d14" : "#f3e3c3",
         }
@@ -1812,8 +1887,11 @@ export default class GameScene extends Phaser.Scene {
     });
 
     const doneBtn = makeButton(this, width / 2, py + ph - 28, I18n.t("done"), close, {
-      width: 130, height: 38, fontSize: 15,
-      fill: COLORS.woodLight, textColor: "#f3e3c3",
+      width: 130,
+      height: 38,
+      fontSize: 15,
+      fill: COLORS.woodLight,
+      textColor: "#f3e3c3",
     }).setDepth(62);
     modalItems.push(doneBtn);
 
@@ -1838,8 +1916,11 @@ export default class GameScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const { pw, ph, px, py } = panelBox(width, height, 360, 300);
 
-    const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.6)
-      .setOrigin(0).setDepth(80).setInteractive();
+    const overlay = this.add
+      .rectangle(0, 0, width, height, 0x000000, 0.6)
+      .setOrigin(0)
+      .setDepth(80)
+      .setInteractive();
 
     const panel = this.add.graphics().setDepth(81);
     panel.fillStyle(COLORS.ink, 0.98);
@@ -1847,31 +1928,78 @@ export default class GameScene extends Phaser.Scene {
     panel.lineStyle(2, COLORS.accent, 1);
     panel.strokeRoundedRect(px, py, pw, ph, 16);
 
-    const title = this.add.text(width / 2, py + 44, I18n.t("paused"), {
-      fontFamily: FONTS.title, fontSize: "28px", color: "#f3e3c3", fontStyle: "bold",
-    }).setOrigin(0.5).setDepth(82);
+    const title = this.add
+      .text(width / 2, py + 44, I18n.t("paused"), {
+        fontFamily: FONTS.title,
+        fontSize: "28px",
+        color: "#f3e3c3",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5)
+      .setDepth(82);
 
     const elapsed = this.pauseStart - this.startTime;
-    const sub = this.add.text(width / 2, py + 84,
-      `${I18n.t("timeLabel", { time: formatTime(elapsed) })}  \u00b7  ${I18n.t("movesLabel", { moves: this.moves })}`,
-      { fontFamily: FONTS.body, fontSize: "15px", color: "#c9b08a" }
-    ).setOrigin(0.5).setDepth(82);
+    const sub = this.add
+      .text(
+        width / 2,
+        py + 84,
+        `${I18n.t("timeLabel", { time: formatTime(elapsed) })}  \u00b7  ${I18n.t("movesLabel", { moves: this.moves })}`,
+        { fontFamily: FONTS.body, fontSize: "15px", color: "#c9b08a" }
+      )
+      .setOrigin(0.5)
+      .setDepth(82);
 
     this.pauseItems = [overlay, panel, title, sub];
 
-    const resumeBtn = makeButton(this, width / 2, py + 140, I18n.t("resume"),
+    const resumeBtn = makeButton(
+      this,
+      width / 2,
+      py + 140,
+      I18n.t("resume"),
       () => this.resumeGame(),
-      { width: Math.min(220, pw - 48), height: 52, fontSize: 20, fill: COLORS.good, textColor: "#ffffff" }
+      {
+        width: Math.min(220, pw - 48),
+        height: 52,
+        fontSize: 20,
+        fill: COLORS.good,
+        textColor: "#ffffff",
+      }
     ).setDepth(82);
 
-    const restartBtn = makeButton(this, width / 2, py + 200, I18n.t("restartLevel"),
-      () => { this.clearPauseUI(); this.scene.restart({ level: this.levelNumber }); },
-      { width: Math.min(200, pw - 48), height: 44, fontSize: 16, fill: COLORS.woodLight, textColor: "#f3e3c3" }
+    const restartBtn = makeButton(
+      this,
+      width / 2,
+      py + 200,
+      I18n.t("restartLevel"),
+      () => {
+        this.clearPauseUI();
+        this.scene.restart({ level: this.levelNumber });
+      },
+      {
+        width: Math.min(200, pw - 48),
+        height: 44,
+        fontSize: 16,
+        fill: COLORS.woodLight,
+        textColor: "#f3e3c3",
+      }
     ).setDepth(82);
 
-    const menuBtn = makeButton(this, width / 2, py + 252, I18n.t("menu"),
-      () => { this.clearPauseUI(); goToScene(this, "MenuScene"); },
-      { width: Math.min(200, pw - 48), height: 44, fontSize: 16, fill: COLORS.woodLight, textColor: "#f3e3c3" }
+    const menuBtn = makeButton(
+      this,
+      width / 2,
+      py + 252,
+      I18n.t("menu"),
+      () => {
+        this.clearPauseUI();
+        goToScene(this, "MenuScene");
+      },
+      {
+        width: Math.min(200, pw - 48),
+        height: 44,
+        fontSize: 16,
+        fill: COLORS.woodLight,
+        textColor: "#f3e3c3",
+      }
     ).setDepth(82);
 
     this.pauseItems.push(resumeBtn, restartBtn, menuBtn);
@@ -1936,9 +2064,8 @@ export default class GameScene extends Phaser.Scene {
       .setOrigin(0.5)
       .setDepth(92);
 
-    const reasonText = reason === "time"
-      ? I18n.t("challengeFailTime")
-      : I18n.t("challengeFailMoves");
+    const reasonText =
+      reason === "time" ? I18n.t("challengeFailTime") : I18n.t("challengeFailMoves");
     const body = this.add
       .text(width / 2, py + 86, reasonText, {
         fontFamily: FONTS.body,
@@ -2126,7 +2253,7 @@ export default class GameScene extends Phaser.Scene {
   updatePager() {
     const multi = this.pageCount > 1;
     const notFirst = this.currentPage > 0;
-    const notLast  = this.currentPage < this.pageCount - 1;
+    const notLast = this.currentPage < this.pageCount - 1;
 
     this.sidePrev?.setVisible(multi && notFirst);
     this.sideNext?.setVisible(multi && notLast);
@@ -2162,9 +2289,7 @@ export default class GameScene extends Phaser.Scene {
       return translated.startsWith("rule_") ? getRuleLabel(rule) : translated;
     }
     if (rule && typeof rule === "object" && !Array.isArray(rule)) {
-      const lbl = I18n.lang === "es"
-        ? (rule.label_es || rule.label)
-        : (rule.label || rule.label_es);
+      const lbl = I18n.lang === "es" ? rule.label_es || rule.label : rule.label || rule.label_es;
       if (lbl) return lbl;
     }
     return getRuleLabel(rule);
@@ -2174,7 +2299,7 @@ export default class GameScene extends Phaser.Scene {
     const wrongPages = new Set();
 
     this.order.forEach((c, i) => {
-      const ok   = perSlot[i];
+      const ok = perSlot[i];
       const slot = this.slots[i];
       const guide = this.slotGuides[i];
       const onScreen = slot.page === this.currentPage;
@@ -2203,8 +2328,8 @@ export default class GameScene extends Phaser.Scene {
     });
 
     // Toast for visible-page errors
-    const hasCurrentPageErrors = this.order.some((c, i) =>
-      !perSlot[i] && this.slots[i].page === this.currentPage
+    const hasCurrentPageErrors = this.order.some(
+      (c, i) => !perSlot[i] && this.slots[i].page === this.currentPage
     );
     if (hasCurrentPageErrors) {
       this.showFeedbackToast(I18n.t("orderWrong"));
@@ -2402,7 +2527,8 @@ export default class GameScene extends Phaser.Scene {
     const { width, height } = this.scale;
     const { pw, ph, px, py } = panelBox(width, height, 400, 210);
 
-    const overlay = this.add.rectangle(0, 0, width, height, 0x000000, 0.55)
+    const overlay = this.add
+      .rectangle(0, 0, width, height, 0x000000, 0.55)
       .setOrigin(0)
       .setDepth(50)
       .setInteractive();
@@ -2413,19 +2539,25 @@ export default class GameScene extends Phaser.Scene {
     panel.lineStyle(2, 0xd9a441, 1);
     panel.strokeRoundedRect(px, py, pw, ph, 14);
 
-    const title = this.add.text(width / 2, py + 28, I18n.t("autoConfirmTitle"), {
-      fontFamily: "Georgia, serif",
-      fontSize: "20px",
-      color: "#f3e3c3",
-      fontStyle: "bold",
-    }).setOrigin(0.5, 0.5).setDepth(52);
+    const title = this.add
+      .text(width / 2, py + 28, I18n.t("autoConfirmTitle"), {
+        fontFamily: "Georgia, serif",
+        fontSize: "20px",
+        color: "#f3e3c3",
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5, 0.5)
+      .setDepth(52);
 
-    const body = this.add.text(width / 2, py + 80, I18n.t("autoConfirmBody"), {
-      fontFamily: "Georgia, serif",
-      fontSize: "14px",
-      color: "#c8b89a",
-      align: "center",
-    }).setOrigin(0.5, 0.5).setDepth(52);
+    const body = this.add
+      .text(width / 2, py + 80, I18n.t("autoConfirmBody"), {
+        fontFamily: "Georgia, serif",
+        fontSize: "14px",
+        color: "#c8b89a",
+        align: "center",
+      })
+      .setOrigin(0.5, 0.5)
+      .setDepth(52);
 
     const closeAll = () => {
       overlay.destroy();
@@ -2437,17 +2569,30 @@ export default class GameScene extends Phaser.Scene {
     };
 
     const cancelBtn = this.makeDialogButton(
-      px + pw * 0.28, py + ph - 42, Math.min(140, pw * 0.42), 38,
+      px + pw * 0.28,
+      py + ph - 42,
+      Math.min(140, pw * 0.42),
+      38,
       I18n.t("cancel") ?? "Cancel",
-      0x5a3e28, "#f3e3c3", 52,
+      0x5a3e28,
+      "#f3e3c3",
+      52,
       closeAll
     );
 
     const confirmBtn = this.makeDialogButton(
-      px + pw * 0.72, py + ph - 42, Math.min(160, pw * 0.42), 38,
+      px + pw * 0.72,
+      py + ph - 42,
+      Math.min(160, pw * 0.42),
+      38,
       I18n.t("autoConfirmYes"),
-      0x8b2020, "#ffffff", 52,
-      () => { closeAll(); this.runAutoArrange(); }
+      0x8b2020,
+      "#ffffff",
+      52,
+      () => {
+        closeAll();
+        this.runAutoArrange();
+      }
     );
   }
 
@@ -2462,19 +2607,29 @@ export default class GameScene extends Phaser.Scene {
     };
     draw(false);
 
-    const txt = this.add.text(cx, cy, label, {
-      fontFamily: "Georgia, serif",
-      fontSize: "14px",
-      color: textColor,
-      fontStyle: "bold",
-    }).setOrigin(0.5, 0.5).setDepth(depth + 1);
+    const txt = this.add
+      .text(cx, cy, label, {
+        fontFamily: "Georgia, serif",
+        fontSize: "14px",
+        color: textColor,
+        fontStyle: "bold",
+      })
+      .setOrigin(0.5, 0.5)
+      .setDepth(depth + 1);
 
-    const zone = this.add.zone(cx, cy, w, h).setDepth(depth + 2).setInteractive();
+    const zone = this.add
+      .zone(cx, cy, w, h)
+      .setDepth(depth + 2)
+      .setInteractive();
     zone.on("pointerover", () => draw(true));
     zone.on("pointerout", () => draw(false));
     zone.on("pointerup", () => onTap());
 
-    const destroy = () => { bg.destroy(); txt.destroy(); zone.destroy(); };
+    const destroy = () => {
+      bg.destroy();
+      txt.destroy();
+      zone.destroy();
+    };
     return { destroy };
   }
 

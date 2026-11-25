@@ -32,15 +32,17 @@ export const Sfx = {
   _armed: false,
   _ambienceSrc: null,
   _ambienceGain: null,
-  _skipAmbience: typeof window !== "undefined" && new URLSearchParams(window.location.search).has("test"),
+  _skipAmbience:
+    typeof window !== "undefined" && new URLSearchParams(window.location.search).has("test"),
 
   init() {
     if (typeof window === "undefined") return Promise.resolve();
     this.armUnlock();
     this.armVisibility();
-    if (!this._loading) this._loading = this._load().catch((err) => {
-      console.warn("[sfx] could not load audio", err);
-    });
+    if (!this._loading)
+      this._loading = this._load().catch((err) => {
+        console.warn("[sfx] could not load audio", err);
+      });
     return this._loading;
   },
 
@@ -118,7 +120,10 @@ export const Sfx = {
       src.start();
     };
     if (ctx.state === "suspended") {
-      ctx.resume().then(start).catch(() => {});
+      ctx
+        .resume()
+        .then(start)
+        .catch(() => {});
       return;
     }
     start();

@@ -42,7 +42,16 @@ const config = {
     createContainer: true,
   },
   input: { activePointers: 2 },
-  scene: [BootScene, MenuScene, LevelSelectScene, BooksScene, BookDetailScene, GameScene, LevelCompleteScene, ErrorScene],
+  scene: [
+    BootScene,
+    MenuScene,
+    LevelSelectScene,
+    BooksScene,
+    BookDetailScene,
+    GameScene,
+    LevelCompleteScene,
+    ErrorScene,
+  ],
 };
 
 const game = new Phaser.Game(config);

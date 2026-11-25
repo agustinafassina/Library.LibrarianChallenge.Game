@@ -114,7 +114,11 @@ body {
   border-radius: 10px;
   background: #1e1410;
   color: #f3e3c3;
-  font: 15px "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  font:
+    15px "Trebuchet MS",
+    "Segoe UI",
+    system-ui,
+    sans-serif;
   outline: none;
 }
 
@@ -171,7 +175,11 @@ body {
   height: 42px;
   border: none;
   border-radius: 10px;
-  font: 700 16px "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  font:
+    700 16px "Trebuchet MS",
+    "Segoe UI",
+    system-ui,
+    sans-serif;
   cursor: pointer;
 }
 
@@ -243,7 +251,11 @@ body.lc-keyboard-open .books-toolbar {
   border-radius: 10px;
   background: #2c1d14;
   color: #f3e3c3;
-  font: bold 15px "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  font:
+    bold 15px "Trebuchet MS",
+    "Segoe UI",
+    system-ui,
+    sans-serif;
   outline: none;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.28);
 }
@@ -371,7 +383,11 @@ body.book-detail-page {
   border-radius: 10px;
   background: #8a5a2b;
   color: #f3e3c3;
-  font: bold 13px "Trebuchet MS", "Segoe UI", system-ui, sans-serif;
+  font:
+    bold 13px "Trebuchet MS",
+    "Segoe UI",
+    system-ui,
+    sans-serif;
   cursor: pointer;
 }
 

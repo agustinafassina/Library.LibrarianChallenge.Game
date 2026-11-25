@@ -8,12 +8,7 @@
     "description_es": "Ordená los libros por título A–Z.",
     "hint": "Drag the books so their titles read A to Z, left to right.",
     "hint_es": "Arrastrá los libros para que los títulos vayan de la A a la Z, de izquierda a derecha.",
-    "books": [
-      4,
-      1,
-      3,
-      2
-    ]
+    "books": [4, 1, 3, 2]
   },
   {
     "level": 2,
@@ -24,15 +19,7 @@
     "description_es": "Ordená los libros por nombre de autor A–Z (usa dos estantes).",
     "hint": "By author A–Z. Top shelf first, then the next. Same author? Order by title.",
     "hint_es": "Por autor A–Z. Primero el estante de arriba, después el siguiente. ¿Mismo autor? Ordená por título.",
-    "books": [
-      1,
-      5,
-      2,
-      6,
-      21,
-      22,
-      25
-    ]
+    "books": [1, 5, 2, 6, 21, 22, 25]
   },
   {
     "level": 3,
@@ -43,17 +30,7 @@
     "description_es": "Agrupá los libros por género A–Z: Fantasy, después History, después Mystery.",
     "hint": "Fill the top shelf first. Genres go A–Z; within a genre, order by title.",
     "hint_es": "Llená primero el estante de arriba. Los géneros van A–Z; dentro de cada género, ordená por título.",
-    "books": [
-      3,
-      5,
-      25,
-      4,
-      6,
-      33,
-      1,
-      7,
-      29
-    ]
+    "books": [3, 5, 25, 4, 6, 33, 1, 7, 29]
   },
   {
     "level": 4,
@@ -64,18 +41,7 @@
     "description_es": "Ordená los libros por año de publicación, del más viejo al más nuevo (en dos estantes).",
     "hint": "Oldest on the top-left, newest on the bottom-right. Check each spine's year.",
     "hint_es": "El más viejo arriba a la izquierda, el más nuevo abajo a la derecha. Mirá el año en cada lomo.",
-    "books": [
-      4,
-      32,
-      11,
-      26,
-      2,
-      29,
-      13,
-      22,
-      39,
-      17
-    ]
+    "books": [4, 32, 11, 26, 2, 29, 13, 22, 39, 17]
   },
   {
     "level": 5,
@@ -86,19 +52,7 @@
     "description_es": "Agrupá por género A–Z y, dentro de cada género, por título A–Z.",
     "hint": "Genres A–Z (Fantasy, History, Mystery, Romance). Inside each, go A–Z by title. Top shelf first.",
     "hint_es": "Géneros A–Z (Fantasy, History, Mystery, Romance). Dentro de cada uno, A–Z por título. Primero el estante de arriba.",
-    "books": [
-      3,
-      18,
-      30,
-      4,
-      16,
-      33,
-      7,
-      10,
-      36,
-      9,
-      14
-    ]
+    "books": [3, 18, 30, 4, 16, 33, 7, 10, 36, 9, 14]
   },
   {
     "level": 6,
@@ -109,20 +63,7 @@
     "description_es": "Un carrito lleno, cinco géneros incluyendo Sci-Fi. Género A–Z y luego título A–Z.",
     "hint": "Five genres A–Z (Fantasy … Sci-Fi last). Within each, A–Z by title. Read top shelf first.",
     "hint_es": "Cinco géneros A–Z (Fantasy … Sci-Fi al final). Dentro de cada uno, A–Z por título. Leé primero el estante de arriba.",
-    "books": [
-      25,
-      35,
-      24,
-      40,
-      23,
-      36,
-      21,
-      34,
-      27,
-      28,
-      37,
-      39
-    ]
+    "books": [25, 35, 24, 40, 23, 36, 21, 34, 27, 28, 37, 39]
   },
   {
     "level": 7,
@@ -133,21 +74,7 @@
     "description_es": "Ordená un grupo más grande por título A–Z en tres estantes.",
     "hint": "Read the shelves like lines on a page: top shelf first, then middle, then bottom.",
     "hint_es": "Leé los estantes como renglones: primero arriba, después el medio y por último abajo.",
-    "books": [
-      53,
-      54,
-      55,
-      56,
-      57,
-      58,
-      41,
-      42,
-      43,
-      44,
-      45,
-      46,
-      47
-    ]
+    "books": [53, 54, 55, 56, 57, 58, 41, 42, 43, 44, 45, 46, 47]
   },
   {
     "level": 8,
@@ -158,22 +85,7 @@
     "description_es": "Ordená por nombre de autor A–Z. ¿Mismo autor? Entonces ordená esos libros por título.",
     "hint": "Author pairs are mixed together. Keep each author's books in title order.",
     "hint_es": "Hay pares de autores mezclados. Mantené los libros de cada autor ordenados por título.",
-    "books": [
-      41,
-      42,
-      43,
-      44,
-      45,
-      46,
-      47,
-      48,
-      49,
-      50,
-      51,
-      52,
-      53,
-      54
-    ]
+    "books": [41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54]
   },
   {
     "level": 9,
@@ -184,22 +96,7 @@
     "description_es": "Ordená los libros por año de publicación, del más viejo al más nuevo, en tres estantes.",
     "hint": "The years jump around a lot. Start with the 1990s and work toward the future.",
     "hint_es": "Los años saltan bastante. Empezá por los 90 y avanzá hacia el futuro.",
-    "books": [
-      46,
-      51,
-      58,
-      42,
-      54,
-      45,
-      48,
-      59,
-      50,
-      44,
-      53,
-      55,
-      41,
-      60
-    ]
+    "books": [46, 51, 58, 42, 54, 45, 48, 59, 50, 44, 53, 55, 41, 60]
   },
   {
     "level": 10,
@@ -210,23 +107,7 @@
     "description_es": "Se mezclan seis géneros. Agrupá por género A–Z y luego por título A–Z.",
     "hint": "Adventure comes first alphabetically. Sci-Fi comes last. Inside each genre, use title order.",
     "hint_es": "Adventure va primero alfabéticamente. Sci-Fi va al final. Dentro de cada género, usá el título.",
-    "books": [
-      53,
-      54,
-      57,
-      45,
-      49,
-      55,
-      46,
-      51,
-      59,
-      44,
-      47,
-      42,
-      48,
-      41,
-      43
-    ]
+    "books": [53, 54, 57, 45, 49, 55, 46, 51, 59, 44, 47, 42, 48, 41, 43]
   },
   {
     "level": 11,
@@ -237,24 +118,7 @@
     "description_es": "Una reapertura agitada: muchos libros y muchos géneros. Género A–Z y luego título A–Z.",
     "hint": "Stay calm: sort by genre groups first, then clean up each group by title.",
     "hint_es": "Con calma: primero armá grupos por género, después ordená cada grupo por título.",
-    "books": [
-      53,
-      57,
-      58,
-      30,
-      38,
-      45,
-      49,
-      55,
-      56,
-      32,
-      46,
-      51,
-      59,
-      40,
-      23,
-      44
-    ]
+    "books": [53, 57, 58, 30, 38, 45, 49, 55, 56, 32, 46, 51, 59, 40, 23, 44]
   },
   {
     "level": 12,
@@ -265,24 +129,7 @@
     "description_es": "Dieciséis libros, títulos A–Z.",
     "hint": "Pure alphabetical order by title. Fill the top shelf first.",
     "hint_es": "Orden alfabético por título. Llená primero el estante de arriba.",
-    "books": [
-      12,
-      16,
-      20,
-      8,
-      11,
-      15,
-      19,
-      5,
-      9,
-      13,
-      17,
-      7,
-      1,
-      2,
-      3,
-      4
-    ]
+    "books": [12, 16, 20, 8, 11, 15, 19, 5, 9, 13, 17, 7, 1, 2, 3, 4]
   },
   {
     "level": 13,
@@ -293,25 +140,7 @@
     "description_es": "Ordená por autor A–Z. Varios autores tienen dos libros.",
     "hint": "Group each author's books together, then order them by title.",
     "hint_es": "Juntá los libros de cada autor y después ordenálos por título.",
-    "books": [
-      10,
-      36,
-      3,
-      7,
-      18,
-      30,
-      9,
-      14,
-      31,
-      42,
-      48,
-      21,
-      12,
-      16,
-      1,
-      2,
-      5
-    ]
+    "books": [10, 36, 3, 7, 18, 30, 9, 14, 31, 42, 48, 21, 12, 16, 1, 2, 5]
   },
   {
     "level": 14,
@@ -322,25 +151,7 @@
     "description_es": "Diecisiete libros por año, del más viejo primero.",
     "hint": "Watch the years on the spines; they're shuffled.",
     "hint_es": "Mirá los años en los lomos; están mezclados.",
-    "books": [
-      15,
-      4,
-      32,
-      11,
-      26,
-      2,
-      29,
-      13,
-      22,
-      39,
-      17,
-      33,
-      5,
-      1,
-      35,
-      7,
-      9
-    ]
+    "books": [15, 4, 32, 11, 26, 2, 29, 13, 22, 39, 17, 33, 5, 1, 35, 7, 9]
   },
   {
     "level": 15,
@@ -351,26 +162,7 @@
     "description_es": "Agrupá por género A–Z y luego por título.",
     "hint": "All same-genre books sit together; inside, A–Z by title.",
     "hint_es": "Los del mismo género van juntos; adentro, A–Z por título.",
-    "books": [
-      3,
-      5,
-      8,
-      4,
-      6,
-      11,
-      1,
-      2,
-      10,
-      9,
-      14,
-      19,
-      7,
-      12,
-      13,
-      15,
-      16,
-      17
-    ]
+    "books": [3, 5, 8, 4, 6, 11, 1, 2, 10, 9, 14, 19, 7, 12, 13, 15, 16, 17]
   },
   {
     "level": 16,
@@ -381,26 +173,7 @@
     "description_es": "Dieciocho devoluciones: género A–Z y luego título A–Z.",
     "hint": "First clump by genre, then tidy each genre by title.",
     "hint_es": "Primero agrupá por género, después ordená cada género por título.",
-    "books": [
-      3,
-      18,
-      30,
-      35,
-      4,
-      16,
-      33,
-      40,
-      7,
-      10,
-      36,
-      44,
-      9,
-      14,
-      31,
-      42,
-      1,
-      2
-    ]
+    "books": [3, 18, 30, 35, 4, 16, 33, 40, 7, 10, 36, 44, 9, 14, 31, 42, 1, 2]
   },
   {
     "level": 17,
@@ -411,26 +184,7 @@
     "description_es": "Dieciocho libros en tres estantes, títulos A–Z.",
     "hint": "A big alphabetical run. Top shelf, then middle, then bottom.",
     "hint_es": "Una tira alfabética grande. Arriba, medio y abajo.",
-    "books": [
-      41,
-      42,
-      43,
-      44,
-      45,
-      46,
-      47,
-      48,
-      49,
-      50,
-      51,
-      52,
-      53,
-      54,
-      55,
-      56,
-      57,
-      58
-    ]
+    "books": [41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58]
   },
   {
     "level": 18,
@@ -441,28 +195,7 @@
     "description_es": "Veinte libros por año de publicación, del más viejo primero.",
     "hint": "Start in the 1990s and end in the 2020s.",
     "hint_es": "Empezá en los 90 y terminá en los 2020.",
-    "books": [
-      46,
-      51,
-      58,
-      42,
-      54,
-      45,
-      48,
-      59,
-      50,
-      44,
-      53,
-      55,
-      41,
-      60,
-      43,
-      49,
-      47,
-      52,
-      56,
-      57
-    ]
+    "books": [46, 51, 58, 42, 54, 45, 48, 59, 50, 44, 53, 55, 41, 60, 43, 49, 47, 52, 56, 57]
   },
   {
     "level": 19,
@@ -473,30 +206,7 @@
     "description_es": "Veintidós libros por autor A–Z, título como desempate.",
     "hint": "Same author? Keep those in title order.",
     "hint_es": "¿Mismo autor? Mantenélos en orden por título.",
-    "books": [
-      1,
-      5,
-      17,
-      2,
-      6,
-      19,
-      3,
-      7,
-      18,
-      4,
-      8,
-      20,
-      21,
-      22,
-      25,
-      26,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14
-    ]
+    "books": [1, 5, 17, 2, 6, 19, 3, 7, 18, 4, 8, 20, 21, 22, 25, 26, 9, 10, 11, 12, 13, 14]
   },
   {
     "level": 20,
@@ -508,30 +218,7 @@
     "hint": "Adventure first, Sci-Fi last. Inside each genre, A–Z by title.",
     "hint_es": "Adventure primero, Sci-Fi al final. Dentro de cada género, A–Z por título.",
     "books": [
-      53,
-      57,
-      54,
-      45,
-      49,
-      55,
-      58,
-      46,
-      51,
-      59,
-      32,
-      44,
-      47,
-      60,
-      42,
-      48,
-      41,
-      43,
-      50,
-      52,
-      56,
-      30,
-      38,
-      23
+      53, 57, 54, 45, 49, 55, 58, 46, 51, 59, 32, 44, 47, 60, 42, 48, 41, 43, 50, 52, 56, 30, 38, 23
     ]
   },
   {
@@ -544,32 +231,7 @@
     "hint": "More than one page now. Sort A–Z, flipping pages as needed.",
     "hint_es": "Ahora hay más de una página. Ordená A–Z, cambiando de página cuando haga falta.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26
     ]
   },
   {
@@ -582,34 +244,8 @@
     "hint": "Drag a book to the right edge to carry it to the next page.",
     "hint_es": "Arrastrá un libro al borde derecho para llevarlo a la página siguiente.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28
     ]
   },
   {
@@ -622,36 +258,8 @@
     "hint": "Two pages of authors. Keep each author's books together.",
     "hint_es": "Dos páginas de autores. Mantené juntos los libros de cada autor.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30
     ]
   },
   {
@@ -664,36 +272,8 @@
     "hint": "Adventure first, Sci-Fi last. Use the pages to fit them all.",
     "hint_es": "Adventure primero, Sci-Fi al final. Usá las páginas para que entren todos.",
     "books": [
-      31,
-      32,
-      33,
-      34,
-      35,
-      36,
-      37,
-      38,
-      39,
-      40,
-      41,
-      42,
-      43,
-      44,
-      45,
-      46,
-      47,
-      48,
-      49,
-      50,
-      51,
-      52,
-      53,
-      54,
-      55,
-      56,
-      57,
-      58,
-      59,
-      60
+      31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53,
+      54, 55, 56, 57, 58, 59, 60
     ]
   },
   {
@@ -706,38 +286,8 @@
     "hint": "Take it page by page. Adventure first, Sci-Fi last; titles A–Z inside each genre.",
     "hint_es": "Tomalo página por página. Adventure primero, Sci-Fi al final; títulos A–Z dentro de cada género.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      53,
-      54,
-      57
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 53, 54, 57
     ]
   },
   {
@@ -750,40 +300,8 @@
     "hint": "Two pages of spines. Sort A–Z and flip when full.",
     "hint_es": "Dos páginas de lomos. Ordená A–Z y cambiá de página cuando se llene.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34
     ]
   },
   {
@@ -796,42 +314,8 @@
     "hint": "Keep each author's books grouped, in title order.",
     "hint_es": "Mantené agrupados los libros de cada autor, en orden por título.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34, 35, 36
     ]
   },
   {
@@ -844,44 +328,8 @@
     "hint": "From the 1990s to the 2020s, across both pages.",
     "hint_es": "De los 90 a los 2020, repartidos en las dos páginas.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36,
-      37,
-      38
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38
     ]
   },
   {
@@ -894,46 +342,8 @@
     "hint": "Adventure first, Sci-Fi last. Page through the genres.",
     "hint_es": "Adventure primero, Sci-Fi al final. Pasá las páginas por género.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36,
-      37,
-      53,
-      54,
-      57
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 53, 54, 57
     ]
   },
   {
@@ -946,48 +356,8 @@
     "hint": "All of one genre together before the next begins.",
     "hint_es": "Todo un género junto antes de que empiece el siguiente.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36,
-      37,
-      38,
-      39,
-      53,
-      54,
-      57
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 53, 54, 57
     ]
   },
   {
@@ -1000,50 +370,8 @@
     "hint": "A long alphabetical march. Use both pages.",
     "hint_es": "Una larga marcha alfabética. Usá las dos páginas.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36,
-      37,
-      38,
-      39,
-      40,
-      41,
-      42,
-      43,
-      44
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44
     ]
   },
   {
@@ -1056,52 +384,8 @@
     "hint": "Same author? Title order. Two pages to manage.",
     "hint_es": "¿Mismo autor? Orden por título. Dos páginas para manejar.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36,
-      37,
-      38,
-      39,
-      40,
-      41,
-      42,
-      43,
-      44,
-      45,
-      46
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46
     ]
   },
   {
@@ -1114,54 +398,8 @@
     "hint": "Two full pages. Oldest top-left of page one.",
     "hint_es": "Dos páginas llenas. El más viejo arriba a la izquierda de la primera.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36,
-      37,
-      38,
-      39,
-      40,
-      41,
-      42,
-      43,
-      44,
-      45,
-      46,
-      47,
-      48
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48
     ]
   },
   {
@@ -1174,56 +412,8 @@
     "hint": "Now there's a third page—flip right twice to see it all.",
     "hint_es": "Ahora hay una tercera página: pasá dos veces a la derecha para verlo todo.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36,
-      37,
-      38,
-      39,
-      40,
-      41,
-      42,
-      43,
-      44,
-      45,
-      46,
-      47,
-      53,
-      54,
-      57
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 53, 54, 57
     ]
   },
   {
@@ -1236,58 +426,9 @@
     "hint": "The grand sweep. Adventure first, Sci-Fi last; titles A–Z inside each.",
     "hint_es": "El gran barrido. Adventure primero, Sci-Fi al final; títulos A–Z dentro de cada uno.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36,
-      37,
-      38,
-      39,
-      40,
-      41,
-      42,
-      43,
-      44,
-      45,
-      46,
-      47,
-      48,
-      49,
-      53,
-      54,
-      57
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+      53, 54, 57
     ]
   },
   {
@@ -1300,59 +441,9 @@
     "hint": "Still two pages—keep sorting A–Z as you flip.",
     "hint_es": "Siguen siendo dos páginas: ordená A–Z mientras cambiás.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36,
-      37,
-      38,
-      39,
-      40,
-      41,
-      42,
-      43,
-      44,
-      45,
-      46,
-      47,
-      48,
-      49,
-      50,
-      51,
-      52,
-      53
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+      50, 51, 52, 53
     ]
   },
   {
@@ -1365,60 +456,9 @@
     "hint": "Same author? Title breaks the tie.",
     "hint_es": "¿Mismo autor? El título desempata.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36,
-      37,
-      38,
-      39,
-      40,
-      41,
-      42,
-      43,
-      44,
-      45,
-      46,
-      47,
-      48,
-      49,
-      50,
-      51,
-      52,
-      53,
-      54
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+      50, 51, 52, 53, 54
     ]
   },
   {
@@ -1431,61 +471,9 @@
     "hint": "Watch the spine years across both pages.",
     "hint_es": "Mirá los años en los lomos en las dos páginas.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36,
-      37,
-      38,
-      39,
-      40,
-      41,
-      42,
-      43,
-      44,
-      45,
-      46,
-      47,
-      48,
-      49,
-      50,
-      51,
-      52,
-      53,
-      54,
-      55
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+      50, 51, 52, 53, 54, 55
     ]
   },
   {
@@ -1498,62 +486,9 @@
     "hint": "Genre blocks first, titles inside each block.",
     "hint_es": "Primero bloques por género, títulos adentro de cada uno.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36,
-      37,
-      38,
-      39,
-      40,
-      41,
-      42,
-      43,
-      44,
-      45,
-      46,
-      47,
-      48,
-      49,
-      50,
-      51,
-      52,
-      53,
-      54,
-      55,
-      56
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+      50, 51, 52, 53, 54, 55, 56
     ]
   },
   {
@@ -1566,63 +501,9 @@
     "hint": "Adventure first, Sci-Fi last.",
     "hint_es": "Adventure primero, Sci-Fi al final.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36,
-      37,
-      38,
-      39,
-      40,
-      41,
-      42,
-      43,
-      44,
-      45,
-      46,
-      47,
-      48,
-      49,
-      50,
-      51,
-      52,
-      53,
-      54,
-      55,
-      56,
-      57
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+      50, 51, 52, 53, 54, 55, 56, 57
     ]
   },
   {
@@ -1635,64 +516,9 @@
     "hint": "A long run—page through the alphabet.",
     "hint_es": "Una tira larga: pasá las páginas del alfabeto.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36,
-      37,
-      38,
-      39,
-      40,
-      41,
-      42,
-      43,
-      44,
-      45,
-      46,
-      47,
-      48,
-      49,
-      50,
-      51,
-      52,
-      53,
-      54,
-      55,
-      56,
-      57,
-      58
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+      50, 51, 52, 53, 54, 55, 56, 57, 58
     ]
   },
   {
@@ -1705,65 +531,9 @@
     "hint": "Group each author's pair before moving on.",
     "hint_es": "Agrupá cada par de un autor antes de seguir.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36,
-      37,
-      38,
-      39,
-      40,
-      41,
-      42,
-      43,
-      44,
-      45,
-      46,
-      47,
-      48,
-      49,
-      50,
-      51,
-      52,
-      53,
-      54,
-      55,
-      56,
-      57,
-      58,
-      59
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+      50, 51, 52, 53, 54, 55, 56, 57, 58, 59
     ]
   },
   {
@@ -1776,66 +546,9 @@
     "hint": "Every spine from the 1990s to the 2020s.",
     "hint_es": "Todos los lomos, de los 90 a los 2020.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36,
-      37,
-      38,
-      39,
-      40,
-      41,
-      42,
-      43,
-      44,
-      45,
-      46,
-      47,
-      48,
-      49,
-      50,
-      51,
-      52,
-      53,
-      54,
-      55,
-      56,
-      57,
-      58,
-      59,
-      60
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+      50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60
     ]
   },
   {
@@ -1848,67 +561,9 @@
     "hint": "New arrivals mixed in—sort by genre first.",
     "hint_es": "Llegadas nuevas mezcladas: primero por género.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36,
-      37,
-      38,
-      39,
-      40,
-      41,
-      42,
-      43,
-      44,
-      45,
-      46,
-      47,
-      48,
-      49,
-      50,
-      51,
-      52,
-      53,
-      54,
-      55,
-      56,
-      57,
-      58,
-      59,
-      60,
-      61
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+      50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61
     ]
   },
   {
@@ -1921,68 +576,9 @@
     "hint": "Each genre section grows bigger now.",
     "hint_es": "Cada sección de género crece más.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36,
-      37,
-      38,
-      39,
-      40,
-      41,
-      42,
-      43,
-      44,
-      45,
-      46,
-      47,
-      48,
-      49,
-      50,
-      51,
-      52,
-      53,
-      54,
-      55,
-      56,
-      57,
-      58,
-      59,
-      60,
-      61,
-      62
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+      50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62
     ]
   },
   {
@@ -1995,69 +591,9 @@
     "hint": "Three pages of titles. Stay alphabetical.",
     "hint_es": "Tres páginas de títulos. Mantené el orden alfabético.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36,
-      37,
-      38,
-      39,
-      40,
-      41,
-      42,
-      43,
-      44,
-      45,
-      46,
-      47,
-      48,
-      49,
-      50,
-      51,
-      52,
-      53,
-      54,
-      55,
-      56,
-      57,
-      58,
-      59,
-      60,
-      61,
-      62,
-      63
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+      50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63
     ]
   },
   {
@@ -2070,70 +606,9 @@
     "hint": "Almost every author in the building.",
     "hint_es": "Casi todos los autores del edificio.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36,
-      37,
-      38,
-      39,
-      40,
-      41,
-      42,
-      43,
-      44,
-      45,
-      46,
-      47,
-      48,
-      49,
-      50,
-      51,
-      52,
-      53,
-      54,
-      55,
-      56,
-      57,
-      58,
-      59,
-      60,
-      61,
-      62,
-      63,
-      64
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+      50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64
     ]
   },
   {
@@ -2146,71 +621,9 @@
     "hint": "From dusty 90s tomes to brand-new arrivals.",
     "hint_es": "De tomos polvorientos de los 90 a llegadas nuevas.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36,
-      37,
-      38,
-      39,
-      40,
-      41,
-      42,
-      43,
-      44,
-      45,
-      46,
-      47,
-      48,
-      49,
-      50,
-      51,
-      52,
-      53,
-      54,
-      55,
-      56,
-      57,
-      58,
-      59,
-      60,
-      61,
-      62,
-      63,
-      64,
-      65
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+      50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65
     ]
   },
   {
@@ -2223,72 +636,9 @@
     "hint": "One level left after this. Genre groups first.",
     "hint_es": "Queda un nivel después de este. Primero grupos por género.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36,
-      37,
-      38,
-      39,
-      40,
-      41,
-      42,
-      43,
-      44,
-      45,
-      46,
-      47,
-      48,
-      49,
-      50,
-      51,
-      52,
-      53,
-      54,
-      55,
-      56,
-      57,
-      58,
-      59,
-      60,
-      61,
-      62,
-      63,
-      64,
-      65,
-      66
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+      50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66
     ]
   },
   {
@@ -2301,73 +651,9 @@
     "hint": "The ultimate reshelving. Adventure first, Sci-Fi last; titles A–Z inside each.",
     "hint_es": "La reorganización definitiva. Adventure primero, Sci-Fi al final; títulos A–Z dentro de cada uno.",
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36,
-      37,
-      38,
-      39,
-      40,
-      41,
-      42,
-      43,
-      44,
-      45,
-      46,
-      47,
-      48,
-      49,
-      50,
-      51,
-      52,
-      53,
-      54,
-      55,
-      56,
-      57,
-      58,
-      59,
-      60,
-      61,
-      62,
-      63,
-      64,
-      65,
-      66,
-      67
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49,
+      50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67
     ]
   },
   {
@@ -2381,53 +667,26 @@
         "rule": "title_az",
         "label": "Top Shelf — Titles A–Z",
         "label_es": "Estante superior — Títulos A–Z",
-        "books": [
-          3,
-          7,
-          12,
-          18,
-          25,
-          31
-        ]
+        "books": [3, 7, 12, 18, 25, 31]
       },
       {
         "rule": "year_asc",
         "label": "Bottom Shelf — Oldest First",
         "label_es": "Estante inferior — Más viejo primero",
-        "books": [
-          2,
-          8,
-          14,
-          20,
-          27,
-          33
-        ]
+        "books": [2, 8, 14, 20, 27, 33]
       }
     ]
   },
   {
     "level": 52,
-    "keys": [
-      "genre",
-      "year:desc",
-      "title"
-    ],
+    "keys": ["genre", "year:desc", "title"],
     "ruleLabel": "Genre A–Z, then newest year, then Title A–Z",
     "ruleLabel_es": "Género A–Z, luego año más nuevo, luego Título A–Z",
     "title": "Custom Combined Rule",
     "title_es": "Regla combinada a medida",
     "hint": "Group by genre; inside each genre put the newest book first, ties broken by title.",
     "hint_es": "Agrupá por género; dentro de cada género poné el más nuevo primero, y desempatá por título.",
-    "books": [
-      3,
-      18,
-      4,
-      6,
-      1,
-      7,
-      9,
-      19
-    ]
+    "books": [3, 18, 4, 6, 1, 7, 9, 19]
   },
   {
     "level": 53,
@@ -2436,12 +695,7 @@
     "title_es": "Alfabeto al revés",
     "hint": "Sort the titles Z–A, from Z on the left to A on the right.",
     "hint_es": "Ordená los títulos de la Z a la A, de izquierda a derecha.",
-    "books": [
-      1,
-      3,
-      5,
-      7
-    ]
+    "books": [1, 3, 5, 7]
   },
   {
     "level": 54,
@@ -2454,13 +708,7 @@
       "maxMoves": 10,
       "maxTimeSec": 50
     },
-    "books": [
-      15,
-      13,
-      9,
-      25,
-      20
-    ]
+    "books": [15, 13, 9, 25, 20]
   },
   {
     "level": 55,
@@ -2469,14 +717,7 @@
     "title_es": "De chico a grande",
     "hint": "Order by size: small first, then medium, then large. Same size? By title.",
     "hint_es": "Ordená por tamaño: primero chico, luego mediano, luego grande. ¿Mismo tamaño? Por título.",
-    "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6
-    ]
+    "books": [1, 2, 3, 4, 5, 6]
   },
   {
     "level": 56,
@@ -2488,14 +729,7 @@
     "challenge": {
       "maxMoves": 11
     },
-    "books": [
-      9,
-      4,
-      3,
-      20,
-      27,
-      18
-    ]
+    "books": [9, 4, 3, 20, 27, 18]
   },
   {
     "level": 57,
@@ -2507,14 +741,7 @@
     "challenge": {
       "maxTimeSec": 45
     },
-    "books": [
-      34,
-      39,
-      44,
-      49,
-      54,
-      59
-    ]
+    "books": [34, 39, 44, 49, 54, 59]
   },
   {
     "level": 58,
@@ -2523,13 +750,7 @@
     "title_es": "Autores al revés",
     "hint": "Sort by author name Z–A. Same author? Order by title.",
     "hint_es": "Ordená por autor de la Z a la A. ¿Mismo autor? Ordená por título.",
-    "books": [
-      1,
-      27,
-      53,
-      55,
-      59
-    ]
+    "books": [1, 27, 53, 55, 59]
   },
   {
     "level": 59,
@@ -2542,14 +763,7 @@
       "maxMoves": 12,
       "maxTimeSec": 65
     },
-    "books": [
-      7,
-      8,
-      10,
-      11,
-      12,
-      13
-    ]
+    "books": [7, 8, 10, 11, 12, 13]
   },
   {
     "level": 60,
@@ -2561,14 +775,7 @@
     "challenge": {
       "maxMoves": 13
     },
-    "books": [
-      5,
-      10,
-      15,
-      20,
-      25,
-      30
-    ]
+    "books": [5, 10, 15, 20, 25, 30]
   },
   {
     "level": 61,
@@ -2584,25 +791,13 @@
         "rule": "color_rainbow",
         "label": "Top Shelf — Rainbow",
         "label_es": "Estante superior — Arcoíris",
-        "books": [
-          9,
-          4,
-          3,
-          20,
-          27
-        ]
+        "books": [9, 4, 3, 20, 27]
       },
       {
         "rule": "pages_asc",
         "label": "Bottom Shelf — Fewest Pages",
         "label_es": "Estante inferior — Menos páginas",
-        "books": [
-          59,
-          54,
-          49,
-          44,
-          39
-        ]
+        "books": [59, 54, 49, 44, 39]
       }
     ]
   },
@@ -2621,26 +816,13 @@
         "rule": "size_asc",
         "label": "Top Shelf — By Size",
         "label_es": "Estante superior — Por tamaño",
-        "books": [
-          10,
-          11,
-          12,
-          13,
-          14,
-          16
-        ]
+        "books": [10, 11, 12, 13, 14, 16]
       },
       {
         "rule": "pages_desc",
         "label": "Bottom Shelf — Most Pages",
         "label_es": "Estante inferior — Más páginas",
-        "books": [
-          60,
-          64,
-          65,
-          66,
-          69
-        ]
+        "books": [60, 64, 65, 66, 69]
       }
     ]
   },
@@ -2653,14 +835,7 @@
     "description_es": "Seis libros de ciencia ficción, ordenados A–Z por título.",
     "hint": "All sci-fi here. Sort their titles from A to Z, left to right.",
     "hint_es": "Arrastrá los libros para que los títulos vayan de la A a la Z.",
-    "books": [
-      27,
-      28,
-      37,
-      39,
-      41,
-      43
-    ]
+    "books": [27, 28, 37, 39, 41, 43]
   },
   {
     "level": 64,
@@ -2671,13 +846,7 @@
     "description_es": "Libros de aventura ordenados del más viejo al más nuevo.",
     "hint": "Check the year on each cover. Oldest adventure first, newest last.",
     "hint_es": "Mirá el año en cada portada. La aventura más vieja primero.",
-    "books": [
-      62,
-      54,
-      53,
-      67,
-      57
-    ]
+    "books": [62, 54, 53, 67, 57]
   },
   {
     "level": 65,
@@ -2691,16 +860,7 @@
     "challenge": {
       "maxTimeSec": 60
     },
-    "books": [
-      59,
-      54,
-      49,
-      39,
-      34,
-      44,
-      4,
-      63
-    ]
+    "books": [59, 54, 49, 39, 34, 44, 4, 63]
   },
   {
     "level": 66,
@@ -2714,21 +874,11 @@
     "challenge": {
       "maxMoves": 10
     },
-    "books": [
-      50,
-      66,
-      65,
-      60,
-      55,
-      53
-    ]
+    "books": [50, 66, 65, 60, 55, 53]
   },
   {
     "level": 67,
-    "keys": [
-      "genre",
-      "year"
-    ],
+    "keys": ["genre", "year"],
     "ruleLabel": "Genre A–Z, then by Year",
     "ruleLabel_es": "Género A–Z, luego por Año",
     "title": "Genre & Era",
@@ -2737,17 +887,7 @@
     "description_es": "Agrupá por género A–Z y, dentro de cada género, por año (el más viejo primero).",
     "hint": "Adventure, Fantasy, Sci-Fi. Inside each genre, go oldest to newest.",
     "hint_es": "Adventure, Fantasy, Sci-Fi. Dentro de cada género, del más viejo al más nuevo.",
-    "books": [
-      62,
-      53,
-      57,
-      61,
-      55,
-      56,
-      50,
-      66,
-      52
-    ]
+    "books": [62, 53, 57, 61, 55, 56, 50, 66, 52]
   },
   {
     "level": 68,
@@ -2760,25 +900,13 @@
         "rule": "author_az",
         "label": "Top Shelf — Authors A–Z",
         "label_es": "Estante superior — Autores A–Z",
-        "books": [
-          63,
-          27,
-          37,
-          41,
-          55
-        ]
+        "books": [63, 27, 37, 41, 55]
       },
       {
         "rule": "year_desc",
         "label": "Bottom Shelf — Newest First",
         "label_es": "Estante inferior — Más nuevo primero",
-        "books": [
-          52,
-          69,
-          60,
-          67,
-          58
-        ]
+        "books": [52, 69, 60, 67, 58]
       }
     ]
   },
@@ -2794,22 +922,11 @@
     "challenge": {
       "maxMoves": 14
     },
-    "books": [
-      9,
-      40,
-      4,
-      57,
-      28,
-      61,
-      47
-    ]
+    "books": [9, 40, 4, 57, 28, 61, 47]
   },
   {
     "level": 70,
-    "keys": [
-      "author",
-      "year"
-    ],
+    "keys": ["author", "year"],
     "ruleLabel": "Author A–Z, then by Year",
     "ruleLabel_es": "Autor A–Z, luego por Año",
     "title": "Author's Timeline",
@@ -2818,23 +935,11 @@
     "description_es": "Ordená por autor A–Z; dentro de cada autor, el libro más viejo primero.",
     "hint": "Amina, Bruno, Carla, Daniel — oldest to newest within each author.",
     "hint_es": "Amina, Bruno, Carla, Daniel — del más viejo al más nuevo dentro de cada autor.",
-    "books": [
-      58,
-      57,
-      59,
-      60,
-      61,
-      7,
-      4,
-      62
-    ]
+    "books": [58, 57, 59, 60, 61, 7, 4, 62]
   },
   {
     "level": 71,
-    "keys": [
-      "year:desc",
-      "title"
-    ],
+    "keys": ["year:desc", "title"],
     "ruleLabel": "Newest First, ties by Title A–Z",
     "ruleLabel_es": "Más nuevo primero, empates por Título A–Z",
     "title": "The Big Reverse",
@@ -2847,20 +952,7 @@
       "maxMoves": 20,
       "maxTimeSec": 100
     },
-    "books": [
-      56,
-      37,
-      20,
-      25,
-      69,
-      18,
-      57,
-      27,
-      7,
-      3,
-      66,
-      41
-    ]
+    "books": [56, 37, 20, 25, 69, 18, 57, 27, 7, 3, 66, 41]
   },
   {
     "level": 72,
@@ -2877,27 +969,13 @@
         "rule": "pages_desc",
         "label": "Top Shelf — Most Pages",
         "label_es": "Estante superior — Más páginas",
-        "books": [
-          5,
-          10,
-          40,
-          50,
-          32,
-          67
-        ]
+        "books": [5, 10, 40, 50, 32, 67]
       },
       {
         "rule": "title_az",
         "label": "Bottom Shelf — Titles A–Z",
         "label_es": "Estante inferior — Títulos A–Z",
-        "books": [
-          53,
-          55,
-          58,
-          59,
-          61,
-          70
-        ]
+        "books": [53, 55, 58, 59, 61, 70]
       }
     ]
   },
@@ -2908,17 +986,7 @@
     "title_es": "Del bolsillo al tomo",
     "hint": "Order by size: small, medium, large. Same size? Title A-Z.",
     "hint_es": "Ordená por tamaño: chico, mediano, grande. ¿Mismo tamaño? Título A-Z.",
-    "books": [
-      54,
-      57,
-      63,
-      66,
-      53,
-      61,
-      67,
-      70,
-      55
-    ]
+    "books": [54, 57, 63, 66, 53, 61, 67, 70, 55]
   },
   {
     "level": 74,
@@ -2927,15 +995,7 @@
     "title_es": "Lista al revés",
     "hint": "Sort authors Z-A. Same author? Use title A-Z.",
     "hint_es": "Ordená autores Z-A. ¿Mismo autor? Usá título A-Z.",
-    "books": [
-      52,
-      51,
-      49,
-      47,
-      45,
-      43,
-      41
-    ]
+    "books": [52, 51, 49, 47, 45, 43, 41]
   },
   {
     "level": 75,
@@ -2947,39 +1007,18 @@
     "challenge": {
       "maxMoves": 15
     },
-    "books": [
-      70,
-      69,
-      68,
-      67,
-      66,
-      65,
-      64,
-      63
-    ]
+    "books": [70, 69, 68, 67, 66, 65, 64, 63]
   },
   {
     "level": 76,
-    "keys": [
-      "color",
-      "year:desc"
-    ],
+    "keys": ["color", "year:desc"],
     "ruleLabel": "Color Rainbow, then Newest First",
     "ruleLabel_es": "Color arcoíris, luego más nuevo primero",
     "title": "Hue and Time",
     "title_es": "Color y tiempo",
     "hint": "Sort by spine color. Same color family? Newest year first.",
     "hint_es": "Ordená por color del lomo. ¿Misma familia de color? Año más nuevo primero.",
-    "books": [
-      9,
-      40,
-      59,
-      69,
-      57,
-      66,
-      47,
-      61
-    ]
+    "books": [9, 40, 59, 69, 57, 66, 47, 61]
   },
   {
     "level": 77,
@@ -2992,34 +1031,19 @@
         "rule": "title_az",
         "label": "Top Shelf - Titles A-Z",
         "label_es": "Estante superior - Títulos A-Z",
-        "books": [
-          53,
-          54,
-          55,
-          56
-        ]
+        "books": [53, 54, 55, 56]
       },
       {
         "rule": "size_desc",
         "label": "Middle Shelf - Largest First",
         "label_es": "Estante medio - Grandes primero",
-        "books": [
-          57,
-          58,
-          59,
-          60
-        ]
+        "books": [57, 58, 59, 60]
       },
       {
         "rule": "pages_asc",
         "label": "Bottom Shelf - Fewest Pages",
         "label_es": "Estante inferior - Menos páginas",
-        "books": [
-          61,
-          62,
-          63,
-          64
-        ]
+        "books": [61, 62, 63, 64]
       }
     ]
   },
@@ -3030,22 +1054,7 @@
     "title_es": "Posta de géneros",
     "hint": "Group by genre A-Z, then title A-Z inside each genre.",
     "hint_es": "Agrupá por género A-Z y luego por título A-Z dentro de cada género.",
-    "books": [
-      53,
-      54,
-      57,
-      62,
-      55,
-      56,
-      58,
-      61,
-      64,
-      65,
-      66,
-      67,
-      68,
-      70
-    ]
+    "books": [53, 54, 57, 62, 55, 56, 58, 61, 64, 65, 66, 67, 68, 70]
   },
   {
     "level": 79,
@@ -3057,23 +1066,7 @@
     "challenge": {
       "maxTimeSec": 80
     },
-    "books": [
-      37,
-      52,
-      20,
-      25,
-      69,
-      56,
-      57,
-      34,
-      18,
-      49,
-      7,
-      43,
-      36,
-      60,
-      24
-    ]
+    "books": [37, 52, 20, 25, 69, 56, 57, 34, 18, 49, 7, 43, 36, 60, 24]
   },
   {
     "level": 80,
@@ -3082,26 +1075,7 @@
     "title_es": "Asamblea de autores",
     "hint": "Authors A-Z. If the same author appears twice, title breaks the tie.",
     "hint_es": "Autores A-Z. Si un autor aparece dos veces, el título desempata.",
-    "books": [
-      58,
-      57,
-      59,
-      60,
-      61,
-      7,
-      4,
-      62,
-      63,
-      9,
-      64,
-      10,
-      65,
-      11,
-      66,
-      12,
-      67,
-      21
-    ]
+    "books": [58, 57, 59, 60, 61, 7, 4, 62, 63, 9, 64, 10, 65, 11, 66, 12, 67, 21]
   },
   {
     "level": 81,
@@ -3113,20 +1087,7 @@
     "challenge": {
       "maxMoves": 18
     },
-    "books": [
-      70,
-      69,
-      68,
-      67,
-      66,
-      65,
-      64,
-      63,
-      62,
-      61,
-      60,
-      59
-    ]
+    "books": [70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59]
   },
   {
     "level": 82,
@@ -3135,46 +1096,18 @@
     "title_es": "Arcoíris silencioso",
     "hint": "Arrange by color hue from warm to cool and violet.",
     "hint_es": "Acomodá por matiz de color: cálidos, fríos y violetas.",
-    "books": [
-      48,
-      34,
-      54,
-      59,
-      57,
-      68,
-      28,
-      50,
-      52,
-      55
-    ]
+    "books": [48, 34, 54, 59, 57, 68, 28, 50, 52, 55]
   },
   {
     "level": 83,
-    "keys": [
-      "size",
-      "pages:desc",
-      "title"
-    ],
+    "keys": ["size", "pages:desc", "title"],
     "ruleLabel": "Size Small-Large, then Pages High-Low",
     "ruleLabel_es": "Tamaño chico-grande, luego páginas mayor-menor",
     "title": "Size with Weight",
     "title_es": "Tamaño con peso",
     "hint": "Small books first. Within each size, put the most pages first.",
     "hint_es": "Libros chicos primero. Dentro de cada tamaño, más páginas primero.",
-    "books": [
-      1,
-      2,
-      3,
-      5,
-      6,
-      10,
-      14,
-      16,
-      20,
-      25,
-      30,
-      35
-    ]
+    "books": [1, 2, 3, 5, 6, 10, 14, 16, 20, 25, 30, 35]
   },
   {
     "level": 84,
@@ -3187,29 +1120,13 @@
         "rule": "pages_asc",
         "label": "Top Shelf - Adventure Pages",
         "label_es": "Estante superior - Páginas Adventure",
-        "books": [
-          53,
-          54,
-          57,
-          62,
-          67
-        ]
+        "books": [53, 54, 57, 62, 67]
       },
       {
         "rule": "year_desc",
         "label": "Bottom Shelf - Sci-Fi Newest",
         "label_es": "Estante inferior - Sci-Fi más nuevo",
-        "books": [
-          27,
-          28,
-          37,
-          39,
-          41,
-          43,
-          50,
-          52,
-          66
-        ]
+        "books": [27, 28, 37, 39, 41, 43, 50, 52, 66]
       }
     ]
   },
@@ -3223,58 +1140,18 @@
     "challenge": {
       "maxTimeSec": 90
     },
-    "books": [
-      44,
-      39,
-      34,
-      54,
-      49,
-      29,
-      59,
-      63,
-      48,
-      43,
-      38,
-      23,
-      13,
-      18,
-      67,
-      8
-    ]
+    "books": [44, 39, 34, 54, 49, 29, 59, 63, 48, 43, 38, 23, 13, 18, 67, 8]
   },
   {
     "level": 86,
-    "keys": [
-      "genre",
-      "author:desc",
-      "title"
-    ],
+    "keys": ["genre", "author:desc", "title"],
     "ruleLabel": "Genre A-Z, Author Z-A, Title A-Z",
     "ruleLabel_es": "Género A-Z, Autor Z-A, Título A-Z",
     "title": "Genre Backspin",
     "title_es": "Género con giro",
     "hint": "Group by genre A-Z. Inside each genre, authors go Z-A, then title A-Z.",
     "hint_es": "Agrupá por género A-Z. Dentro, autores Z-A y luego título A-Z.",
-    "books": [
-      53,
-      54,
-      57,
-      62,
-      67,
-      55,
-      56,
-      58,
-      61,
-      68,
-      59,
-      63,
-      65,
-      66,
-      70,
-      27,
-      37,
-      52
-    ]
+    "books": [53, 54, 57, 62, 67, 55, 56, 58, 61, 68, 59, 63, 65, 66, 70, 27, 37, 52]
   },
   {
     "level": 87,
@@ -3287,20 +1164,7 @@
       "maxMoves": 18,
       "maxTimeSec": 85
     },
-    "books": [
-      3,
-      6,
-      10,
-      13,
-      16,
-      19,
-      23,
-      26,
-      30,
-      32,
-      35,
-      38
-    ]
+    "books": [3, 6, 10, 13, 16, 19, 23, 26, 30, 32, 35, 38]
   },
   {
     "level": 88,
@@ -3309,28 +1173,7 @@
     "title_es": "Muro alfabético",
     "hint": "A-Z by title across a larger set. Flip pages when needed.",
     "hint_es": "A-Z por título en un grupo grande. Cambiá de página cuando haga falta.",
-    "books": [
-      1,
-      5,
-      8,
-      12,
-      15,
-      17,
-      20,
-      24,
-      27,
-      31,
-      34,
-      37,
-      40,
-      43,
-      46,
-      49,
-      52,
-      55,
-      58,
-      61
-    ]
+    "books": [1, 5, 8, 12, 15, 17, 20, 24, 27, 31, 34, 37, 40, 43, 46, 49, 52, 55, 58, 61]
   },
   {
     "level": 89,
@@ -3343,79 +1186,32 @@
         "rule": "color_rainbow",
         "label": "Top Shelf - Rainbow",
         "label_es": "Estante superior - Arcoíris",
-        "books": [
-          9,
-          4,
-          3,
-          20,
-          27,
-          18
-        ]
+        "books": [9, 4, 3, 20, 27, 18]
       },
       {
         "rule": "author_az",
         "label": "Middle Shelf - Authors",
         "label_es": "Estante medio - Autores",
-        "books": [
-          53,
-          55,
-          57,
-          59,
-          61,
-          63
-        ]
+        "books": [53, 55, 57, 59, 61, 63]
       },
       {
         "rule": "year_asc",
         "label": "Bottom Shelf - Oldest First",
         "label_es": "Estante inferior - Más viejo primero",
-        "books": [
-          64,
-          65,
-          66,
-          67,
-          68,
-          69
-        ]
+        "books": [64, 65, 66, 67, 68, 69]
       }
     ]
   },
   {
     "level": 90,
-    "keys": [
-      "year",
-      "pages"
-    ],
+    "keys": ["year", "pages"],
     "ruleLabel": "Year Old-New, then Pages Low-High",
     "ruleLabel_es": "Año viejo-nuevo, luego páginas menor-mayor",
     "title": "Decade Details",
     "title_es": "Detalles por década",
     "hint": "Sort by year oldest to newest. Same year? Fewer pages first.",
     "hint_es": "Ordená por año del más viejo al más nuevo. ¿Mismo año? Menos páginas primero.",
-    "books": [
-      46,
-      4,
-      32,
-      51,
-      58,
-      26,
-      2,
-      29,
-      42,
-      68,
-      22,
-      39,
-      54,
-      45,
-      23,
-      5,
-      50,
-      31,
-      40,
-      44,
-      35,
-      1
-    ]
+    "books": [46, 4, 32, 51, 58, 26, 2, 29, 42, 68, 22, 39, 54, 45, 23, 5, 50, 31, 40, 44, 35, 1]
   },
   {
     "level": 91,
@@ -3427,22 +1223,7 @@
     "challenge": {
       "maxMoves": 21
     },
-    "books": [
-      52,
-      51,
-      49,
-      48,
-      47,
-      46,
-      45,
-      44,
-      43,
-      42,
-      41,
-      40,
-      39,
-      38
-    ]
+    "books": [52, 51, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38]
   },
   {
     "level": 92,
@@ -3451,32 +1232,7 @@
     "title_es": "Maratón de secciones",
     "hint": "Group by genre A-Z, then title A-Z.",
     "hint_es": "Agrupá por género A-Z y luego título A-Z.",
-    "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      53,
-      54,
-      55,
-      56,
-      57,
-      58,
-      59,
-      60,
-      61,
-      62,
-      63,
-      64
-    ]
+    "books": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64]
   },
   {
     "level": 93,
@@ -3489,26 +1245,7 @@
       "maxMoves": 24,
       "maxTimeSec": 110
     },
-    "books": [
-      5,
-      64,
-      10,
-      20,
-      25,
-      35,
-      40,
-      50,
-      1,
-      60,
-      15,
-      65,
-      70,
-      11,
-      16,
-      31,
-      46,
-      51
-    ]
+    "books": [5, 64, 10, 20, 25, 35, 40, 50, 1, 60, 15, 65, 70, 11, 16, 31, 46, 51]
   },
   {
     "level": 94,
@@ -3517,54 +1254,18 @@
     "title_es": "Devoluciones prismáticas",
     "hint": "Sort by spine color, rainbow order.",
     "hint_es": "Ordená por color del lomo, en orden arcoíris.",
-    "books": [
-      19,
-      9,
-      40,
-      59,
-      69,
-      45,
-      57,
-      68,
-      12,
-      28,
-      50,
-      52,
-      55,
-      61,
-      47
-    ]
+    "books": [19, 9, 40, 59, 69, 45, 57, 68, 12, 28, 50, 52, 55, 61, 47]
   },
   {
     "level": 95,
-    "keys": [
-      "author",
-      "title:desc"
-    ],
+    "keys": ["author", "title:desc"],
     "ruleLabel": "Author A-Z, Title Z-A",
     "ruleLabel_es": "Autor A-Z, Título Z-A",
     "title": "Author Twist",
     "title_es": "Giro de autor",
     "hint": "Authors A-Z. For the same author, titles go Z-A.",
     "hint_es": "Autores A-Z. Para el mismo autor, títulos Z-A.",
-    "books": [
-      1,
-      5,
-      17,
-      2,
-      6,
-      19,
-      3,
-      7,
-      18,
-      4,
-      8,
-      20,
-      9,
-      13,
-      14,
-      21
-    ]
+    "books": [1, 5, 17, 2, 6, 19, 3, 7, 18, 4, 8, 20, 9, 13, 14, 21]
   },
   {
     "level": 96,
@@ -3577,31 +1278,13 @@
         "rule": "title_za",
         "label": "Top Shelf - Titles Z-A",
         "label_es": "Estante superior - Títulos Z-A",
-        "books": [
-          25,
-          24,
-          23,
-          22,
-          21,
-          20,
-          19,
-          18
-        ]
+        "books": [25, 24, 23, 22, 21, 20, 19, 18]
       },
       {
         "rule": "pages_asc",
         "label": "Bottom Shelf - Fewest Pages",
         "label_es": "Estante inferior - Menos páginas",
-        "books": [
-          44,
-          39,
-          34,
-          54,
-          49,
-          29,
-          59,
-          63
-        ]
+        "books": [44, 39, 34, 54, 49, 29, 59, 63]
       }
     ]
   },
@@ -3616,45 +1299,13 @@
       "maxTimeSec": 130
     },
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      53,
-      54,
-      55,
-      56
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      53, 54, 55, 56
     ]
   },
   {
     "level": 98,
-    "keys": [
-      "genre",
-      "year:desc",
-      "pages"
-    ],
+    "keys": ["genre", "year:desc", "pages"],
     "ruleLabel": "Genre A-Z, Newest First, Pages Low-High",
     "ruleLabel_es": "Género A-Z, más nuevo primero, páginas menor-mayor",
     "title": "Catalog Mastery",
@@ -3666,36 +1317,8 @@
       "maxTimeSec": 150
     },
     "books": [
-      1,
-      3,
-      5,
-      7,
-      9,
-      11,
-      13,
-      15,
-      17,
-      19,
-      21,
-      23,
-      25,
-      27,
-      29,
-      31,
-      33,
-      35,
-      37,
-      39,
-      41,
-      43,
-      45,
-      47,
-      49,
-      51,
-      53,
-      55,
-      57,
-      59
+      1, 3, 5, 7, 9, 11, 13, 15, 17, 19, 21, 23, 25, 27, 29, 31, 33, 35, 37, 39, 41, 43, 45, 47, 49,
+      51, 53, 55, 57, 59
     ]
   },
   {
@@ -3713,51 +1336,25 @@
         "rule": "year_asc",
         "label": "Top Shelf - Oldest First",
         "label_es": "Estante superior - Más viejo primero",
-        "books": [
-          46,
-          4,
-          32,
-          51,
-          58,
-          26
-        ]
+        "books": [46, 4, 32, 51, 58, 26]
       },
       {
         "rule": "size_desc",
         "label": "Middle Shelf - Largest First",
         "label_es": "Estante medio - Grandes primero",
-        "books": [
-          55,
-          56,
-          57,
-          58,
-          59,
-          60
-        ]
+        "books": [55, 56, 57, 58, 59, 60]
       },
       {
         "rule": "color_rainbow",
         "label": "Bottom Shelf - Rainbow",
         "label_es": "Estante inferior - Arcoíris",
-        "books": [
-          9,
-          40,
-          59,
-          69,
-          57,
-          66
-        ]
+        "books": [9, 40, 59, 69, 57, 66]
       }
     ]
   },
   {
     "level": 100,
-    "keys": [
-      "color",
-      "size:desc",
-      "pages:desc",
-      "title"
-    ],
+    "keys": ["color", "size:desc", "pages:desc", "title"],
     "ruleLabel": "Color, Size High-Low, Pages High-Low, Title",
     "ruleLabel_es": "Color, tamaño grande-chico, páginas mayor-menor, título",
     "title": "The Centennial Challenge",
@@ -3769,42 +1366,8 @@
       "maxTimeSec": 180
     },
     "books": [
-      1,
-      2,
-      3,
-      4,
-      5,
-      6,
-      7,
-      8,
-      9,
-      10,
-      11,
-      12,
-      13,
-      14,
-      15,
-      16,
-      17,
-      18,
-      19,
-      20,
-      21,
-      22,
-      23,
-      24,
-      25,
-      26,
-      27,
-      28,
-      29,
-      30,
-      31,
-      32,
-      33,
-      34,
-      35,
-      36
+      1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26,
+      27, 28, 29, 30, 31, 32, 33, 34, 35, 36
     ]
   }
 ]

@@ -57,7 +57,8 @@ const STRINGS = {
     feedbackEmailPlaceholder: "your@email.com",
     feedbackEmailRequired: "Please enter your email.",
     feedbackEmailInvalid: "Please enter a valid email address.",
-    feedbackPrivacy: "We use your email only to reply to this feedback. Do not include passwords or sensitive data.",
+    feedbackPrivacy:
+      "We use your email only to reply to this feedback. Do not include passwords or sensitive data.",
     feedbackSend: "Send",
     feedbackSending: "Sending...",
     feedbackSuccess: "Thanks! Your feedback was sent.",
@@ -222,7 +223,8 @@ const STRINGS = {
     feedbackEmailPlaceholder: "tu@email.com",
     feedbackEmailRequired: "Ingres\u00e1 tu email.",
     feedbackEmailInvalid: "Ingres\u00e1 un email v\u00e1lido.",
-    feedbackPrivacy: "Usamos tu email solo para responder este feedback. No incluyas contrase\u00f1as ni datos sensibles.",
+    feedbackPrivacy:
+      "Usamos tu email solo para responder este feedback. No incluyas contrase\u00f1as ni datos sensibles.",
     feedbackSend: "Enviar",
     feedbackSending: "Enviando...",
     feedbackSuccess: "\u00a1Gracias! Tu feedback fue enviado.",
@@ -254,7 +256,8 @@ const STRINGS = {
     done: "Listo",
     back: "\u2190 Men\u00fa",
     loadingLevels: "Cargando niveles...",
-    levelsError: "No se pudieron cargar los niveles.\nEjecut\u00e1 el juego desde un servidor local.",
+    levelsError:
+      "No se pudieron cargar los niveles.\nEjecut\u00e1 el juego desde un servidor local.",
     levelN: "Nivel {n}",
     lockedN: "\uD83D\uDD12 {n}",
     lockedPrevHint: "Completá antes el nivel {level}.",
@@ -299,12 +302,14 @@ const STRINGS = {
     errorsOnPage: "Tambi\u00e9n hay errores en p\u00e1gina {pages}",
     orderWrong: "Todav\u00eda no est\u00e1 en orden. \u00a1Segu\u00ed intentando!",
     autoConfirmTitle: "\u00bfOrganizar solos?",
-    autoConfirmBody: "Los libros se van a acomodar por vos,\npero tu puntaje quedará en 100 como máximo.",
+    autoConfirmBody:
+      "Los libros se van a acomodar por vos,\npero tu puntaje quedará en 100 como máximo.",
     autoConfirmYes: "S\u00ed, organizar",
     autoUsedNote: "Puntaje limitado \u2014 se us\u00f3 Organizar solos.",
     pageIndicator: "P\u00e1gina {page} / {total}",
     loadingLevel: "Cargando nivel...",
-    levelDataError: "No se pudieron cargar los datos.\nServ\u00ed la carpeta por HTTP (ver README).",
+    levelDataError:
+      "No se pudieron cargar los datos.\nServ\u00ed la carpeta por HTTP (ver README).",
     levelNotFound: "Nivel {level} no encontrado.",
     levelComplete: "\u00a1Nivel completado!",
     statTime: "Tiempo:  {time}",

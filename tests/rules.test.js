@@ -2,9 +2,36 @@ import { describe, expect, it } from "vitest";
 import { evaluateOrder, getExpectedOrder, resolveRule } from "../js/utils/rules.js";
 
 const BOOKS = [
-  { id: 1, title: "Gamma", author: "Ada", genre: "History", year: 2001, size: "small", color: "#ff0000", pages: 120 },
-  { id: 2, title: "Alpha", author: "Zoe", genre: "Fantasy", year: 2010, size: "large", color: "#00ff00", pages: 340 },
-  { id: 3, title: "Beta", author: "Ada", genre: "Fantasy", year: 2005, size: "medium", color: "#0000ff", pages: 220 },
+  {
+    id: 1,
+    title: "Gamma",
+    author: "Ada",
+    genre: "History",
+    year: 2001,
+    size: "small",
+    color: "#ff0000",
+    pages: 120,
+  },
+  {
+    id: 2,
+    title: "Alpha",
+    author: "Zoe",
+    genre: "Fantasy",
+    year: 2010,
+    size: "large",
+    color: "#00ff00",
+    pages: 340,
+  },
+  {
+    id: 3,
+    title: "Beta",
+    author: "Ada",
+    genre: "Fantasy",
+    year: 2005,
+    size: "medium",
+    color: "#0000ff",
+    pages: 220,
+  },
 ];
 
 describe("rules.js", () => {

@@ -69,7 +69,9 @@ function parseKeys(raw) {
   const keyNames = resolveRule(tokens).keys.map((k) => k.key);
   const invalid = keyNames.filter((k) => !VALID_SORT_KEYS.includes(k));
   if (invalid.length) {
-    throw new Error(`Unknown sort key(s): ${invalid.join(", ")}. Valid keys: ${VALID_SORT_KEYS.join(", ")}`);
+    throw new Error(
+      `Unknown sort key(s): ${invalid.join(", ")}. Valid keys: ${VALID_SORT_KEYS.join(", ")}`
+    );
   }
   return tokens;
 }
@@ -139,11 +141,15 @@ function main() {
 
   console.log(`\nSelected books (${selected.length}):`);
   selected.forEach((b) =>
-    console.log(`- ${b.id}: ${b.title} (${b.author}, ${b.genre}, ${b.year}, ${b.size}, ${b.pages}p)`)
+    console.log(
+      `- ${b.id}: ${b.title} (${b.author}, ${b.genre}, ${b.year}, ${b.size}, ${b.pages}p)`
+    )
   );
 
   console.log("\nExpected order:");
-  expected.forEach((b, i) => console.log(`${String(i + 1).padStart(2, " ")}. ${b.id} - ${b.title}`));
+  expected.forEach((b, i) =>
+    console.log(`${String(i + 1).padStart(2, " ")}. ${b.id} - ${b.title}`)
+  );
 
   const levelObj = {
     level,

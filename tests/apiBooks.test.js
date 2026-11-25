@@ -208,7 +208,13 @@ describe("apiBooks.js", () => {
         ok: true,
         json: async () => ({
           count: 1,
-          books: [{ title: `Book for ${requestedTags.at(-1)}`, authors: ["Author"], source: "GoogleBooks" }],
+          books: [
+            {
+              title: `Book for ${requestedTags.at(-1)}`,
+              authors: ["Author"],
+              source: "GoogleBooks",
+            },
+          ],
         }),
       };
     };

@@ -2,7 +2,9 @@ import { COLORS } from "./ui.js";
 
 const GOLD = "#d9a441";
 const CREAM = "#f3e3c3";
-const DISTANT_COLORS = [0x7a4fc6, 0xc64f9e, 0xd9a441, 0x4f86c6, 0xc64f5b, 0x5bbf6a, 0x8a5a2b, 0x73bfe6];
+const DISTANT_COLORS = [
+  0x7a4fc6, 0xc64f9e, 0xd9a441, 0x4f86c6, 0xc64f5b, 0x5bbf6a, 0x8a5a2b, 0x73bfe6,
+];
 
 function hash32(value) {
   let hash = 2166136261;
@@ -16,7 +18,13 @@ function hash32(value) {
 
 function hexToRgb(hex) {
   const raw = String(hex || "#8a5a2b").replace("#", "");
-  const n = raw.length === 3 ? raw.split("").map((c) => c + c).join("") : raw.padEnd(6, "0");
+  const n =
+    raw.length === 3
+      ? raw
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : raw.padEnd(6, "0");
   const v = Number.parseInt(n.slice(0, 6), 16) || 0x8a5a2b;
   return { r: (v >> 16) & 255, g: (v >> 8) & 255, b: v & 255 };
 }
@@ -187,7 +195,7 @@ export function ensureBookSpineTexture(scene, book, width, height, extras = {}) 
   roundedRectPath(ctx, 1, 1, w - 2, h - 2, radius);
   ctx.clip();
 
-  ctx.fillStyle = shadeHex(fill, (seed % 5 - 2) * 6);
+  ctx.fillStyle = shadeHex(fill, ((seed % 5) - 2) * 6);
   ctx.fillRect(0, 0, w, h);
   ctx.fillStyle = "rgba(255,255,255,0.12)";
   ctx.fillRect(bindW, 0, 5, h);
